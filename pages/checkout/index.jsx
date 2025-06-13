@@ -10,6 +10,7 @@ import { calculateCart, getFormatedDate, getFormatedTime } from "../../services/
 import { validate, validateProperty } from "../../models/shippingAddress";
 import { getCitiesByStateId, getCountriesList, getStatesByCountryId } from "../../services/publicContentsService";
 import { placeOrder, getprofileByCustomer } from "../../services/webCustomerService";
+import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 
 export default function Index({ user, customerData }) {
   // Cookies.set("Card_visited", true);
@@ -59,11 +60,11 @@ export default function Index({ user, customerData }) {
         console.log(error);
       });
 
-    handleProfileCountryInputChange({ value: Number(customerData.customercontact.country), label: `${customerData.customercontact.country_name} (${customerData.customercontact.country_code})` });
-    if (customerData.customercontact.state) {
-      handleProfileStateInputChange({ value: Number(customerData.customercontact.state), label: `${customerData.customercontact.state_name} (${customerData.customercontact.state_code})` });
+    handleProfileCountryInputChange({ value: Number(customerData?.customercontact?.country) || 0, label: `${customerData?.customercontact?.country_name} (${customerData?.customercontact?.country_code})` });
+    if (customerData?.customercontact?.state) {
+      handleProfileStateInputChange({ value: Number(customerData.customercontact.state) || 0, label: `${customerData.customercontact.state_name} (${customerData.customercontact.state_code})` });
     }
-    if (customerData.customercontact.city) {
+    if (customerData?.customercontact?.city) {
       handleProfileCityInputChange({ value: Number(customerData.customercontact.city), label: customerData.customercontact.city_name });
     }
 
@@ -73,8 +74,8 @@ export default function Index({ user, customerData }) {
       amount: 0,
       is_paid: 0,
       customer_id: customerData.id,
-      customer_type: customerData.customercategory.title,
-      customer_type_id: customerData.customercategory.id,
+      customer_type: customerData?.customercategory?.title || '',
+      customer_type_id: customerData?.customercategory?.id || '',
       customer_no: customerData.customer_no,
       firstname: customerData.firstname,
       lastname: customerData.lastname,
@@ -85,23 +86,23 @@ export default function Index({ user, customerData }) {
       status: 1,
       remarks: "",
       dial_code: customerData.dial_code,
-      address_line_one: customerData.customercontact.address_line_one,
-      address_line_two: customerData.customercontact.address_line_two,
-      city: customerData.customercontact.city,
-      city_name: customerData.customercontact.city_name,
-      tax_rate: customerData.customercontact.tax_rate,
-      state: customerData.customercontact.state,
-      state_code: customerData.customercontact.state_code,
-      state_name: customerData.customercontact.state_name,
-      zipcode: customerData.customercontact.zipcode,
-      country: customerData.customercontact.country,
-      country_code: customerData.customercontact.country_code,
-      country_name: customerData.customercontact.country_name,
-      billing_address: customerData.customerprofile.billing_address,
-      location: customerData.customerprofile.location,
-      zone: customerData.customerprofile.zone,
-      carrier: customerData.customerprofile.carrier,
-      terms: customerData.customerprofile.terms,
+      address_line_one: customerData?.customercontact?.address_line_one || '',
+      address_line_two: customerData?.customercontact?.address_line_two || '',
+      city: customerData?.customercontact?.city || '',
+      city_name: customerData?.customercontact?.city_name || '',
+      tax_rate: customerData?.customercontact?.tax_rate || 0,
+      state: customerData?.customercontact?.state || '',
+      state_code: customerData?.customercontact?.state_code || '',
+      state_name: customerData?.customercontact?.state_name || '',
+      zipcode: customerData?.customercontact?.zipcode || '',
+      country: customerData?.customercontact?.country || '',
+      country_code: customerData?.customercontact?.country_code || '',
+      country_name: customerData?.customercontact?.country_name || '',
+      billing_address: customerData?.customerprofile?.billing_address || '',
+      location: customerData?.customerprofile?.location || '',
+      zone: customerData?.customerprofile?.zone || '',
+      carrier: customerData?.customerprofile?.carrier || '',
+      terms: customerData?.customerprofile?.terms || '',
       products: "",
       length: "",
       width: "",
@@ -374,14 +375,44 @@ export default function Index({ user, customerData }) {
                                         <label>
                                           Address Line One&nbsp;<span className="text-danger">*</span>
                                         </label>
-                                        <input
-                                          type="text"
-                                          name="address_line_one"
-                                          placeholder="Steet address"
+                                        <PlacesAutocomplete
                                           value={shippingAddress.address_line_one}
-                                          onChange={handleChange}
-                                          className="form-control"
-                                        />
+                                          onChange={val => setShippingAddress((prev) => ({ ...prev, address_line_one: val }))}
+                                          onSelect={async (value) => {
+                                            setShippingAddress((prev) => ({ ...prev, address_line_one: value }));
+                                            try {
+                                              const results = await geocodeByAddress(value);
+                                              if (results && results[0]) {
+                                                const addressComponents = results[0].address_components;
+                                                let city = '', state = '', zipcode = '', country = '';
+                                                addressComponents.forEach(component => {
+                                                  if (component.types.includes('locality')) city = component.long_name;
+                                                  if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+                                                  if (component.types.includes('postal_code')) zipcode = component.long_name;
+                                                  if (component.types.includes('country')) country = component.long_name;
+                                                });
+                                                setShippingAddress((prev) => ({ ...prev, city_name: city, state_name: state, zipcode, country_name: country }));
+                                              }
+                                            } catch (e) { }
+                                          }}
+                                        >
+                                          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                                            <div>
+                                              <input {...getInputProps({ placeholder: 'Street address', className: 'form-control' })} />
+                                              <div className='autocomplete-dropdown-container'>
+                                                {loading && <div>Loading...</div>}
+                                                {suggestions.map(suggestion => {
+                                                  const className = suggestion.active ? 'suggestion-item--active' : 'suggestion-item';
+                                                  return (
+                                                    <div {...getSuggestionItemProps(suggestion, { className })}>
+                                                      <span>{suggestion.description}</span>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </PlacesAutocomplete>
                                         {errors && errors.address && (
                                           <div style={{ color: "red" }}>
                                             {errors.address}

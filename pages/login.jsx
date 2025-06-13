@@ -16,6 +16,12 @@ function Login() {
 	});
 	const [errors, setErrors] = useState({});
 	const [showPassword, setShowPassword] = useState(false);
+	// 2FA: Uncomment to enable 2-factor authentication
+	/*
+	const [show2FA, setShow2FA] = useState(false);
+	const [twofaCode, setTwofaCode] = useState('');
+	const [twofaUsername, setTwofaUsername] = useState('');
+	*/
 
 	const handleChange = (e) => {
 		var errorsCopy = { ...errors };
@@ -29,19 +35,38 @@ function Login() {
 	};
 
 	const handleSubmit = async (e) => {
-		// console.log('handleSubmit', user);
 		e.preventDefault();
 		const errorsCopy = loginValidate(user);
 		setErrors(errorsCopy);
 		if (errorsCopy) return;
 		try {
 			let data = await login(user);
-			// console.log('login---->', data)
 			toast(data.appMessage);
-			if (data.appStatus == false) return;
+			if (data.appStatus == false) {
+				// 2FA: Uncomment to enable 2-factor authentication
+				/*
+				if (data.twofa) {
+					setShow2FA(true);
+					setTwofaUsername(user.username);
+				}
+				*/
+				return;
+			}
 			setUSER(data.appData);
 		} catch (error) { }
 	};
+
+	// 2FA: Uncomment to enable 2-factor authentication
+	/*
+	const handle2FASubmit = async () => {
+		const res = await login({ username: twofaUsername, code: twofaCode, twofa: true });
+		if (res.data.appStatus) {
+			setUSER(res.data.appData);
+		} else {
+			toast(res.data.appMessage);
+		}
+	};
+	*/
 
 	return (
 		<>

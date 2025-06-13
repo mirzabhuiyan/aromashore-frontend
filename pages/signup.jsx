@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/router";
 import {apiUrl} from "../config";
 import axios from "axios";
+import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 
 function Signup() {
 	const router = useRouter();
@@ -26,6 +27,13 @@ function Signup() {
 	const [errors, setErrors] = useState({});
 	const [showPassword, setShowPassword] = useState(false);
 	const [allCountryList, setAllCountryList] = useState([{ dial_code: '+1', name: 'USA' }, { dial_code: '+880', name: 'BD' }]);
+	const [address, setAddress] = useState({
+		address_line_one: '',
+		city: '',
+		state: '',
+		zipcode: '',
+		country: ''
+	});
 
 	// useEffect(() => {
 	// 	axios.get(apiUrl + "/public/country").then(function (response) {
@@ -57,6 +65,28 @@ function Signup() {
 		setUser(userCopy);
 	};
 
+	const handleAddressChange = (name, value) => {
+		setAddress((prev) => ({ ...prev, [name]: value }));
+	};
+
+	const handleSelectAddress = async (value) => {
+		setAddress((prev) => ({ ...prev, address_line_one: value }));
+		try {
+			const results = await geocodeByAddress(value);
+			if (results && results[0]) {
+				const addressComponents = results[0].address_components;
+				let city = '', state = '', zipcode = '', country = '';
+				addressComponents.forEach(component => {
+					if (component.types.includes('locality')) city = component.long_name;
+					if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+					if (component.types.includes('postal_code')) zipcode = component.long_name;
+					if (component.types.includes('country')) country = component.long_name;
+				});
+				setAddress((prev) => ({ ...prev, city, state, zipcode, country }));
+			}
+		} catch (e) { }
+	};
+
 	const validateUser = async () => {
 		if (user.username) {
 			try {
@@ -84,7 +114,8 @@ function Signup() {
 		// console.log(user);
 		if (errorsCopy) return;
 		try {
-			const { data } = await register(user);
+			const payload = { ...user, ...address };
+			const { data } = await register(payload);
 			toast(data.appMessage);
 			router.push('/');
 		} catch (ex) {
@@ -161,6 +192,45 @@ function Signup() {
 															{errors && errors.contact && <div style={{ color: "red" }}>{errors.contact}</div>}
 														</div>
 													</div>
+												</div>
+											</div>
+											<div className='row'>
+												<div className='col-12 col-md-12'>
+													<label>Address Line 1</label>
+													<PlacesAutocomplete value={address.address_line_one} onChange={val => handleAddressChange('address_line_one', val)} onSelect={handleSelectAddress}>
+														{({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+															<div>
+																<input {...getInputProps({ placeholder: 'Address Line 1', className: 'form-control myform-control mb-2' })} />
+																<div className='autocomplete-dropdown-container'>
+																	{loading && <div>Loading...</div>}
+																	{suggestions.map(suggestion => {
+																		const className = suggestion.active ? 'suggestion-item--active' : 'suggestion-item';
+																		return (
+																			<div {...getSuggestionItemProps(suggestion, { className })}>
+																				<span>{suggestion.description}</span>
+																			</div>
+																		);
+																	})}
+																</div>
+															</div>
+														)}
+													</PlacesAutocomplete>
+												</div>
+												<div className='col-12 col-md-6'>
+													<label>City</label>
+													<input className='form-control myform-control mb-2' type='text' name='city' value={address.city} onChange={e => handleAddressChange('city', e.target.value)} placeholder='City' />
+												</div>
+												<div className='col-12 col-md-6'>
+													<label>State</label>
+													<input className='form-control myform-control mb-2' type='text' name='state' value={address.state} onChange={e => handleAddressChange('state', e.target.value)} placeholder='State' />
+												</div>
+												<div className='col-12 col-md-6'>
+													<label>Zip Code</label>
+													<input className='form-control myform-control mb-2' type='text' name='zipcode' value={address.zipcode} onChange={e => handleAddressChange('zipcode', e.target.value)} placeholder='Zip Code' />
+												</div>
+												<div className='col-12 col-md-6'>
+													<label>Country</label>
+													<input className='form-control myform-control mb-2' type='text' name='country' value={address.country} onChange={e => handleAddressChange('country', e.target.value)} placeholder='Country' />
 												</div>
 											</div>
 											<div className='row myform-check'>
