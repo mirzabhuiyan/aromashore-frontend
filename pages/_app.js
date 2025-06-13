@@ -11,6 +11,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { createShoppingCart, clearShoppingCart, getprofileByCustomer, getCartDetailsByCustomerId } from "../services/webCustomerService";
 import { calculateCart } from "../services/utilityService";
 import { toast, ToastContainer } from "react-toastify";
+import Script from 'next/script';
 
 function MyApp({
   Component,
@@ -108,8 +109,8 @@ function MyApp({
           amount: totalAmount,
           total_weight: totalWeight,
           customer_id: customerDataX.id,
-          customer_type: customerDataX.customercategory.title,
-          customer_type_id: customerDataX.customercategory.id,
+          customer_type: customerDataX?.customercategory?.title || '',
+          customer_type_id: customerDataX?.customercategory?.id || '',
           customer_no: customerDataX.customer_no,
           customer_name: customerDataX.firstname + customerDataX.lastname,
           dial_code: customerDataX.dial_code,
@@ -321,6 +322,10 @@ function MyApp({
 
   return (
     <>
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`}
+        strategy="beforeInteractive"
+      />
       <ToastContainer />
       <AppStore.Provider value={storeValue}>
         <Component {...pageProps} />
