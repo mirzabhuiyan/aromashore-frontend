@@ -5,6 +5,7 @@ const apiRegisterEndPoint = apiUrl + "/web/customer/register";
 const apiForgotPasswordEndPoint = apiUrl + "/web/customer/forgot-password";
 const apiResetPasswordEndPoint = apiUrl + "/web/customer/reset-password";
 const apiValidateUsernameEndPoint = apiUrl + "/web/customer/check/username/";
+const apiVerifyOTPAndResetPasswordEndPoint = apiUrl + "/web/sms/verifyOTPAndResetPassword";
 
 export function register(user) {
   return http.post(apiRegisterEndPoint, {
@@ -23,4 +24,8 @@ export function forgotPassword(forgotForm) {
 export function resetPassword(resetForm) {
   console.log(resetForm)
   return http.post(apiResetPasswordEndPoint, resetForm);
+}
+
+export function verifyOTPAndResetPassword(resetForm) {
+  return http.post(apiVerifyOTPAndResetPasswordEndPoint, resetForm);
 }
