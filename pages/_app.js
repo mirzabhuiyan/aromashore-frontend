@@ -318,6 +318,7 @@ function MyApp({
     setUSER,
     // companyInfo,
     logout,
+    customerData,
   };
 
   return (

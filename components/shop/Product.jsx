@@ -7,6 +7,8 @@ import Image from "next/image";
 import { globalProductImageAddress } from '../../config';
 
 export default function Product({ product, viewType = true, shopPage = false }) {
+	const { customerData } = useContext(AppStore);
+	const isDistributor = customerData?.customercategory?.title?.toLowerCase() === "distributor";
 	// console.log(product)
 	// const { add_TO_CART } = useContext(AppStore);
 	// const [tabType, setTabType] = useState(1);
@@ -34,6 +36,13 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 	});
 
 	const productpro = productproperties.length > 0 ? productproperties[0] : [];
+
+	// Determine which price to show
+	const displayPrice = isDistributor && productpro.dist_price
+		? productpro.dist_price
+		: productpro.sale_price > 0
+			? productpro.sale_price
+			: productpro.price;
 
 	return (
 		<>
@@ -97,9 +106,15 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 											{/* <span>({totalReviewers})</span> */}
 										</div>
 									</div>
-									<Link href={"/products/" + id}>
-										<span className='product-name'>{name}</span>
-									</Link>
+								</div>
+								<Link href={"/products/" + id}>
+									<span className='product-name'>{name}</span>
+								</Link>
+								<div className='product-price mt-2'>
+									<b>Price: ${displayPrice}</b>
+									{isDistributor && productpro.dist_price && (
+										<span className="badge bg-info ms-2">Distributor Price</span>
+									)}
 								</div>
 							</div>
 						</Card.Body>
@@ -130,6 +145,12 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 									<Link href={"/products/" + id}>
 										<span className='product-name'>{name}</span>
 									</Link>
+									<div className='product-price mt-2'>
+										<b>Price: ${displayPrice}</b>
+										{isDistributor && productpro.dist_price && (
+											<span className="badge bg-info ms-2">Distributor Price</span>
+										)}
+									</div>
 									<div>
 										{/* <div className='product-btn'>
 											<a
