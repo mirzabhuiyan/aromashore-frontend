@@ -34,6 +34,7 @@ export default function HeaderNavigation({ openCart }) {
 		axios.get(apiUrl + "/web/get/webmenu").then((response) => {
 			// console.log("waiting end", response);
 			if (response.data.appStatus) {
+
 				// const bottomMenuList = response.data.appData;
 				// let bottomMenuListCopy = bottomMenuList?.map((item) => {
 				// 	return {
@@ -92,10 +93,12 @@ export default function HeaderNavigation({ openCart }) {
 		console.log(allCategoryProduct);
 		setSelectedCategory(null);
 		const allProductFromSelectedMenu = [];
-		if (allCategoryProduct !== null && allCategoryProduct.length > 0) {
+		if (allCategoryProduct && Array.isArray(allCategoryProduct) && allCategoryProduct.length > 0) {
 			allCategoryProduct.map(acp => {
 				console.log(acp.products);
-				allProductFromSelectedMenu.push(...acp.products);
+				if (acp.products && Array.isArray(acp.products)) {
+					allProductFromSelectedMenu.push(...acp.products);
+				}
 			})
 			setSelectedCategoryWiseAllProduct(allProductFromSelectedMenu);
 		} else {
@@ -183,7 +186,7 @@ export default function HeaderNavigation({ openCart }) {
 										return (
 											<li key={menu.id} className='nav-item' onClick={() => handleSelectMenu(menu)}>
 												<a className='nav-link' href='#'>
-													{menu.name}
+													{menu.category_name}
 													<i className='fas fa-angle-down ms-2'></i>
 												</a>
 											</li>
@@ -274,7 +277,7 @@ export default function HeaderNavigation({ openCart }) {
 												<li data-bs-dismiss='offcanvas' onClick={() => goToSelectedCategory('all')}>
 													All
 												</li>
-												{selectedMobileMenu && selectedMobileMenu.productcategories.map(pcat =>
+												{selectedMobileMenu && selectedMobileMenu.productcategories && Array.isArray(selectedMobileMenu.productcategories) && selectedMobileMenu.productcategories.map(pcat =>
 													<li key={pcat.id} data-bs-dismiss='offcanvas' onClick={() => goToSelectedCategory(pcat.id)}>
 														{pcat.category_name}
 													</li>
@@ -340,14 +343,14 @@ export default function HeaderNavigation({ openCart }) {
 							<div className='item_wrapper'>
 								<div className='item filter'>
 									<h4 className='d-flex justify-content-center align-items-center' onClick={() => handleSelectMenu(null)}>
-										{selectedMenu?.name}
+										{selectedMenu?.name || selectedMenu?.category_name || 'Menu'}
 										<i className="mobile-mega-menu-close-button fas fa-times-circle text-danger ms-2"></i>
 									</h4>
 									<ul>
 										<li className='category_name' onClick={() => handleSelectedMenuAllProduct(selectedMenu.productcategories)}>
 											All
 										</li>
-										{selectedMenu.productcategories.map(pcat =>
+										{selectedMenu.productcategories && Array.isArray(selectedMenu.productcategories) && selectedMenu.productcategories.map(pcat =>
 											<li key={pcat.id} className='category_name' onClick={() => handleSelectCategory(pcat)}>
 												{pcat.category_name}
 												{/* <Link href={"/shop?category=" + pcat.id}>{pcat.category_name}</Link> */}
@@ -369,14 +372,14 @@ export default function HeaderNavigation({ openCart }) {
 									</ul>
 								</div>
 								<div className="menu-product-list">
-									{selectedCategory ?
-										selectedCategory?.products.map((product, i) => {
+									{selectedCategory && selectedCategory.products ?
+										selectedCategory.products && Array.isArray(selectedCategory.products) && selectedCategory.products.map((product, i) => {
 											return (
 												<div key={i} className='item'>
 													<Product product={product} />
 												</div>
 											);
-										}) : selectedCategoryWiseAllProduct.map((product, i) => {
+										}) : selectedCategoryWiseAllProduct && Array.isArray(selectedCategoryWiseAllProduct) && selectedCategoryWiseAllProduct.map((product, i) => {
 											return (
 												<div key={i} className='item'>
 													<Product product={product} />

@@ -539,9 +539,9 @@ export default function PersonalInfo({ user, profile }) {
 														</tr>
 														<tr>
 															<th>Contact</th>
-															<td>{bean.contact.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")}</td>
+															<td>{bean.contact ? bean.contact.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3") : ''}</td>
 															<th>Phone No</th>
-															<td>{bean.phone_no}</td>
+															<td>{bean.phone_no || ''}</td>
 
 														</tr>
 														<tr>
