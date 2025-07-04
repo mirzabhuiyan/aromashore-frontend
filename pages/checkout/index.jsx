@@ -38,10 +38,9 @@ export default function Index({ user, customerData }) {
   });
 
   useEffect(() => {
-    console.log('chechout ---->', customerData);
     getCountriesList()
       .then(function (response) {
-        console.log(response);
+        console.log("response.data --------> ", response.data);
         if (response.status === 200 && !response.data["appStatus"]) {
           setProfileCountryList([]);
         } else {
@@ -51,6 +50,7 @@ export default function Index({ user, customerData }) {
           tempCountryList.map((cl) => {
             const country = { value: cl.id, label: `${cl.name} (${cl.code})` };
             customCountryList.push(country);
+            // console.log("customCountryList --------> ", customCountryList);
             return true;
           });
           setProfileCountryList(customCountryList);
@@ -145,6 +145,7 @@ export default function Index({ user, customerData }) {
     setShippingAddress((values) => ({ ...values, country: value, country_name: label, country_code: code }));
     setShippingAddress((values) => ({ ...values, state: "", state_name: "", state_code: "", city: "", city_name: "" }));
     setSelectedProfileCountry({ value: value, label: `${label} (${code})` });
+    console.log("selectedProfileCountry --------> ", selectedProfileCountry);
     setSelectedProfileState({ value: 0, label: "" });
     setSelectedProfileCity({ value: 0, label: "" });
   };
@@ -384,16 +385,28 @@ export default function Index({ user, customerData }) {
                                               const results = await geocodeByAddress(value);
                                               if (results && results[0]) {
                                                 const addressComponents = results[0].address_components;
-                                                let city = '', state = '', zipcode = '', country = '';
+                                                let city = '', state = '', zipcode = '', country = '', countryCode = '';
                                                 addressComponents.forEach(component => {
                                                   if (component.types.includes('locality')) city = component.long_name;
                                                   if (component.types.includes('administrative_area_level_1')) state = component.long_name;
                                                   if (component.types.includes('postal_code')) zipcode = component.long_name;
-                                                  if (component.types.includes('country')) country = component.long_name;
+                                                  if (component.types.includes('country')) {
+                                                    country = component.long_name;
+                                                    countryCode = component.short_name;
+                                                  }
                                                 });
-                                                setShippingAddress((prev) => ({ ...prev, city_name: city, state_name: state, zipcode, country_name: country }));
+                                                setShippingAddress((prev) => ({ 
+                                                  ...prev, 
+                                                  city_name: city, 
+                                                  state_name: state, 
+                                                  zipcode, 
+                                                  country_name: country,
+                                                  country_code: countryCode
+                                                }));
                                               }
-                                            } catch (e) { }
+                                            } catch (e) { 
+                                              console.error('Error geocoding address:', e);
+                                            }
                                           }}
                                         >
                                           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
@@ -403,8 +416,10 @@ export default function Index({ user, customerData }) {
                                                 {loading && <div>Loading...</div>}
                                                 {suggestions.map(suggestion => {
                                                   const className = suggestion.active ? 'suggestion-item--active' : 'suggestion-item';
+                                                  const suggestionProps = getSuggestionItemProps(suggestion, { className });
+                                                  const { key, ...otherProps } = suggestionProps;
                                                   return (
-                                                    <div {...getSuggestionItemProps(suggestion, { className })}>
+                                                    <div key={key} {...otherProps}>
                                                       <span>{suggestion.description}</span>
                                                     </div>
                                                   );
