@@ -324,7 +324,7 @@ function MyApp({
   return (
     <>
       <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`}
+        src={`https://maps.googleapis.com/maps/api/js?key=AIzaSyCe92gBOWPXDIKSNCwI9RfYZEtJffQpaT8&libraries=places`}
         strategy="beforeInteractive"
       />
       <ToastContainer />
