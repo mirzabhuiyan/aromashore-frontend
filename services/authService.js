@@ -2,12 +2,19 @@ import Cookies from "js-cookie";
 import {apiUrl} from "../config";
 import http from "./httpService";
 const apiEndPoint = apiUrl + "/web/customer/login";
+const api2FAEndPoint = apiUrl + "/web/customer/login/2fa-verify";
 
-export async function login({username, password}) {
+export async function login({username, password, code, twofa}) {
   console.log('login called')
   Cookies.set("login", true)
-  const {data} = await http.post(apiEndPoint, {username, password});
-  return data;
+  if (twofa) {
+    // OTP verification step
+    return await http.post(api2FAEndPoint, { username, code });
+  } else {
+    // Normal login step
+    const {data} = await http.post(apiEndPoint, {username, password});
+    return data;
+  }
 }
 
 export function logout() {

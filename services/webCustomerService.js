@@ -8,6 +8,7 @@ export function fetchCustomerTypes() {
 }
 
 export function getprofileByCustomer(user) {
+  console.log("user1 --------> ", user);
   return http.get(
     apiUrl + `/web/customer/getprofile/${user.uid}/${user.username}`,
     {

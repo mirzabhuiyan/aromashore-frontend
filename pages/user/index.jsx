@@ -16,7 +16,7 @@ export default function Index() {
 	const { user } = useContext(AppStore);
 	const [customerprofile, setCustomerprofile] = useState(null)
 	useEffect(() => {
-		console.log(user);
+		console.log("user2 --------> ", user);
 		if (user) {
 			getprofileByCustomer(user).then(profile => {
 				console.log("profileData.appData --------> ", profile);
