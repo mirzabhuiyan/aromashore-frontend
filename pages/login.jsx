@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import Link from "next/link";
 import Layout from "../layouts/Layout";
 import { loginValidate, validateProperty } from "../models/user";
-import { login } from "../services/authService";
+import { login, verifyOTP } from "../services/authService";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AppStore } from "../store/AppStore";
@@ -16,12 +16,12 @@ function Login() {
 	});
 	const [errors, setErrors] = useState({});
 	const [showPassword, setShowPassword] = useState(false);
-	// 2FA: Uncomment to enable 2-factor authentication
-	/*
+
+	// 2FA/OTP state
 	const [show2FA, setShow2FA] = useState(false);
-	const [twofaCode, setTwofaCode] = useState('');
-	const [twofaUsername, setTwofaUsername] = useState('');
-	*/
+	const [twofaCode, setTwofaCode] = useState("");
+	const [twofaUsername, setTwofaUsername] = useState("");
+	const [loading, setLoading] = useState(false);
 
 	const handleChange = (e) => {
 		var errorsCopy = { ...errors };
@@ -40,33 +40,44 @@ function Login() {
 		setErrors(errorsCopy);
 		if (errorsCopy) return;
 		try {
+			setLoading(true);
 			let data = await login(user);
 			toast(data.appMessage);
-			if (data.appStatus == false) {
-				// 2FA: Uncomment to enable 2-factor authentication
-				/*
+			if (data.appStatus === false) {
 				if (data.twofa) {
 					setShow2FA(true);
 					setTwofaUsername(user.username);
 				}
-				*/
+				setLoading(false);
 				return;
 			}
 			setUSER(data.appData);
-		} catch (error) { }
-	};
-
-	// 2FA: Uncomment to enable 2-factor authentication
-	/*
-	const handle2FASubmit = async () => {
-		const res = await login({ username: twofaUsername, code: twofaCode, twofa: true });
-		if (res.data.appStatus) {
-			setUSER(res.data.appData);
-		} else {
-			toast(res.data.appMessage);
+			setLoading(false);
+		} catch (error) {
+			toast('Login failed. Please try again.');
+			setLoading(false);
 		}
 	};
-	*/
+
+	const handle2FASubmit = async (e) => {
+		e.preventDefault();
+		if (!twofaCode) {
+			toast('Please enter the OTP code.');
+			return;
+		}
+		setLoading(true);
+		try {
+			const res = await verifyOTP({ username: twofaUsername, code: twofaCode });
+			if (res.appStatus) {
+				setUSER(res.appData);
+			} else {
+				toast(res.appMessage || 'Invalid or expired OTP.');
+			}
+		} catch (error) {
+			toast('OTP verification failed. Please try again.');
+		}
+		setLoading(false);
+	};
 
 	return (
 		<>
@@ -81,32 +92,37 @@ function Login() {
 										<div className='mt-2'>
 											<p className='login-em'>Login</p>
 										</div>
-										<form className='mt-4' onSubmit={handleSubmit}>
-											<div className='myform-group'>
-												<div className='col-12'>
-													<input className='form-control myform-control' type='text' name='username' value={user.username} onChange={handleChange} placeholder='Enter Username' />
-													{errors && errors.username && <div style={{ color: "red" }}>{errors.username}</div>}
+										<form className='mt-4' onSubmit={show2FA ? handle2FASubmit : handleSubmit}>
+											{!show2FA && (
+												<>
+													<div className='myform-group'>
+														<div className='col-12'>
+															<input className='form-control myform-control' type='text' name='username' value={user.username} onChange={handleChange} placeholder='Enter Username' />
+															{errors && errors.username && <div style={{ color: "red" }}>{errors.username}</div>}
+														</div>
+													</div>
+													<div className='myform-group'>
+														<div className='col-12 position-relative'>
+															<input className='form-control myform-control' style={{ paddingRight: '35px' }} type={showPassword ? 'text' : 'password'} name='password' value={user.password} onChange={handleChange} placeholder='Enter Password' />
+															{showPassword ? <i className="fa fa-eye" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(false)}></i> :
+																<i className="fa fa-eye-slash" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(true)}></i>}
+															{errors && errors.password && <div style={{ color: "red" }}>{errors.password}</div>}
+														</div>
+													</div>
+												</>
+											)}
+											{show2FA && (
+												<div className='myform-group'>
+													<div className='col-12'>
+														<input className='form-control myform-control' type='text' name='otp' value={twofaCode} onChange={e => setTwofaCode(e.target.value)} placeholder='Enter OTP sent to your email' maxLength={6} />
+													</div>
 												</div>
-											</div>
-											<div className='myform-group'>
-												<div className='col-12 position-relative'>
-													<input className='form-control myform-control' style={{ paddingRight: '35px' }} type={showPassword ? 'text' : 'password'} name='password' value={user.password} onChange={handleChange} placeholder='Enter Password' />
-													{showPassword ? <i className="fa fa-eye" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(false)}></i> :
-														<i className="fa fa-eye-slash" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(true)}></i>}
-													{errors && errors.password && <div style={{ color: "red" }}>{errors.password}</div>}
-												</div>
-											</div>
-											{/* <div className='myform-group myform-check'>
-												<div className='col-12'>
-													<label className='myform-check-label'>
-														<input className='myform-check-input' name='rememberMe' checked={user.registerPolicy} type='checkbox' onChange={handleInputCheck} />
-														<span>Remember me</span>
-													</label>
-												</div>
-											</div> */}
+											)}
 											<div className='myform-group mt-4'>
 												<div className='col-12'>
-													<button type="submit" className='btn my-btn -red'>Login</button>
+													<button type="submit" className={`btn my-btn ${show2FA ? '-yellow' : '-red'}`} disabled={loading}>
+														{loading ? (show2FA ? 'Verifying OTP...' : 'Logging In...') : (show2FA ? 'Verify OTP' : 'Login')}
+													</button>
 												</div>
 											</div>
 											<div className='row mt-4 text-center'>

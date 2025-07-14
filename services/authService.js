@@ -6,7 +6,14 @@ const apiEndPoint = apiUrl + "/web/customer/login";
 export async function login({username, password}) {
   console.log('login called')
   Cookies.set("login", true)
+  console.log('username', username)
+  console.log('password', password)
   const {data} = await http.post(apiEndPoint, {username, password});
+  return data;
+}
+
+export async function verifyOTP({username, code}) {
+  const {data} = await http.post(apiUrl + "/web/customer/login/2fa-verify", {username, code});
   return data;
 }
 
