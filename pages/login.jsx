@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import Link from "next/link";
 import Layout from "../layouts/Layout";
 import { loginValidate, validateProperty } from "../models/user";
-import { login } from "../services/authService";
+import { login, verifyOTP } from "../services/authService";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AppStore } from "../store/AppStore";
@@ -38,6 +38,7 @@ function Login() {
 		setErrors(errorsCopy);
 		if (errorsCopy) return;
 		try {
+			setLoading(true);
 			let data = await login(user);
 			toast(data.appMessage);
 			if (!data.appStatus && data.twofa) {
@@ -82,25 +83,11 @@ function Login() {
 													{errors && errors.username && <div style={{ color: "red" }}>{errors.username}</div>}
 												</div>
 											</div>
-											<div className='myform-group'>
-												<div className='col-12 position-relative'>
-													<input className='form-control myform-control' style={{ paddingRight: '35px' }} type={showPassword ? 'text' : 'password'} name='password' value={user.password} onChange={handleChange} placeholder='Enter Password' />
-													{showPassword ? <i className="fa fa-eye" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(false)}></i> :
-														<i className="fa fa-eye-slash" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(true)}></i>}
-													{errors && errors.password && <div style={{ color: "red" }}>{errors.password}</div>}
-												</div>
-											</div>
-											{/* <div className='myform-group myform-check'>
-												<div className='col-12'>
-													<label className='myform-check-label'>
-														<input className='myform-check-input' name='rememberMe' checked={user.registerPolicy} type='checkbox' onChange={handleInputCheck} />
-														<span>Remember me</span>
-													</label>
-												</div>
-											</div> */}
 											<div className='myform-group mt-4'>
 												<div className='col-12'>
-													<button type="submit" className='btn my-btn -red'>Login</button>
+													<button type="submit" className={`btn my-btn ${show2FA ? '-yellow' : '-red'}`} disabled={loading}>
+														{loading ? (show2FA ? 'Verifying OTP...' : 'Logging In...') : (show2FA ? 'Verify OTP' : 'Login')}
+													</button>
 												</div>
 											</div>
 											<div className='row mt-4 text-center'>
