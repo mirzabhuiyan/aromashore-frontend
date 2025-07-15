@@ -12,6 +12,19 @@ import { getCitiesByStateId, getCountriesList, getStatesByCountryId } from "../.
 import { placeOrder, getprofileByCustomer } from "../../services/webCustomerService";
 import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+
+function smartCityCase(name) {
+  // If the name is all uppercase, convert to Title Case
+  if (name === name.toUpperCase()) {
+    return toTitleCase(name);
+  }
+  // Otherwise, return as-is
+  return name;
+}
+
 export default function Index({ user, customerData }) {
   // Cookies.set("Card_visited", true);
   const router = useRouter();
@@ -36,6 +49,8 @@ export default function Index({ user, customerData }) {
     value: 0,
     label: ""
   });
+  const [pendingState, setPendingState] = useState(null);
+  const [pendingCity, setPendingCity] = useState(null);
 
   useEffect(() => {
     getCountriesList()
@@ -113,6 +128,96 @@ export default function Index({ user, customerData }) {
     });
   }, []);
 
+  // Autofill country/state/city/zip from address_line_one if present and not already filled
+  useEffect(() => {
+    if (!shippingAddress?.address_line_one) return;
+    if (!profileCountryList.length) return;
+    // Only autofill if country, state, city, or zip are missing
+    if (shippingAddress.country_name && shippingAddress.state_name && shippingAddress.city_name && shippingAddress.zipcode) return;
+    (async () => {
+      try {
+        const results = await geocodeByAddress(shippingAddress.address_line_one);
+        if (results && results[0]) {
+          const addressComponents = results[0].address_components;
+          let city = '', state = '', stateCode = '', zipcode = '', country = '', countryCode = '';
+          addressComponents.forEach(component => {
+            if (component.types.includes('locality')) city = component.long_name;
+            if (component.types.includes('administrative_area_level_1')) {
+              state = component.long_name;
+              stateCode = component.short_name;
+            }
+            if (component.types.includes('postal_code')) zipcode = component.long_name;
+            if (component.types.includes('country')) {
+              country = component.long_name;
+              countryCode = component.short_name;
+            }
+          });
+
+          // Find country option
+          const countryOption = profileCountryList.find(opt => {
+            const match = opt.label.match(/^(.*)\s*\((.*)\)$/);
+            let optName = opt.label, optCode = '';
+            if (match) {
+              optName = match[1].trim();
+              optCode = match[2].trim();
+            }
+            if (countryCode && optCode.toLowerCase() === countryCode.toLowerCase()) return true;
+            if (country && (
+              optName.toLowerCase() === country.toLowerCase() ||
+              (country.toLowerCase() === 'usa' && optName.toLowerCase().includes('united states'))
+            )) return true;
+            if (opt.label.toLowerCase().includes(country.toLowerCase())) return true;
+            return false;
+          });
+
+          if (countryOption) {
+            await handleProfileCountryInputChange(countryOption);
+            setSelectedProfileCountry(countryOption);
+            setPendingState({ name: state, code: stateCode });
+            setPendingCity(city);
+            setShippingAddress((prev) => ({
+              ...prev,
+              country_name: country,
+              country_code: countryCode,
+              state_name: state,
+              state_code: stateCode,
+              city_name: city,
+              zipcode
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Error geocoding address:', e);
+      }
+    })();
+  }, [shippingAddress?.address_line_one, profileCountryList]);
+
+  useEffect(() => {
+    if (pendingState && profileStateList.length > 0) {
+      const stateOption = profileStateList.find(opt =>
+        opt.label.toLowerCase().includes(pendingState.name.toLowerCase()) ||
+        opt.label.toLowerCase().includes(pendingState.code.toLowerCase())
+      );
+      if (stateOption) {
+        setSelectedProfileState(stateOption);
+        handleProfileStateInputChange(stateOption);
+        setPendingState(null);
+      }
+    }
+  }, [profileStateList, pendingState]);
+
+  useEffect(() => {
+    if (pendingCity && profileCityList.length > 0) {
+      const cityOption = profileCityList.find(opt =>
+        opt.label.toLowerCase().includes(pendingCity.toLowerCase())
+      );
+      if (cityOption) {
+        handleProfileCityInputChange(cityOption);
+        setPendingCity(null);
+      }
+    }
+  }, [profileCityList, pendingCity]);
+
   const handleProfileCountryInputChange = (event) => {
     
     const value = event.value;
@@ -178,7 +283,7 @@ export default function Index({ user, customerData }) {
             const tempCityList = response.data["appData"];
             const customCityList = [];
             tempCityList.map((cl) => {
-              const city = { value: cl.id, label: cl.name, tax_rate: cl.tax_rate };
+              const city = { value: cl.id, label: smartCityCase(cl.name), tax_rate: cl.tax_rate };
               customCityList.push(city);
               return true;
             });
@@ -212,7 +317,7 @@ export default function Index({ user, customerData }) {
       selectedCityDetail = profileCityList.find((cl) => cl.value === value);
     }
     // console.log(selectedCityDetail);
-    setShippingAddress((values) => ({ ...values, city: value, city_name: label, tax_rate: selectedCityDetail.tax_rate }));
+    setShippingAddress((values) => ({ ...values, city: value, city_name: label, tax_rate: selectedCityDetail && selectedCityDetail.tax_rate !== undefined ? selectedCityDetail.tax_rate : 0 }));
     setSelectedProfileCity({ value: value, label: label });
   };
 
@@ -315,6 +420,65 @@ export default function Index({ user, customerData }) {
       } catch (error) {
         console.log(error)
       }
+    }
+  };
+
+  const handleAddressLineOneBlur = async (e) => {
+    const address = e.target.value;
+    if (!address) return;
+    try {
+      const results = await geocodeByAddress(address);
+      if (results && results[0]) {
+        const addressComponents = results[0].address_components;
+        let city = '', state = '', stateCode = '', zipcode = '', country = '', countryCode = '';
+        addressComponents.forEach(component => {
+          if (component.types.includes('locality')) city = component.long_name;
+          if (component.types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+            stateCode = component.short_name;
+          }
+          if (component.types.includes('postal_code')) zipcode = component.long_name;
+          if (component.types.includes('country')) {
+            country = component.long_name;
+            countryCode = component.short_name;
+          }
+        });
+
+        // Find country option
+        const countryOption = profileCountryList.find(opt => {
+          const match = opt.label.match(/^(.*)\s*\((.*)\)$/);
+          let optName = opt.label, optCode = '';
+          if (match) {
+            optName = match[1].trim();
+            optCode = match[2].trim();
+          }
+          if (countryCode && optCode.toLowerCase() === countryCode.toLowerCase()) return true;
+          if (country && (
+            optName.toLowerCase() === country.toLowerCase() ||
+            (country.toLowerCase() === 'usa' && optName.toLowerCase().includes('united states'))
+          )) return true;
+          if (opt.label.toLowerCase().includes(country.toLowerCase())) return true;
+          return false;
+        });
+
+        if (countryOption) {
+          await handleProfileCountryInputChange(countryOption);
+          setSelectedProfileCountry(countryOption);
+          setPendingState({ name: state, code: stateCode });
+          setPendingCity(city);
+          setShippingAddress((prev) => ({
+            ...prev,
+            country_name: country,
+            country_code: countryCode,
+            state_name: state,
+            state_code: stateCode,
+            city_name: city,
+            zipcode
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Error geocoding address:', e);
     }
   };
 
@@ -445,45 +609,28 @@ export default function Index({ user, customerData }) {
                                                   await handleProfileCountryInputChange(countryOption);
                                                   setSelectedProfileCountry(countryOption);
                                                   // Wait for state list to load
-                                                  setTimeout(() => {
-                                                    stateOption = profileStateList.find(opt => 
-                                                      opt.label.toLowerCase().includes(state.toLowerCase()) || 
-                                                      opt.label.toLowerCase().includes(stateCode.toLowerCase())
-                                                    );
-                                                    if (stateOption) {
-                                                      setSelectedProfileState(stateOption);
-                                                      handleProfileStateInputChange(stateOption);
-                                                      // Wait for city list to load
-                                                      setTimeout(() => {
-                                                        cityOption = profileCityList.find(opt => 
-                                                          opt.label.toLowerCase().includes(city.toLowerCase())
-                                                        );
-                                                        if (cityOption) {
-                                                          handleProfileCityInputChange(cityOption);
-                                                        }
-                                                      }, 500);
-                                                    }
-                                                  }, 500);
+                                                  setPendingState({ name: state, code: stateCode });
+                                                  setPendingCity(city);
+                                                  setShippingAddress((prev) => ({ 
+                                                    ...prev, 
+                                                    country_name: country,
+                                                    country_code: countryCode,
+                                                    state_name: state, 
+                                                    state_code: stateCode,
+                                                    city_name: city, 
+                                                    zipcode
+                                                  }));
                                                 }
-
-                                                setShippingAddress((prev) => ({ 
-                                                  ...prev, 
-                                                  city_name: city, 
-                                                  state_name: state, 
-                                                  state_code: stateCode,
-                                                  zipcode, 
-                                                  country_name: country,
-                                                  country_code: countryCode
-                                                }));
                                               }
                                             } catch (e) { 
                                               console.error('Error geocoding address:', e);
                                             }
                                           }}
+                                          onBlur={handleAddressLineOneBlur}
                                         >
                                           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
                                             <div>
-                                              <input {...getInputProps({ placeholder: 'Street address', className: 'form-control' })} />
+                                              <input {...getInputProps({ placeholder: 'Street address', className: 'form-control', onBlur: handleAddressLineOneBlur })} />
                                               <div className='autocomplete-dropdown-container'>
                                                 {loading && <div>Loading...</div>}
                                                 {suggestions.map(suggestion => {
