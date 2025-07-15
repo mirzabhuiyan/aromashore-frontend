@@ -40,7 +40,6 @@ export default function Index({ user, customerData }) {
   useEffect(() => {
     getCountriesList()
       .then(function (response) {
-        console.log("response.data --------> ", response.data);
         if (response.status === 200 && !response.data["appStatus"]) {
           setProfileCountryList([]);
         } else {
@@ -115,14 +114,34 @@ export default function Index({ user, customerData }) {
   }, []);
 
   const handleProfileCountryInputChange = (event) => {
+    
     const value = event.value;
     const nameNCode = event.label.split("(");
     const label = nameNCode[0];
     const code = nameNCode[1].toString().slice(0, -1);
+
+    // Only reset state/city/zip if country actually changed
+    setShippingAddress((values) => {
+      if (!values) {
+        // If values is null, initialize with the new country and clear state/city/zip
+        return { country: value, country_name: label, country_code: code, state: "", state_name: "", state_code: "", city: "", city_name: "", zipcode: "" };
+      }
+      if (values.country === value) {
+        // Country did not change, keep state/city/zip
+        return { ...values, country: value, country_name: label, country_code: code };
+      } else {
+        // Country changed, reset state/city/zip
+        return { ...values, country: value, country_name: label, country_code: code, state: "", state_name: "", state_code: "", city: "", city_name: "", zipcode: "" };
+      }
+    });
+
+    setSelectedProfileCountry({ value: value, label: `${label} (${code})` });
+    setSelectedProfileState({ value: 0, label: "" });
+    setSelectedProfileCity({ value: 0, label: "" });
     if (value) {
       getStatesByCountryId(value)
         .then(function (response) {
-          console.log(response);
+          console.log("response --------> ", response);
           if (response.status === 200 && !response.data["appStatus"]) {
             setProfileStateList([]);
           } else {
@@ -133,6 +152,7 @@ export default function Index({ user, customerData }) {
               customStateList.push(state);
               return true;
             });
+            console.log("customStateList --------> ", customStateList);
             setProfileStateList(customStateList);
           }
         })
@@ -142,12 +162,6 @@ export default function Index({ user, customerData }) {
     } else {
       setProfileStateList([]);
     }
-    setShippingAddress((values) => ({ ...values, country: value, country_name: label, country_code: code }));
-    setShippingAddress((values) => ({ ...values, state: "", state_name: "", state_code: "", city: "", city_name: "" }));
-    setSelectedProfileCountry({ value: value, label: `${label} (${code})` });
-    console.log("selectedProfileCountry --------> ", selectedProfileCountry);
-    setSelectedProfileState({ value: 0, label: "" });
-    setSelectedProfileCity({ value: 0, label: "" });
   };
 
   const handleProfileStateInputChange = (event) => {
@@ -158,7 +172,6 @@ export default function Index({ user, customerData }) {
     if (value) {
       getCitiesByStateId(value)
         .then(function (response) {
-          console.log(response);
           if (response.status === 200 && !response.data["appStatus"]) {
             setProfileCityList([]);
           } else {
@@ -178,8 +191,15 @@ export default function Index({ user, customerData }) {
     } else {
       setProfileCityList([]);
     }
-    setShippingAddress((values) => ({ ...values, state: value, state_name: label, state_code: code }));
-    setShippingAddress((values) => ({ ...values, city: "", city_name: "", tax_rate: 0 }));
+    setShippingAddress((values) => {
+      if (values && values.state === value) {
+        // State did not change, keep city/city_name
+        return { ...values, state: value, state_name: label, state_code: code };
+      } else {
+        // State changed, reset city/city_name
+        return { ...values, state: value, state_name: label, state_code: code, city: "", city_name: "", tax_rate: 0 };
+      }
+    });
     setSelectedProfileState({ value: value, label: `${label} (${code})` });
     setSelectedProfileCity({ value: 0, label: "" });
   };
@@ -385,20 +405,72 @@ export default function Index({ user, customerData }) {
                                               const results = await geocodeByAddress(value);
                                               if (results && results[0]) {
                                                 const addressComponents = results[0].address_components;
-                                                let city = '', state = '', zipcode = '', country = '', countryCode = '';
+                                                let city = '', state = '', stateCode = '', zipcode = '', country = '', countryCode = '';
                                                 addressComponents.forEach(component => {
                                                   if (component.types.includes('locality')) city = component.long_name;
-                                                  if (component.types.includes('administrative_area_level_1')) state = component.long_name;
+                                                  if (component.types.includes('administrative_area_level_1')) {
+                                                    state = component.long_name;
+                                                    stateCode = component.short_name;
+                                                  }
                                                   if (component.types.includes('postal_code')) zipcode = component.long_name;
                                                   if (component.types.includes('country')) {
                                                     country = component.long_name;
                                                     countryCode = component.short_name;
                                                   }
                                                 });
+
+                                                // Find country/state/city options from lists
+                                                const countryOption = profileCountryList.find(opt => {
+                                                  // Extract name and code from label, e.g. "United States (US)"
+                                                  const match = opt.label.match(/^(.*)\s*\((.*)\)$/);
+                                                  let optName = opt.label, optCode = '';
+                                                  if (match) {
+                                                    optName = match[1].trim();
+                                                    optCode = match[2].trim();
+                                                  }
+                                                  // Prefer code match
+                                                  if (countryCode && optCode.toLowerCase() === countryCode.toLowerCase()) return true;
+                                                  // Accept 'USA' as 'United States'
+                                                  if (country && (
+                                                    optName.toLowerCase() === country.toLowerCase() ||
+                                                    (country.toLowerCase() === 'usa' && optName.toLowerCase().includes('united states'))
+                                                  )) return true;
+                                                  // Fallback: partial match
+                                                  if (opt.label.toLowerCase().includes(country.toLowerCase())) return true;
+                                                  return false;
+                                                });
+                                                let stateOption = null, cityOption = null;
+
+                                                if (countryOption) {
+                                                  await handleProfileCountryInputChange(countryOption);
+                                                  setSelectedProfileCountry(countryOption);
+                                                  // Wait for state list to load
+                                                  setTimeout(() => {
+                                                    stateOption = profileStateList.find(opt => 
+                                                      opt.label.toLowerCase().includes(state.toLowerCase()) || 
+                                                      opt.label.toLowerCase().includes(stateCode.toLowerCase())
+                                                    );
+                                                    if (stateOption) {
+                                                      setSelectedProfileState(stateOption);
+                                                      handleProfileStateInputChange(stateOption);
+                                                      // Wait for city list to load
+                                                      setTimeout(() => {
+                                                        cityOption = profileCityList.find(opt => 
+                                                          opt.label.toLowerCase().includes(city.toLowerCase())
+                                                        );
+                                                        if (cityOption) {
+                                                          handleProfileCityInputChange(cityOption);
+                                                        }
+                                                      }, 500);
+                                                    }
+                                                  }, 500);
+                                                }
+
                                                 setShippingAddress((prev) => ({ 
                                                   ...prev, 
                                                   city_name: city, 
                                                   state_name: state, 
+                                                  state_code: stateCode,
                                                   zipcode, 
                                                   country_name: country,
                                                   country_code: countryCode

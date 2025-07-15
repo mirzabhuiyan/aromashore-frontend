@@ -56,7 +56,8 @@ const getNameFromListById = (list, id) => {
 };
 
 export default function PersonalInfo({ user, profile }) {
-	console.log(user, profile)
+	console.log("user --------> ", user);
+	console.log("profile --------> ", profile);
 	let basicInfo = {
 		customer_no: '',
 		firstname: '',
@@ -134,7 +135,6 @@ export default function PersonalInfo({ user, profile }) {
 	});
 
 	useEffect(() => {
-		console.log('getCountriesList');
 		getCountriesList()
 			.then(function (response) {
 				console.log(response);
@@ -163,6 +163,7 @@ export default function PersonalInfo({ user, profile }) {
 	useEffect(() => {
 		const personal_data = JSON.stringify(bean);
 		Cookies.set("personal-data", personal_data);
+		console.log("personal_data --------> ", personal_data);
 	}, [bean]);
 
 	const renderForm = () => {
@@ -430,39 +431,39 @@ export default function PersonalInfo({ user, profile }) {
 														<tr>
 															<th>Company Name</th>
 															<td colSpan={3}>
-																<input className='form-control' id='company' type='text' name='company' value={bean.company ? bean.company : ""} onChange={handleChange} placeholder='Company ' />
+																<input className='form-control' id='company' type='text' name='company' value={bean.company || ""} onChange={handleChange} placeholder='Company ' />
 															</td>
 														</tr>
 														{/* fn + ln */}
 														<tr>
 															<th>First Name</th>
 															<td>
-																<input type='text' className='form-control' id='firstname' name='firstname' value={bean.firstname ? bean.firstname : ""} onChange={handleChange} placeholder='First Name' />
+																<input type='text' className='form-control' id='firstname' name='firstname' value={bean.firstname || ""} onChange={handleChange} placeholder='First Name' />
 															</td>
 															<th>Last Name</th>
 															<td>
-																<input type='text' className='form-control' id='lastname' name='lastname' value={bean.lastname ? bean.lastname : ""} onChange={handleChange} placeholder='Last Name ' />
+																<input type='text' className='form-control' id='lastname' name='lastname' value={bean.lastname || ""} onChange={handleChange} placeholder='Last Name ' />
 															</td>
 														</tr>
 														<tr>
 															<th>Contact</th>
 															<td>
-																<input type='text' className='form-control' id='contact' name='contact' value={bean.contact ? bean.contact : ""} onChange={handleChange} placeholder='Contact No' />
+																<input type='text' className='form-control' id='contact' name='contact' value={bean.contact || ""} onChange={handleChange} placeholder='Contact No' />
 															</td>
 															<th>Phone No</th>
 															<td>
-																<input type='text' className='form-control' id='phone_no' name='phone_no' value={bean.phone_no ? bean.phone_no : ""} onChange={handleChange} placeholder='Phone No' />
+																<input type='text' className='form-control' id='phone_no' name='phone_no' value={bean.phone_no || ""} onChange={handleChange} placeholder='Phone No' />
 															</td>
 
 														</tr>
 														<tr>
 															<th>Email</th>
 															<td>
-																<input type='email' className='form-control' id='email' name='email' value={bean.email ? bean.email : ""} onChange={handleChange} placeholder='Email ID' />
+																<input type='email' className='form-control' id='email' name='email' value={bean.email || ""} onChange={handleChange} placeholder='Email ID' />
 															</td>
 															<th>Tax ID</th>
 															<td>
-																<input type='text' className='form-control' id='tax_id' name='tax_id' value={bean.tax_id ? bean.tax_id : ""} onChange={handleChange} placeholder='Tax Id' />
+																<input type='text' className='form-control' id='tax_id' name='tax_id' value={bean.tax_id || ""} onChange={handleChange} placeholder='Tax Id' />
 															</td>
 														</tr>
 														<tr>
@@ -601,11 +602,11 @@ export default function PersonalInfo({ user, profile }) {
 														<tr>
 															<th>Address Line One</th>
 															<td>
-																<textarea className='form-control' id='address_line_one' name='address_line_one' value={bean.address_line_one ? bean.address_line_one : ""} onChange={handleChange} rows='4' />
+																<textarea className='form-control' id='address_line_one' name='address_line_one' value={bean.address_line_one || ""} onChange={handleChange} rows='4' />
 															</td>
 															<th>Address LIne Two</th>
 															<td>
-																<textarea className='form-control' id='address_line_two' name='address_line_two' onChange={handleChange} value={bean.address_line_two ? bean.address_line_two : ""} rows='4' />
+																<textarea className='form-control' id='address_line_two' name='address_line_two' onChange={handleChange} value={bean.address_line_two || ""} rows='4' />
 															</td>
 														</tr>
 														<tr>
@@ -616,7 +617,7 @@ export default function PersonalInfo({ user, profile }) {
 																{profile.country !== "" && profileStateList.length > 0 ? (
 																	<Select options={profileStateList} value={selectedProfileState} onChange={(event) => handleProfileStateInputChange(event)} required />
 																) : (
-																	<input className='form-control' type='text' name='state_name' value={bean.state_name} onChange={handleChange} />
+																	<input className='form-control' type='text' name='state_name' value={bean.state_name || ""} onChange={handleChange} />
 																)}
 															</td>
 														</tr>
@@ -626,12 +627,12 @@ export default function PersonalInfo({ user, profile }) {
 																{profile.state !== "" && profileCityList.length > 0 ? (
 																	<Select options={profileCityList} value={selectedProfileCity} onChange={(event) => handleProfileCityInputChange(event)} required />
 																) : (
-																	<input className='form-control' type='text' name='city_name' value={bean.city_name} onChange={handleChange} />
+																	<input className='form-control' type='text' name='city_name' value={bean.city_name || ""} onChange={handleChange} />
 																)}
 															</td>
 															<th>Zip Code</th>
 															<td>
-																<input type='text' className='form-control' id='zipcode' name='zipcode' value={bean.zipcode ? bean.zipcode : ""} onChange={handleChange} placeholder='Zip code ' />
+																<input type='text' className='form-control' id='zipcode' name='zipcode' value={bean.zipcode || ""} onChange={handleChange} placeholder='Zip code ' />
 															</td>
 														</tr>
 														{/* <tr>
@@ -709,7 +710,7 @@ export default function PersonalInfo({ user, profile }) {
 															<label htmlFor='previousPassword' className='form-label fw-bold'>
 																Previous Password
 															</label>
-															<input type='password' className='form-control' id='previousPassword' name='previousPassword' value={changePasswordInformation.previousPassword} onChange={handleChangePasswordChange} placeholder='************' />
+															<input type='password' className='form-control' id='previousPassword' name='previousPassword' value={changePasswordInformation.previousPassword || ""} onChange={handleChangePasswordChange} placeholder='************' />
 														</div>
 													</div>
 													<div className='col-12 col-md-12'>
@@ -717,7 +718,7 @@ export default function PersonalInfo({ user, profile }) {
 															<label htmlFor='newPassword' className='form-label fw-bold'>
 																New Password
 															</label>
-															<input type='password' className='form-control' id='newPassword' name='newPassword' value={changePasswordInformation.newPassword} onChange={handleChangePasswordChange} placeholder=' New Password ' />
+															<input type='password' className='form-control' id='newPassword' name='newPassword' value={changePasswordInformation.newPassword || ""} onChange={handleChangePasswordChange} placeholder=' New Password ' />
 															{errors && errors.newPassword && <div style={{ color: "red" }}>{errors.newPassword}</div>}
 														</div>
 													</div>
@@ -726,7 +727,7 @@ export default function PersonalInfo({ user, profile }) {
 															<label htmlFor='repeat_password' className='form-label fw-bold'>
 																Retype New Password
 															</label>
-															<input type='password' className='form-control' id='repeat_password' name='repeat_password' value={changePasswordInformation.repeat_password} onChange={handleChangePasswordChange} placeholder='Re Type New Password ' />
+															<input type='password' className='form-control' id='repeat_password' name='repeat_password' value={changePasswordInformation.repeat_password || ""} onChange={handleChangePasswordChange} placeholder='Re Type New Password ' />
 															{errors && errors.repeat_password && <div style={{ color: "red" }}>{errors.repeat_password}</div>}
 														</div>
 													</div>
