@@ -38,7 +38,6 @@ function Login() {
 		setErrors(errorsCopy);
 		if (errorsCopy) return;
 		try {
-			setLoading(true);
 			let data = await login(user);
 			toast(data.appMessage);
 			if (!data.appStatus && data.twofa) {
@@ -53,11 +52,15 @@ function Login() {
 	// 2FA: Uncomment to enable 2-factor authentication
 	
 	const handle2FASubmit = async () => {
-		const res = await login({ username: twofaUsername, code: twofaCode, twofa: true });
-		if (res.appStatus) {
-			setUSER(res.appData);
-		} else {
-			toast(res.appMessage);
+		try {
+			const res = await verifyOTP({ username: twofaUsername, code: twofaCode });
+			if (res.appStatus) {
+				setUSER(res.appData);
+			} else {
+				toast(res.appMessage);
+			}
+		} catch (error) {
+			toast("Error verifying OTP. Please try again.");
 		}
 	};
 	
@@ -72,76 +75,94 @@ function Login() {
 							<div className='sign-in-section'>
 								<div className='sign-up__card'>
 									<div className='sign-up__card-body'>
-										<div className='mt-2'>
-											<p className='login-em'>{show2FA ? 'Two-Factor Authentication' : 'Login'}</p>
-										</div>
-										{!show2FA && (
-											<form className='mt-4' onSubmit={handleSubmit}>
-											<div className='myform-group'>
-												<div className='col-12'>
-													<input className='form-control myform-control' type='text' name='username' value={user.username} onChange={handleChange} placeholder='Enter Username' />
-													{errors && errors.username && <div style={{ color: "red" }}>{errors.username}</div>}
+										{!show2FA ? (
+											<>
+												<div className='mt-2'>
+													<p className='login-em'>Login</p>
 												</div>
-											</div>
-											<div className='myform-group mt-4'>
-												<div className='col-12'>
-													<button type="submit" className={`btn my-btn ${show2FA ? '-yellow' : '-red'}`} disabled={loading}>
-														{loading ? (show2FA ? 'Verifying OTP...' : 'Logging In...') : (show2FA ? 'Verify OTP' : 'Login')}
-													</button>
-												</div>
-											</div>
-											<div className='row mt-4 text-center'>
-												<div className='col-12'>
-													<Link href='/forgot-password' className="text-primary">
-														Forgot your Password?
-													</Link>
-												</div>
-												<div className='col-12 mt-2'>
-													<Link href='/signup' className="text-primary">
-														Do not Have Account! Create Now.
-													</Link>
-												</div>
-											</div>
-										</form>
-										)}
-										
-										{/* 2FA Form */}
-										{show2FA && (
-											<form className='mt-4'>
-												<div className='myform-group'>
-													<div className='col-12'>
-														<input 
-															className='form-control myform-control' 
-															type='text' 
-															value={twofaCode} 
-															onChange={(e) => setTwofaCode(e.target.value)} 
-															placeholder='Enter OTP Code' 
-														/>
+												<form className='mt-4' onSubmit={handleSubmit}>
+													<div className='myform-group'>
+														<div className='col-12'>
+															<input className='form-control myform-control' type='text' name='username' value={user.username} onChange={handleChange} placeholder='Enter Username' />
+															{errors && errors.username && <div style={{ color: "red" }}>{errors.username}</div>}
+														</div>
 													</div>
-												</div>
-												<div className='myform-group mt-4'>
-													<div className='col-12'>
-														<button 
-															type="button" 
-															className='btn my-btn -red'
-															onClick={handle2FASubmit}
-														>
-															Verify OTP
-														</button>
+													<div className='myform-group'>
+														<div className='col-12 position-relative'>
+															<input className='form-control myform-control' style={{ paddingRight: '35px' }} type={showPassword ? 'text' : 'password'} name='password' value={user.password} onChange={handleChange} placeholder='Enter Password' />
+															{showPassword ? <i className="fa fa-eye" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(false)}></i> :
+																<i className="fa fa-eye-slash" style={{ position: 'absolute', top: '11px', right: '24px' }} onClick={() => setShowPassword(true)}></i>}
+															{errors && errors.password && <div style={{ color: "red" }}>{errors.password}</div>}
+														</div>
 													</div>
-												</div>
-												<div className='row mt-4 text-center'>
-													<div className='col-12'>
-														<button 
-															type="button" 
-															className="text-primary btn btn-link"
-															onClick={() => setShow2FA(false)}
-														>
-															← Back to Login
-														</button>
+													{/* <div className='myform-group myform-check'>
+														<div className='col-12'>
+															<label className='myform-check-label'>
+																<input className='myform-check-input' name='rememberMe' checked={user.registerPolicy} type='checkbox' onChange={handleInputCheck} />
+																<span>Remember me</span>
+															</label>
+														</div>
+													</div> */}
+													<div className='myform-group mt-4'>
+														<div className='col-12'>
+															<button type="submit" className='btn my-btn -red'>Login</button>
+														</div>
 													</div>
+													<div className='row mt-4 text-center'>
+														<div className='col-12'>
+															<Link href='/forgot-password' className="text-primary">
+																Forgot your Password?
+															</Link>
+														</div>
+														<div className='col-12 mt-2'>
+															<Link href='/signup' className="text-primary">
+																Do not Have Account! Create Now.
+															</Link>
+														</div>
+													</div>
+												</form>
+											</>
+										) : (
+											<>
+												<div className='mt-2'>
+													<p className='login-em'>Two-Factor Authentication</p>
 												</div>
-											</form>
+												<form className='mt-4'>
+													<div className='myform-group'>
+														<div className='col-12'>
+															<input 
+																className='form-control myform-control' 
+																type='text' 
+																value={twofaCode} 
+																onChange={(e) => setTwofaCode(e.target.value)} 
+																placeholder='Enter OTP Code' 
+															/>
+														</div>
+													</div>
+													<div className='myform-group mt-4'>
+														<div className='col-12'>
+															<button 
+																type="button" 
+																className='btn my-btn -red'
+																onClick={handle2FASubmit}
+															>
+																Verify OTP
+															</button>
+														</div>
+													</div>
+													<div className='row mt-4 text-center'>
+														<div className='col-12'>
+															<button 
+																type="button" 
+																className="text-primary btn btn-link"
+																onClick={() => setShow2FA(false)}
+															>
+																Back to Login
+															</button>
+														</div>
+													</div>
+												</form>
+											</>
 										)}
 									</div>
 								</div>
