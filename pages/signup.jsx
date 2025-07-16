@@ -29,6 +29,7 @@ function Signup() {
 	const [allCountryList, setAllCountryList] = useState([{ dial_code: '+1', name: 'USA' }, { dial_code: '+880', name: 'BD' }]);
 	const [address, setAddress] = useState({
 		address_line_one: '',
+		address_line_two: '',
 		city: '',
 		state: '',
 		zipcode: '',
@@ -215,6 +216,17 @@ function Signup() {
 															</div>
 														)}
 													</PlacesAutocomplete>
+												</div>
+												<div className='col-12 col-md-12'>
+													<label>Address Line 2</label>
+													<input
+														className='form-control myform-control mb-2'
+														type='text'
+														name='address_line_two'
+														value={address.address_line_two}
+														onChange={e => handleAddressChange('address_line_two', e.target.value)}
+														placeholder='Address Line 2'
+													/>
 												</div>
 												<div className='col-12 col-md-6'>
 													<label>City</label>
