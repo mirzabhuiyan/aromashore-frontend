@@ -6,7 +6,7 @@ import { register, validateUsername } from "../services/userService";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/router";
-import {apiUrl} from "../config";
+import { apiUrl } from "../config";
 import axios from "axios";
 import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 
@@ -76,14 +76,16 @@ function Signup() {
 			const results = await geocodeByAddress(value);
 			if (results && results[0]) {
 				const addressComponents = results[0].address_components;
-				let city = '', state = '', zipcode = '', country = '';
+				let city = '', state = '', zipcode = '', country = '',street = '',streetNumber = '';
 				addressComponents.forEach(component => {
 					if (component.types.includes('locality')) city = component.long_name;
 					if (component.types.includes('administrative_area_level_1')) state = component.long_name;
 					if (component.types.includes('postal_code')) zipcode = component.long_name;
 					if (component.types.includes('country')) country = component.long_name;
-				});
-				setAddress((prev) => ({ ...prev, city, state, zipcode, country }));
+					if (component.types.includes('route')) street = component.long_name;
+					if (component.types.includes('street_number')) streetNumber = component.long_name;
+					});
+				setAddress((prev) => ({ ...prev, city, state, zipcode, country,street,streetNumber,address_line_one:streetNumber + ' ' + street }));
 			}
 		} catch (e) { }
 	};
@@ -201,7 +203,9 @@ function Signup() {
 											<div className='row'>
 												<div className='col-12 col-md-12'>
 													<label>Address Line 1</label>
-													<PlacesAutocomplete value={address.address_line_one} onChange={val => handleAddressChange('address_line_one', val)} onSelect={handleSelectAddress}>
+													<PlacesAutocomplete value={address.address_line_one}
+														onChange={val => handleAddressChange('address_line_one', val)}
+														onSelect={handleSelectAddress}>
 														{({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
 															<div>
 																<input {...getInputProps({ placeholder: 'Address Line 1', className: 'form-control myform-control mb-2' })} />
