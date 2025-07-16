@@ -118,7 +118,10 @@ function Signup() {
 			const payload = { ...user, ...address };
 			const { data } = await register(payload);
 			toast(data.appMessage);
-			router.push('/');
+			if (data.appStatus) {
+				router.push('/');
+			}
+			// If not successful, stay on the page and show the toast only
 		} catch (ex) {
 			if (ex.response && ex.response.status === 400) {
 				const errorsTemp = { ...errors };
