@@ -673,13 +673,13 @@ export default function PersonalInfo({ user, profile }) {
 														</tr>
 														<tr>
 															<th>City</th>
-															<td>{bean.city_name}</td>
+															<td>{bean.city}</td>
 															<th>State</th>
-															<td>{bean.state_name}</td>
+															<td>{bean.state}</td>
 														</tr>
 														<tr>
 															<th>Country</th>
-															<td>{bean.country_name}</td>
+															<td>{bean.country}</td>
 															<th>Zip Code</th>
 															<td>{bean.zipcode}</td>
 														</tr>

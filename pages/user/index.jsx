@@ -15,24 +15,18 @@ export default function Index() {
 	const router = useRouter();
 	const { user } = useContext(AppStore);
 	const [customerprofile, setCustomerprofile] = useState(null)
+	const [profileImgUrl, setProfileImgUrl] = useState("/app/assets/images/avatar.jpg");
 	useEffect(() => {
-		console.log("user2 --------> ", user);
 		if (user) {
 			getprofileByCustomer(user).then(profile => {
 				console.log("profileData.appData --------> ", profile);
 				setCustomerprofile(profile.data.appData);
-			}).catch(err => console.log(err))
+				setProfileImgUrl(profile.data.appData?.customerprofile?.image);
+			}).catch(err => console.log('Not found'))
 		} else {
 			window.location = "/";
 		}
 	}, [user])
-
-	const [profileImgUrl, setProfileImgUrl] = useState(
-		customerprofile?.customerprofile?.image
-			? customerprofile?.customerprofile?.image
-			: "/app/assets/images/avatar.jpg"
-	);
-	console.log('user profile --->>', customerprofile)
 
 	const previewFile = (e) => {
 		let file = e.target.files[0];
@@ -43,7 +37,7 @@ export default function Index() {
 
 				updateprofilePicture({ image: e.target.result }, user)
 					.then((res) => {
-						// console.log(res);
+						console.log('===update profile image===',res);
 					})
 					.catch((error) => {
 						console.log("data", error);
