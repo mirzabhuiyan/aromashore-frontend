@@ -27,3 +27,11 @@ export function updateCcProfile(customerId, payload) {
     headerWithUserAuthToken()
   );
 }
+
+export function createPaymentIntent(payload) {
+  return httpService.post(
+    apiUrl + `/web/customer/stripe/create-payment-intent`,
+    payload,
+    headerWithUserAuthToken()
+  );
+}
