@@ -93,7 +93,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 			productDetails.push(bundleProductDetails);
 			unit.push(bundleProductUnit);
 		});
-		console.log(productDetails, unit);
+		console.log('SSS',productDetails, unit);
 		add_TO_CART({ productDetails, unit, bundleId: bundleId });
 	}
 

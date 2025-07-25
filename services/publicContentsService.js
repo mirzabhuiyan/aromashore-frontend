@@ -7,6 +7,16 @@ export function getCountriesList() {
     apiUrl + `/public/country`,
   );
 }
+export function getStatesList() {
+  return httpService.get(
+    apiUrl + `/public/state`,
+  );
+}
+export function getCitiesList() {
+  return httpService.get(
+    apiUrl + `/public/city`,
+  );
+}
 
 export function getStatesByCountryId(countryId) {
   return httpService.get(
@@ -33,5 +43,11 @@ export function createPaymentIntent(payload) {
     apiUrl + `/web/customer/stripe/create-payment-intent`,
     payload,
     headerWithUserAuthToken()
+  );
+}
+
+export function getAllShippingServices() {
+  return httpService.get(
+    apiUrl + `/shipping/services/all`
   );
 }

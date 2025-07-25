@@ -18,6 +18,7 @@ import {
   getCountriesList,
   getStatesByCountryId,
   createPaymentIntent,
+  getAllShippingServices,
 } from "../../services/publicContentsService";
 import {
   placeOrder,
@@ -59,8 +60,8 @@ function getUSCountryOption(countryList) {
   return countryList.find(
     (opt) =>
       opt.label.toLowerCase().includes("united states") ||
-      opt.label.toLowerCase().includes("usa") ||
-      opt.label.toLowerCase().includes("(us)")
+    opt.label.toLowerCase().includes("usa") ||
+    opt.label.toLowerCase().includes("(us)")
   );
 }
 
@@ -68,12 +69,13 @@ export default function Index({ user, customerData }) {
   // Cookies.set("Card_visited", true);
   const router = useRouter();
   const { cart, clearCart } = useContext(AppStore);
-  console.log(cart);
-  let { totalAmount } = calculateCart(cart);
+  const [availableShippingServices, setAvailableShippingServices] = useState([]);
+  const [selectedShippingService, setSelectedShippingService] = useState(null);
+
   const [shippingAddress, setShippingAddress] = useState(null);
   const [errors, setErrors] = useState({});
   const [shippingMethod, setShippingMethod] = useState("standard");
-
+  
   const [profileCountryList, setProfileCountryList] = useState([]);
   const [selectedProfileCountry, setSelectedProfileCountry] = useState({
     value: 0,
@@ -91,9 +93,10 @@ export default function Index({ user, customerData }) {
   });
   const [pendingState, setPendingState] = useState(null);
   const [pendingCity, setPendingCity] = useState(null);
-
+  
   const [clientSecret, setClientSecret] = useState("pi_3Ro7ukIAIc3GSTDY04in50dO_secret_1Oc6nJYrCxzgDP1QY9DwEJiGJ");
-
+  let { totalAmount } = calculateCart(cart);
+  
   // const options = {
   //   clientSecret,
   //   theme: "stripe",
@@ -200,7 +203,7 @@ export default function Index({ user, customerData }) {
             label: `${cl.name} (${cl.code})`,
           }));
           setProfileStateList(tempStateList);
-
+          console.log('tempStateList ------->', customerData.customercontact);
           const stateOption = tempStateList.find(
             (opt) =>
               Number(opt.value) === Number(customerData.customercontact.state)
@@ -289,6 +292,30 @@ export default function Index({ user, customerData }) {
         });
     }
   }, [shippingAddress, totalAmount]);
+
+  // Add state for available shipping services and selected shipping service
+
+  // Fetch all shipping services when shipping address is set
+  useEffect(() => {
+    if (shippingAddress) {
+      getAllShippingServices().then((res) => {
+        if (res.data.appStatus && res.data.appData) {
+          // Flatten all services into a single array with carrier info
+          const allServices = [];
+          console.log("res.data.appData --------> ", res.data.appData);
+          Object.entries(res.data.appData).forEach(([carrier, services]) => {
+            services.forEach((svc) => {
+              allServices.push({ ...svc, carrier });
+            });
+          });
+          setAvailableShippingServices(allServices);
+          // Optionally select the first as default
+          if (allServices.length > 0) setSelectedShippingService(allServices[0]);
+        }
+      });
+    }
+  }, [shippingAddress]);
+
   const handleProfileCountryInputChange = (event) => {
     const value = event.value;
     const nameNCode = event.label.split("(");
@@ -479,7 +506,7 @@ export default function Index({ user, customerData }) {
   const handleSubmit = async (e) => {
     if (cart.length > 0) {
       e.preventDefault();
-      // console.log("cart", cart);
+      console.log("cart", cart);
       // console.log("shipping", shippingAddress);
       let totalWeight = 0;
       const cartProducts = [];
@@ -615,353 +642,363 @@ export default function Index({ user, customerData }) {
     }
   };
 
-  // const getRateFromShippingGateway = () => {
-  //   setLoaddingShippingRate(true);
-  //   setSelectedShippingService(null);
-  //   let getRateApiPayload;
-  //   console.log("shippingCost.carrier", shippingCost.carrier);
+  const getRateFromShippingGateway = () => {
+    if (!selectedShippingService) {
+      toast("Please select a shipping method.");
+      return;
+    }
+    setLoaddingShippingRate(true);
+    setSelectedShippingService(null);
+    let getRateApiPayload;
+    console.log("shippingCost.carrier", shippingCost.carrier);
+    const packageCounter = {
+      length: 10,
+      width: 6,
+      height: 4,
+      weight: productWeight,
+      unit: "lbs",
+    };
+    // Create base payload for all carriers
+    const basePayload = {
+      packages: [...packageCounter],
+      customer_name: inputs.customer_name,
+      customer_company: inputs.customer_company,
+      address_line_one: inputs.address_line_one,
+      address_line_two: inputs.address_line_two,
+      city: inputs.city_name,
+      stateCode: inputs.state_code,
+      zipcode: inputs.zipcode,
+      countryCode: inputs.country_code,
+    };
 
-  //   // Create base payload for all carriers
-  //   const basePayload = {
-  //     packages: [...packageCounter],
-  //     customer_name: inputs.customer_name,
-  //     customer_company: inputs.customer_company,
-  //     address_line_one: inputs.address_line_one,
-  //     address_line_two: inputs.address_line_two,
-  //     city: inputs.city_name,
-  //     stateCode: inputs.state_code,
-  //     zipcode: inputs.zipcode,
-  //     countryCode: inputs.country_code,
-  //   };
+    if (shippingCost.carrier === "0") {
+      // For 'All' carriers, make single requests to each carrier
+      const upsPromise = GETUPSRATE({
+        ...basePayload,
+        carrier: "1",
+        ups_services: UPSServiceList, // Send all UPS services in one request
+      });
+      console.log("upsProUPSServiceListmise", UPSServiceList);
+      const fedexPromise = GETFEDEXRATE({
+        ...basePayload,
+        carrier: "2",
+      });
 
-  //   if (shippingCost.carrier === "0") {
-  //     // For 'All' carriers, make single requests to each carrier
-  //     const upsPromise = GETUPSRATE({
-  //       ...basePayload,
-  //       carrier: "1",
-  //       ups_services: UPSServiceList, // Send all UPS services in one request
-  //     });
-  //     console.log("upsProUPSServiceListmise", UPSServiceList);
-  //     const fedexPromise = GETFEDEXRATE({
-  //       ...basePayload,
-  //       carrier: "2",
-  //     });
+      const uspsPromise = GETUSPSRATE({
+        ...basePayload,
+        carrier: "3",
+      });
 
-  //     const uspsPromise = GETUSPSRATE({
-  //       ...basePayload,
-  //       carrier: "3",
-  //     });
+      // Execute all promises and combine results
+      Promise.allSettled([upsPromise, fedexPromise, uspsPromise])
+        .then((results) => {
+          console.log("All Carriers Results:", results);
+          const combinedRates = [];
+          const errors = [];
 
-  //     // Execute all promises and combine results
-  //     Promise.allSettled([upsPromise, fedexPromise, uspsPromise])
-  //       .then((results) => {
-  //         console.log("All Carriers Results:", results);
-  //         const combinedRates = [];
-  //         const errors = [];
+          // Process UPS results
+          if (
+            results[0].status === "fulfilled" &&
+            results[0].value.data.appStatus
+          ) {
+            console.log("UPS Rate Response:", results[0].value.data.appData);
+            const upsRates = results[0].value.data.appData;
 
-  //         // Process UPS results
-  //         if (
-  //           results[0].status === "fulfilled" &&
-  //           results[0].value.data.appStatus
-  //         ) {
-  //           console.log("UPS Rate Response:", results[0].value.data.appData);
-  //           const upsRates = results[0].value.data.appData;
+            if (Array.isArray(upsRates)) {
+              upsRates.forEach((ups) => {
+                const serviceName = `UPS - ${
+                  ups.Service?.Description || "Service"
+                }`;
+                const currencyCode = ups.TotalCharges?.CurrencyCode || "USD";
+                const monetaryValue = ups.TotalCharges?.MonetaryValue || "0";
+                const serviceCode = ups.Service?.Code || "0";
 
-  //           if (Array.isArray(upsRates)) {
-  //             upsRates.forEach((ups) => {
-  //               const serviceName = `UPS - ${
-  //                 ups.Service?.Description || "Service"
-  //               }`;
-  //               const currencyCode = ups.TotalCharges?.CurrencyCode || "USD";
-  //               const monetaryValue = ups.TotalCharges?.MonetaryValue || "0";
-  //               const serviceCode = ups.Service?.Code || "0";
+                console.log(
+                  `Adding UPS service: ${serviceName}, ${currencyCode} ${monetaryValue}, Code: ${serviceCode}`
+                );
 
-  //               console.log(
-  //                 `Adding UPS service: ${serviceName}, ${currencyCode} ${monetaryValue}, Code: ${serviceCode}`
-  //               );
+                combinedRates.push({
+                  serviceName: serviceName,
+                  CurrencyCode: currencyCode,
+                  MonetaryValue: monetaryValue,
+                  serviceCode: serviceCode,
+                });
+              });
+            }
+          } else if (results[0].status === "rejected") {
+            console.log("UPS request rejected:", results[0].reason);
+            errors.push(
+              "UPS: " + (results[0].reason?.message || "Failed to get rates")
+            );
+          }
 
-  //               combinedRates.push({
-  //                 serviceName: serviceName,
-  //                 CurrencyCode: currencyCode,
-  //                 MonetaryValue: monetaryValue,
-  //                 serviceCode: serviceCode,
-  //               });
-  //             });
-  //           }
-  //         } else if (results[0].status === "rejected") {
-  //           console.log("UPS request rejected:", results[0].reason);
-  //           errors.push(
-  //             "UPS: " + (results[0].reason?.message || "Failed to get rates")
-  //           );
-  //         }
+          // Process FedEx results
+          if (
+            results[1].status === "fulfilled" &&
+            results[1].value.data.appStatus
+          ) {
+            console.log("FedEx Rate Response:", results[1].value.data.appData);
+            const fedexRates = results[1].value.data.appData;
+            if (Array.isArray(fedexRates)) {
+              fedexRates.forEach((fsp) => {
+                combinedRates.push({
+                  serviceName: `FedEx ${fsp.serviceType}`,
+                  CurrencyCode: fsp.ratedShipmentDetails[0].currency,
+                  MonetaryValue:
+                    fsp.ratedShipmentDetails[0].totalNetFedExCharge,
+                  serviceCode: fsp.serviceDescription.code,
+                });
+              });
+            }
+          } else if (results[1].status === "rejected") {
+            errors.push(
+              "FedEx: " + (results[1].reason?.message || "Failed to get rates")
+            );
+          }
 
-  //         // Process FedEx results
-  //         if (
-  //           results[1].status === "fulfilled" &&
-  //           results[1].value.data.appStatus
-  //         ) {
-  //           console.log("FedEx Rate Response:", results[1].value.data.appData);
-  //           const fedexRates = results[1].value.data.appData;
-  //           if (Array.isArray(fedexRates)) {
-  //             fedexRates.forEach((fsp) => {
-  //               combinedRates.push({
-  //                 serviceName: `FedEx ${fsp.serviceType}`,
-  //                 CurrencyCode: fsp.ratedShipmentDetails[0].currency,
-  //                 MonetaryValue:
-  //                   fsp.ratedShipmentDetails[0].totalNetFedExCharge,
-  //                 serviceCode: fsp.serviceDescription.code,
-  //               });
-  //             });
-  //           }
-  //         } else if (results[1].status === "rejected") {
-  //           errors.push(
-  //             "FedEx: " + (results[1].reason?.message || "Failed to get rates")
-  //           );
-  //         }
+          // Process USPS results
+          if (
+            results[2].status === "fulfilled" &&
+            results[2].value.data.appStatus
+          ) {
+            console.log("USPS Rate Response:", results[2].value.data.appData);
+            const uspsRates = results[2].value.data.appData;
+            if (Array.isArray(uspsRates)) {
+              uspsRates.forEach((usp) => {
+                combinedRates.push({
+                  serviceName: `USPS - ${usp.serviceName.replace(
+                    /_/g,
+                    " "
+                  )} (${usp.serviceType.replace(/_/g, " ")})`,
+                  CurrencyCode: usp.ratedShipmentDetails[0].currency,
+                  MonetaryValue:
+                    usp.ratedShipmentDetails[0].totalNetFedExCharge,
+                  serviceCode: usp.serviceDescription.code,
+                });
+              });
+            }
+          } else if (results[2].status === "rejected") {
+            errors.push(
+              "USPS: " + (results[2].reason?.message || "Failed to get rates")
+            );
+          }
+          // Sort combinedRates by MonetaryValue (freight cost) from low to high
+          combinedRates.sort((a, b) => {
+            // Ensure values are numbers for comparison
+            const aValue = Number(a.MonetaryValue);
+            const bValue = Number(b.MonetaryValue);
+            if (isNaN(aValue) && isNaN(bValue)) return 0;
+            if (isNaN(aValue)) return 1;
+            if (isNaN(bValue)) return -1;
+            return aValue - bValue;
+          });
+          console.log("Combined rates from all carriers:", combinedRates);
+          console.log("Combined rates length:", combinedRates.length);
+          console.log("Errors array:", errors);
 
-  //         // Process USPS results
-  //         if (
-  //           results[2].status === "fulfilled" &&
-  //           results[2].value.data.appStatus
-  //         ) {
-  //           console.log("USPS Rate Response:", results[2].value.data.appData);
-  //           const uspsRates = results[2].value.data.appData;
-  //           if (Array.isArray(uspsRates)) {
-  //             uspsRates.forEach((usp) => {
-  //               combinedRates.push({
-  //                 serviceName: `USPS - ${usp.serviceName.replace(
-  //                   /_/g,
-  //                   " "
-  //                 )} (${usp.serviceType.replace(/_/g, " ")})`,
-  //                 CurrencyCode: usp.ratedShipmentDetails[0].currency,
-  //                 MonetaryValue:
-  //                   usp.ratedShipmentDetails[0].totalNetFedExCharge,
-  //                 serviceCode: usp.serviceDescription.code,
-  //               });
-  //             });
-  //           }
-  //         } else if (results[2].status === "rejected") {
-  //           errors.push(
-  //             "USPS: " + (results[2].reason?.message || "Failed to get rates")
-  //           );
-  //         }
-  //         // Sort combinedRates by MonetaryValue (freight cost) from low to high
-  //         combinedRates.sort((a, b) => {
-  //           // Ensure values are numbers for comparison
-  //           const aValue = Number(a.MonetaryValue);
-  //           const bValue = Number(b.MonetaryValue);
-  //           if (isNaN(aValue) && isNaN(bValue)) return 0;
-  //           if (isNaN(aValue)) return 1;
-  //           if (isNaN(bValue)) return -1;
-  //           return aValue - bValue;
-  //         });
-  //         console.log("Combined rates from all carriers:", combinedRates);
-  //         console.log("Combined rates length:", combinedRates.length);
-  //         console.log("Errors array:", errors);
+          if (combinedRates.length > 0) {
+            console.log("Setting combined rates to state:", combinedRates);
+            setSelectedFedexServiceWithPriceList(combinedRates);
+            setSelectedUPSServiceWithPrice(null);
+            setShippingApiError(null);
+          } else {
+            console.log("No combined rates available, setting empty state");
+            setSelectedFedexServiceWithPriceList([]);
+            setSelectedUPSServiceWithPrice(null);
+            setShippingApiError("No rates available from any carrier");
+          }
 
-  //         if (combinedRates.length > 0) {
-  //           console.log("Setting combined rates to state:", combinedRates);
-  //           setSelectedFedexServiceWithPriceList(combinedRates);
-  //           setSelectedUPSServiceWithPrice(null);
-  //           setShippingApiError(null);
-  //         } else {
-  //           console.log("No combined rates available, setting empty state");
-  //           setSelectedFedexServiceWithPriceList([]);
-  //           setSelectedUPSServiceWithPrice(null);
-  //           setShippingApiError("No rates available from any carrier");
-  //         }
+          if (errors.length > 0) {
+            console.warn("Some carrier requests failed:", errors);
+          }
 
-  //         if (errors.length > 0) {
-  //           console.warn("Some carrier requests failed:", errors);
-  //         }
+          setLoaddingShippingRate(false);
+        })
+        .catch((error) => {
+          console.error("All Carriers Rate Error:", error);
+          setSelectedFedexServiceWithPriceList([]);
+          setSelectedUPSServiceWithPrice(null);
+          setShippingApiError("Failed to get rates from all carriers");
+          setLoaddingShippingRate(false);
+        });
+    } else {
+      // For individual carriers, use the existing logic
+      if (Number(shippingCost.carrier) === 1) {
+        // For UPS, get the specific service that was selected
+        getRateApiPayload = {
+          ...basePayload,
+          carrier: shippingCost.carrier,
+          service_code: selectedService.value,
+          service_name: selectedService.label,
+        };
 
-  //         setLoaddingShippingRate(false);
-  //       })
-  //       .catch((error) => {
-  //         console.error("All Carriers Rate Error:", error);
-  //         setSelectedFedexServiceWithPriceList([]);
-  //         setSelectedUPSServiceWithPrice(null);
-  //         setShippingApiError("Failed to get rates from all carriers");
-  //         setLoaddingShippingRate(false);
-  //       });
-  //   } else {
-  //     // For individual carriers, use the existing logic
-  //     if (Number(shippingCost.carrier) === 1) {
-  //       // For UPS, get the specific service that was selected
-  //       getRateApiPayload = {
-  //         ...basePayload,
-  //         carrier: shippingCost.carrier,
-  //         service_code: selectedService.value,
-  //         service_name: selectedService.label,
-  //       };
+        console.log("ups - getRateApiPayload", getRateApiPayload);
+        GETUPSRATE(getRateApiPayload)
+          .then((response) => {
+            if (response.data.appStatus) {
+              console.log("UPS Rate Response ----->>", response.data.appData);
+              const upsServicePriceList = response.data.appData;
 
-  //       console.log("ups - getRateApiPayload", getRateApiPayload);
-  //       GETUPSRATE(getRateApiPayload)
-  //         .then((response) => {
-  //           if (response.data.appStatus) {
-  //             console.log("UPS Rate Response ----->>", response.data.appData);
-  //             const upsServicePriceList = response.data.appData;
+              // When a specific UPS service is selected, show only that service
+              if (
+                Array.isArray(upsServicePriceList) &&
+                upsServicePriceList.length > 0
+              ) {
+                // Find the specific service that was requested
+                const requestedService = upsServicePriceList.find(
+                  (ups) => ups.Service?.Code === selectedService.value
+                );
+                if (requestedService) {
+                  // Show only the requested service
+                  const singleService = {
+                    serviceName: `UPS - ${
+                      requestedService.Service?.Name || selectedService.label
+                    }`,
+                    CurrencyCode:
+                      requestedService.TotalCharges?.CurrencyCode || "USD",
+                    MonetaryValue:
+                      requestedService.TotalCharges?.MonetaryValue || "0",
+                    serviceCode:
+                      requestedService.Service?.Code || selectedService.value,
+                  };
 
-  //             // When a specific UPS service is selected, show only that service
-  //             if (
-  //               Array.isArray(upsServicePriceList) &&
-  //               upsServicePriceList.length > 0
-  //             ) {
-  //               // Find the specific service that was requested
-  //               const requestedService = upsServicePriceList.find(
-  //                 (ups) => ups.Service?.Code === selectedService.value
-  //               );
-  //               if (requestedService) {
-  //                 // Show only the requested service
-  //                 const singleService = {
-  //                   serviceName: `UPS - ${
-  //                     requestedService.Service?.Name || selectedService.label
-  //                   }`,
-  //                   CurrencyCode:
-  //                     requestedService.TotalCharges?.CurrencyCode || "USD",
-  //                   MonetaryValue:
-  //                     requestedService.TotalCharges?.MonetaryValue || "0",
-  //                   serviceCode:
-  //                     requestedService.Service?.Code || selectedService.value,
-  //                 };
+                  console.log("Single UPS service selected:", singleService);
+                  setSelectedFedexServiceWithPriceList([singleService]); // Show only one service
+                  setSelectedUPSServiceWithPrice(null);
+                  setShippingApiError(null);
+                } else {
+                  // Fallback: show the first service if exact match not found
+                  const firstService = upsServicePriceList[0];
+                  const singleService = {
+                    serviceName: `UPS - ${
+                      firstService.Service?.Name || "Service"
+                    }`,
+                    CurrencyCode:
+                      firstService.TotalCharges?.CurrencyCode || "USD",
+                    MonetaryValue:
+                      firstService.TotalCharges?.MonetaryValue || "0",
+                    serviceCode: firstService.Service?.Code || "0",
+                  };
 
-  //                 console.log("Single UPS service selected:", singleService);
-  //                 setSelectedFedexServiceWithPriceList([singleService]); // Show only one service
-  //                 setSelectedUPSServiceWithPrice(null);
-  //                 setShippingApiError(null);
-  //               } else {
-  //                 // Fallback: show the first service if exact match not found
-  //                 const firstService = upsServicePriceList[0];
-  //                 const singleService = {
-  //                   serviceName: `UPS - ${
-  //                     firstService.Service?.Name || "Service"
-  //                   }`,
-  //                   CurrencyCode:
-  //                     firstService.TotalCharges?.CurrencyCode || "USD",
-  //                   MonetaryValue:
-  //                     firstService.TotalCharges?.MonetaryValue || "0",
-  //                   serviceCode: firstService.Service?.Code || "0",
-  //                 };
+                  console.log("Fallback UPS service:", singleService);
+                  setSelectedFedexServiceWithPriceList([singleService]); // Show only one service
+                  setSelectedUPSServiceWithPrice(null);
+                  setShippingApiError(null);
+                }
+              } else {
+                console.log("No UPS services returned");
+                setSelectedFedexServiceWithPriceList([]);
+                setSelectedUPSServiceWithPrice(null);
+                setShippingApiError(
+                  "No UPS rates available for the selected service"
+                );
+              }
+            } else {
+              console.log(response.data.appMessage);
+              setSelectedFedexServiceWithPriceList([]);
+              setSelectedUPSServiceWithPrice(null);
+              setShippingApiError(response.data.appMessage);
+            }
+            setLoaddingShippingRate(false);
+          })
+          .catch((error) => {
+            console.error("UPS Rate Error:", error);
+            setSelectedFedexServiceWithPriceList([]);
+            setSelectedUPSServiceWithPrice(null);
+            setShippingApiError("Failed to get UPS rates");
+            setLoaddingShippingRate(false);
+          });
+      } else if (Number(shippingCost.carrier) === 2) {
+        getRateApiPayload = {
+          ...basePayload,
+          carrier: shippingCost.carrier,
+          service_code: shippingCost.service_code.toString(),
+          service_name: shippingCost.service_name.toString(),
+        };
 
-  //                 console.log("Fallback UPS service:", singleService);
-  //                 setSelectedFedexServiceWithPriceList([singleService]); // Show only one service
-  //                 setSelectedUPSServiceWithPrice(null);
-  //                 setShippingApiError(null);
-  //               }
-  //             } else {
-  //               console.log("No UPS services returned");
-  //               setSelectedFedexServiceWithPriceList([]);
-  //               setSelectedUPSServiceWithPrice(null);
-  //               setShippingApiError(
-  //                 "No UPS rates available for the selected service"
-  //               );
-  //             }
-  //           } else {
-  //             console.log(response.data.appMessage);
-  //             setSelectedFedexServiceWithPriceList([]);
-  //             setSelectedUPSServiceWithPrice(null);
-  //             setShippingApiError(response.data.appMessage);
-  //           }
-  //           setLoaddingShippingRate(false);
-  //         })
-  //         .catch((error) => {
-  //           console.error("UPS Rate Error:", error);
-  //           setSelectedFedexServiceWithPriceList([]);
-  //           setSelectedUPSServiceWithPrice(null);
-  //           setShippingApiError("Failed to get UPS rates");
-  //           setLoaddingShippingRate(false);
-  //         });
-  //     } else if (Number(shippingCost.carrier) === 2) {
-  //       getRateApiPayload = {
-  //         ...basePayload,
-  //         carrier: shippingCost.carrier,
-  //         service_code: shippingCost.service_code.toString(),
-  //         service_name: shippingCost.service_name.toString(),
-  //       };
+        GETFEDEXRATE(getRateApiPayload)
+          .then((response) => {
+            console.log(response);
+            if (response.data.appStatus) {
+              const fedexServicePriceList = response.data.appData;
+              const filteredFedexServicePriceList = [];
+              fedexServicePriceList.map((fsp) => {
+                const sobj = {
+                  serviceName: `${fsp.serviceType}`,
+                  CurrencyCode: fsp.ratedShipmentDetails[0].currency,
+                  MonetaryValue:
+                    fsp.ratedShipmentDetails[0].totalNetFedExCharge,
+                  serviceCode: fsp.serviceDescription.code,
+                };
+                filteredFedexServicePriceList.push(sobj);
+              });
+              setSelectedFedexServiceWithPriceList(
+                filteredFedexServicePriceList
+              );
+              setSelectedUPSServiceWithPrice(null);
+              setShippingApiError(null);
+            } else {
+              console.log(response.data.appMessage);
+              setSelectedFedexServiceWithPriceList([]);
+              setSelectedUPSServiceWithPrice(null);
+              setShippingApiError(response.data.appMessage);
+            }
+            setLoaddingShippingRate(false);
+          })
+          .catch((error) => {
+            console.error("FedEx Rate Error:", error);
+            setSelectedFedexServiceWithPriceList([]);
+            setSelectedUPSServiceWithPrice(null);
+            setShippingApiError("Failed to get FedEx rates");
+            setLoaddingShippingRate(false);
+          });
+      } else if (Number(shippingCost.carrier) === 3) {
+        getRateApiPayload = {
+          ...basePayload,
+          carrier: shippingCost.carrier,
+          service_code: shippingCost.service_code.toString(),
+          service_name: shippingCost.service_name.toString(),
+        };
 
-  //       GETFEDEXRATE(getRateApiPayload)
-  //         .then((response) => {
-  //           console.log(response);
-  //           if (response.data.appStatus) {
-  //             const fedexServicePriceList = response.data.appData;
-  //             const filteredFedexServicePriceList = [];
-  //             fedexServicePriceList.map((fsp) => {
-  //               const sobj = {
-  //                 serviceName: `${fsp.serviceType}`,
-  //                 CurrencyCode: fsp.ratedShipmentDetails[0].currency,
-  //                 MonetaryValue:
-  //                   fsp.ratedShipmentDetails[0].totalNetFedExCharge,
-  //                 serviceCode: fsp.serviceDescription.code,
-  //               };
-  //               filteredFedexServicePriceList.push(sobj);
-  //             });
-  //             setSelectedFedexServiceWithPriceList(
-  //               filteredFedexServicePriceList
-  //             );
-  //             setSelectedUPSServiceWithPrice(null);
-  //             setShippingApiError(null);
-  //           } else {
-  //             console.log(response.data.appMessage);
-  //             setSelectedFedexServiceWithPriceList([]);
-  //             setSelectedUPSServiceWithPrice(null);
-  //             setShippingApiError(response.data.appMessage);
-  //           }
-  //           setLoaddingShippingRate(false);
-  //         })
-  //         .catch((error) => {
-  //           console.error("FedEx Rate Error:", error);
-  //           setSelectedFedexServiceWithPriceList([]);
-  //           setSelectedUPSServiceWithPrice(null);
-  //           setShippingApiError("Failed to get FedEx rates");
-  //           setLoaddingShippingRate(false);
-  //         });
-  //     } else if (Number(shippingCost.carrier) === 3) {
-  //       getRateApiPayload = {
-  //         ...basePayload,
-  //         carrier: shippingCost.carrier,
-  //         service_code: shippingCost.service_code.toString(),
-  //         service_name: shippingCost.service_name.toString(),
-  //       };
-
-  //       GETUSPSRATE(getRateApiPayload)
-  //         .then((response) => {
-  //           console.log(response);
-  //           if (response.data.appStatus) {
-  //             const uspsServicePriceList = response.data.appData;
-  //             const filteredUspsServicePriceList = [];
-  //             uspsServicePriceList.map((usp) => {
-  //               const sobj = {
-  //                 serviceName: `${usp.serviceType.replace(/_/g, " ")}`,
-  //                 CurrencyCode: usp.ratedShipmentDetails[0].currency,
-  //                 MonetaryValue:
-  //                   usp.ratedShipmentDetails[0].totalNetFedExCharge,
-  //                 serviceCode: usp.serviceDescription.code,
-  //               };
-  //               filteredUspsServicePriceList.push(sobj);
-  //             });
-  //             setSelectedFedexServiceWithPriceList(
-  //               filteredUspsServicePriceList
-  //             );
-  //             setSelectedUPSServiceWithPrice(null);
-  //             setShippingApiError(null);
-  //           } else {
-  //             console.log(response.data.appMessage);
-  //             setSelectedFedexServiceWithPriceList([]);
-  //             setSelectedUPSServiceWithPrice(null);
-  //             setShippingApiError(response.data.appMessage);
-  //           }
-  //           setLoaddingShippingRate(false);
-  //         })
-  //         .catch((error) => {
-  //           console.error("USPS Rate Error:", error);
-  //           setSelectedFedexServiceWithPriceList([]);
-  //           setSelectedUPSServiceWithPrice(null);
-  //           setShippingApiError("Failed to get USPS rates");
-  //           setLoaddingShippingRate(false);
-  //         });
-  //     }
-  //   }
-  // };
+        GETUSPSRATE(getRateApiPayload)
+          .then((response) => {
+            console.log(response);
+            if (response.data.appStatus) {
+              const uspsServicePriceList = response.data.appData;
+              const filteredUspsServicePriceList = [];
+              uspsServicePriceList.map((usp) => {
+                const sobj = {
+                  serviceName: `${usp.serviceType.replace(/_/g, " ")}`,
+                  CurrencyCode: usp.ratedShipmentDetails[0].currency,
+                  MonetaryValue:
+                    usp.ratedShipmentDetails[0].totalNetFedExCharge,
+                  serviceCode: usp.serviceDescription.code,
+                };
+                filteredUspsServicePriceList.push(sobj);
+              });
+              setSelectedFedexServiceWithPriceList(
+                filteredUspsServicePriceList
+              );
+              setSelectedUPSServiceWithPrice(null);
+              setShippingApiError(null);
+            } else {
+              console.log(response.data.appMessage);
+              setSelectedFedexServiceWithPriceList([]);
+              setSelectedUPSServiceWithPrice(null);
+              setShippingApiError(response.data.appMessage);
+            }
+            setLoaddingShippingRate(false);
+          })
+          .catch((error) => {
+            console.error("USPS Rate Error:", error);
+            setSelectedFedexServiceWithPriceList([]);
+            setSelectedUPSServiceWithPrice(null);
+            setShippingApiError("Failed to get USPS rates");
+            setLoaddingShippingRate(false);
+          });
+      }
+    }
+  };
   // Memoize the stripePromise so it is not recreated on every render
   return (
     <>
@@ -1416,102 +1453,45 @@ export default function Index({ user, customerData }) {
                             <div className="card-header">Shipping method</div>
                             <div className="card-body">
                               <div className="shipping-method-options">
-                                <div
-                                  className={`shipping-method-option card mb-2 ${
-                                    shippingMethod === "standard"
-                                      ? "border-primary bg-light"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    border: "1px solid #d1d5db",
-                                    borderRadius: 8,
-                                  }}
-                                >
-                                  <label
-                                    className="d-flex align-items-center p-3 w-100"
-                                    style={{ cursor: "pointer" }}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name="shippingMethod"
-                                      value="standard"
-                                      checked={shippingMethod === "standard"}
-                                      onChange={() =>
-                                        setShippingMethod("standard")
-                                      }
-                                      style={{ marginRight: 12 }}
-                                    />
-                                    <div className="flex-grow-1">
-                                      <div>
-                                        <strong>Standard</strong>
-                                      </div>
-                                      <div
-                                        style={{ color: "#888", fontSize: 14 }}
-                                      >
-                                        (2 - 5 Business Days)
-                                      </div>
-                                    </div>
+                                {availableShippingServices.length === 0 ? (
+                                  <div>Loading shipping methods...</div>
+                                ) : (
+                                  availableShippingServices.map((svc, idx) => (
                                     <div
-                                      style={{ fontWeight: 600, fontSize: 16 }}
+                                      key={svc.carrier + svc.code}
+                                      className={`shipping-method-option card mb-2 ${
+                                        selectedShippingService && selectedShippingService.code === svc.code && selectedShippingService.carrier === svc.carrier
+                                          ? "border-primary bg-light"
+                                          : ""
+                                      }`}
+                                      style={{ border: "1px solid #d1d5db", borderRadius: 8 }}
                                     >
-                                      $33.93
-                                    </div>
-                                  </label>
-                                </div>
-                                <div
-                                  className={`shipping-method-option card ${
-                                    shippingMethod === "expedited"
-                                      ? "border-primary bg-light"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    border: "1px solid #d1d5db",
-                                    borderRadius: 8,
-                                  }}
-                                >
-                                  <label
-                                    className="d-flex align-items-center p-3 w-100"
-                                    style={{ cursor: "pointer" }}
-                                  >
-                                    <input
-                                      type="radio"
-                                      name="shippingMethod"
-                                      value="expedited"
-                                      checked={shippingMethod === "expedited"}
-                                      onChange={() =>
-                                        setShippingMethod("expedited")
-                                      }
-                                      style={{ marginRight: 12 }}
-                                    />
-                                    <div className="flex-grow-1">
-                                      <div>
-                                        <strong>Expedited</strong>
-                                      </div>
-                                      <div
-                                        style={{ color: "#888", fontSize: 14 }}
+                                      <label
+                                        className="d-flex align-items-center p-3 w-100"
+                                        style={{ cursor: "pointer" }}
                                       >
-                                        <span
-                                          style={{
-                                            fontWeight: 600,
-                                            color: "#222",
-                                          }}
-                                        >
-                                          Arriving by Thu, Jul 24
-                                        </span>
-                                        <br />
-                                        <span style={{ color: "#1976d2" }}>
-                                          If you order in the next 11 hours and
-                                          59 minutes.
-                                        </span>
-                                      </div>
+                                        <input
+                                          type="radio"
+                                          name="shippingMethod"
+                                          value={svc.code}
+                                          checked={
+                                            selectedShippingService &&
+                                            selectedShippingService.code === svc.code &&
+                                            selectedShippingService.carrier === svc.carrier
+                                          }
+                                          onChange={() => setSelectedShippingService(svc)}
+                                          style={{ marginRight: 12 }}
+                                        />
+                                        <div className="flex-grow-1">
+                                          <div>
+                                            <strong>{svc.carrier} - {svc.name}</strong>
+                                          </div>
+                                          <div style={{ color: "#888", fontSize: 14 }}>{svc.type}</div>
+                                        </div>
+                                      </label>
                                     </div>
-                                    <div
-                                      style={{ fontWeight: 600, fontSize: 16 }}
-                                    >
-                                      $88.23
-                                    </div>
-                                  </label>
-                                </div>
+                                  ))
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1554,7 +1534,7 @@ export default function Index({ user, customerData }) {
                                       <span>
                                         {product.quantity}&nbsp;x&nbsp;
                                       </span>
-                                      {product.name} ({product.size}-
+                                      {product.product_name} ({product.size}-
                                       {product.size_unit})
                                     </td>
                                     <td className="text-right">
@@ -1573,7 +1553,7 @@ export default function Index({ user, customerData }) {
                                   <tr>
                                     <td>Total</td>
                                     <td className="text-end">
-                                      $&nbsp;{totalAmount}
+                                      $&nbsp;{totalAmount.toFixed(2)}
                                     </td>
                                   </tr>
                                 </tbody>
