@@ -104,7 +104,7 @@ function ProductDetail() {
 				const prodDetails = response.data.appData;
 				let totalReviewersNumber = 0;
 				let totalRating = 0;
-				console.log(prodDetails);
+				console.log('prodDetails ------->', prodDetails);
 				setProductDetails(prodDetails);
 				if (prodDetails.productproperties && prodDetails.productproperties.length > 0) {
 					setProductpro(prodDetails.productproperties[0]);

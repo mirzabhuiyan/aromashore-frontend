@@ -202,13 +202,14 @@ function MyApp({
         "size_unit": unit.size_unit,
         "quantity": unit.qty,
         "weight": unit.weight,
-        "category_id": productDetails.productcategoryId,
+        "category_id": productDetails.productcategory?.id,
         "product_id": productDetails.id,
         "product_no": productDetails.product_no,
         "product_name": productDetails.name,
         "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image_link : "",
         "bundle_id": bundleId
       }
+      console.log('_app add_TO_CART', newCart);
       const findCartItems = copyCart.filter((item) => productDetails.id === item.product_id);
       console.log('findCartItem', findCartItems);
       if (findCartItems.length > 0) {

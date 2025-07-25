@@ -7,7 +7,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { validatePasswordChange } from "../../models/user";
 import { changeProfilePassword, updateprofileByCustomer } from "../../services/webCustomerService";
-import { getCitiesByStateId, getCountriesList, getStatesByCountryId } from "../../services/publicContentsService";
+import { getCitiesByStateId, getCountriesList, getStatesByCountryId, getCitiesList, getStatesList } from "../../services/publicContentsService";
 
 const groupTypeList = [
 	{ value: 1, name: "Group 1" },
@@ -354,6 +354,24 @@ export default function PersonalInfo({ user, profile }) {
 					setShowContactInfoModal(false)
 				}
 			});
+		} catch (error) {
+			console.log(error);
+		 }
+		try {
+			let result = updateprofileByCustomer({
+				...bean,
+				subscription: JSON.stringify(bean.subscription),
+				order_info_notification: JSON.stringify(bean.order_info_notification),
+				...user
+			});
+
+			result.then((res) => {
+				toast(res.data.appMessage);
+				if (res.data.appStatus) {
+					setShowPersonalInfoModal(false);
+					setShowContactInfoModal(false)
+				}
+			});
 		} catch (error) { }
 	};
 
@@ -673,13 +691,13 @@ export default function PersonalInfo({ user, profile }) {
 														</tr>
 														<tr>
 															<th>City</th>
-															<td>{bean.city}</td>
+															<td>{bean.city_name}</td>
 															<th>State</th>
-															<td>{bean.state}</td>
+															<td>{bean.state_name}</td>
 														</tr>
 														<tr>
 															<th>Country</th>
-															<td>{bean.country}</td>
+															<td>{bean.country_name}</td>
 															<th>Zip Code</th>
 															<td>{bean.zipcode}</td>
 														</tr>

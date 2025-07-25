@@ -60,7 +60,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								)} */}
 								<div className='product-thumb'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages[0] ? <img crossOrigin="anonymous" src={`${globalProductImageAddress}${productimages[0]?.image_link}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages[0] ? <img crossOrigin="anonymous" src={`${productimages[0]?.image}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 									<div className='product-thumb__actions'>
 										{/* <div className='product-btn'>
@@ -127,7 +127,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 							<div className='row'>
 								<div className='col-12 col-md-5'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages.length > 0 ? <img crossOrigin="anonymous" src={`${globalProductImageAddress}${productimages[0]?.image_link}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages.length > 0 ? <img crossOrigin="anonymous" src={`${productimages[0]?.image}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 								</div>
 								<div className='col-12 col-md-7'>
