@@ -279,7 +279,7 @@ function ProductDetail() {
 																return (
 																	<SwiperSlide key={index}>
 																		<div key={item.id} className='slider__item'>
-																			<img crossOrigin="anonymous" src={`${globalProductImageAddress}${item.image_link}`} alt={item.name} width={500} height={500} />
+																			<img crossOrigin="anonymous" src={item.image ? item.image : "/app/assets/images/200.svg"} alt={item.name} width={500} height={500} />
 																		</div>
 																	</SwiperSlide>
 																);
