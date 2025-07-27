@@ -157,8 +157,14 @@ export default function PersonalInfo({ user, profile }) {
 			});
 
 		handleProfileCountryInputChange({ value: 187, label: "United State of America (US)" });
-		renderForm();
 	}, []);
+
+	// Add useEffect to watch for profile changes and update form data
+	useEffect(() => {
+		if (profile && profileCountryList.length > 0) {
+			renderForm();
+		}
+	}, [profile, profileCountryList]);
 
 	useEffect(() => {
 		const personal_data = JSON.stringify(bean);
@@ -168,6 +174,8 @@ export default function PersonalInfo({ user, profile }) {
 
 	const renderForm = () => {
 		console.log('renderForm');
+		if (!profile) return;
+		
 		let subscription;
 		let order_info_notification = profile?.customerprofile?.order_info_notification;
 		if (profile?.customerprofile?.subscription) {
@@ -177,14 +185,7 @@ export default function PersonalInfo({ user, profile }) {
 			order_info_notification = JSON.parse(profile?.customerprofile?.order_info_notification);
 		}
 
-		handleProfileCountryInputChange({ value: Number(profile?.customercontact?.country), label: `${profile?.customercontact?.country_name} (${profile?.customercontact?.country_code})` });
-		if (profile?.customercontact?.state) {
-			handleProfileStateInputChange({ value: Number(profile?.customercontact?.state), label: `${profile?.customercontact?.state_name} (${profile?.customercontact?.state_code})` });
-		}
-		if (profile?.customercontact?.city) {
-			handleProfileCityInputChange({ value: Number(profile?.customercontact?.city), label: profile?.customercontact?.city_name });
-		}
-
+		// Update bean state with profile data
 		setBean({
 			customer_no: profile?.customer_no,
 			firstname: profile?.firstname,
@@ -236,6 +237,36 @@ export default function PersonalInfo({ user, profile }) {
 			zipcode: profile?.customercontact?.zipcode,
 			shipping_address: profile?.customercontact?.shipping_address
 		});
+
+		// Update country selection if profile has country data
+		if (profile?.customercontact?.country && profile?.customercontact?.country_name && profile?.customercontact?.country_code) {
+			handleProfileCountryInputChange({ 
+				value: Number(profile.customercontact.country), 
+				label: `${profile.customercontact.country_name} (${profile.customercontact.country_code})` 
+			});
+		}
+		
+		// Update state selection if profile has state data (this will be called after country is set)
+		if (profile?.customercontact?.state && profile?.customercontact?.state_name && profile?.customercontact?.state_code) {
+			// Use setTimeout to ensure country change is processed first
+			setTimeout(() => {
+				handleProfileStateInputChange({ 
+					value: Number(profile.customercontact.state), 
+					label: `${profile.customercontact.state_name} (${profile.customercontact.state_code})` 
+				});
+			}, 100);
+		}
+		
+		// Update city selection if profile has city data (this will be called after state is set)
+		if (profile?.customercontact?.city && profile?.customercontact?.city_name) {
+			// Use setTimeout to ensure state change is processed first
+			setTimeout(() => {
+				handleProfileCityInputChange({ 
+					value: Number(profile.customercontact.city), 
+					label: profile.customercontact.city_name 
+				});
+			}, 200);
+		}
 	}
 
 	const handleChange = (e) => {
@@ -338,41 +369,71 @@ export default function PersonalInfo({ user, profile }) {
 	};
 
 	const handlePersonalProfileSubmit = () => {
-		console.log(bean);
+		console.log('Submitting data:', bean);
+		
+		// Prepare the data according to backend expectations
+		const submitData = {
+			// Basic customer info
+			firstname: bean.firstname,
+			lastname: bean.lastname,
+			company: bean.company,
+			email: bean.email,
+			contact: bean.contact, // Include contact field
+			customercategoryId: bean.customercategoryId,
+			
+			// Profile info
+			race: bean.race,
+			group: bean.group,
+			service: bean.service,
+			location: bean.location,
+			zone: bean.zone,
+			carrier: bean.carrier,
+			terms: bean.terms,
+			tax_id: bean.tax_id, // Include tax_id field
+			subscription: JSON.stringify(bean.subscription),
+			order_info_notification: JSON.stringify(bean.order_info_notification),
+			
+			// Contact info - use IDs and names
+			phone_no: bean.phone_no,
+			fax: bean.fax,
+			address_line_one: bean.address_line_one,
+			address_line_two: bean.address_line_two,
+			city: bean.city, // City ID
+			state: bean.state, // State ID
+			country: bean.country, // Country ID
+			city_name: bean.city_name, // City name
+			state_name: bean.state_name, // State name
+			country_name: bean.country_name, // Country name
+			state_code: bean.state_code, // State code
+			country_code: bean.country_code, // Country code
+			zipcode: bean.zipcode,
+			shipping_address: bean.shipping_address,
+			
+			// User auth info
+			...user
+		};
+		
+		console.log('Formatted data for backend:', submitData);
+		
 		try {
-			let result = updateprofileByCustomer({
-				...bean,
-				subscription: JSON.stringify(bean.subscription),
-				order_info_notification: JSON.stringify(bean.order_info_notification),
-				...user
-			});
+			let result = updateprofileByCustomer(submitData);
 
 			result.then((res) => {
+				console.log('Backend response:', res);
 				toast(res.data.appMessage);
 				if (res.data.appStatus) {
 					setShowPersonalInfoModal(false);
-					setShowContactInfoModal(false)
+					setShowContactInfoModal(false);
+					// Optionally refresh the profile data here
 				}
+			}).catch((error) => {
+				console.error('API Error:', error);
+				toast('Error updating profile. Please try again.');
 			});
 		} catch (error) {
-			console.log(error);
-		 }
-		try {
-			let result = updateprofileByCustomer({
-				...bean,
-				subscription: JSON.stringify(bean.subscription),
-				order_info_notification: JSON.stringify(bean.order_info_notification),
-				...user
-			});
-
-			result.then((res) => {
-				toast(res.data.appMessage);
-				if (res.data.appStatus) {
-					setShowPersonalInfoModal(false);
-					setShowContactInfoModal(false)
-				}
-			});
-		} catch (error) { }
+			console.error('Submit Error:', error);
+			toast('Error updating profile. Please try again.');
+		}
 	};
 
 	const [errors, setErrors] = useState({});
@@ -385,23 +446,25 @@ export default function PersonalInfo({ user, profile }) {
 	});
 
 	const handleChangePasswordChange = (e) => {
-		bean[e.target.name] = e.target.value;
-		setChangePasswordInformation({ ...bean });
+		setChangePasswordInformation(prev => ({
+			...prev,
+			[e.target.name]: e.target.value
+		}));
 	};
 
 	const handleChangePasswordSubmit = async (e) => {
 		e.preventDefault();
 		const errorsCopy = validatePasswordChange({
-			previousPassword: bean.previousPassword,
-			newPassword: bean.newPassword,
-			repeatPassword: bean.repeat_password,
+			previousPassword: changePasswordInformation.previousPassword,
+			newPassword: changePasswordInformation.newPassword,
+			repeatPassword: changePasswordInformation.repeat_password,
 		});
 		setErrors(errorsCopy);
 		if (errorsCopy) return;
 		try {
 			const reqBody = {
-				"oldpassword": bean.previousPassword,
-				"password": bean.newPassword
+				"oldpassword": changePasswordInformation.previousPassword,
+				"password": changePasswordInformation.newPassword
 			}
 
 			let { data } = await changeProfilePassword(reqBody, user);
@@ -729,6 +792,7 @@ export default function PersonalInfo({ user, profile }) {
 																Previous Password
 															</label>
 															<input type='password' className='form-control' id='previousPassword' name='previousPassword' value={changePasswordInformation.previousPassword || ""} onChange={handleChangePasswordChange} placeholder='************' />
+															{errors && errors.previousPassword && <div style={{ color: "red" }}>{errors.previousPassword}</div>}
 														</div>
 													</div>
 													<div className='col-12 col-md-12'>
