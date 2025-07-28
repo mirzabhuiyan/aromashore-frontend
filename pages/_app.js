@@ -206,7 +206,7 @@ function MyApp({
         "product_id": productDetails.id,
         "product_no": productDetails.product_no,
         "product_name": productDetails.name,
-        "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image_link : "",
+        "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image : "",
         "bundle_id": bundleId
       }
       console.log('_app add_TO_CART', newCart);

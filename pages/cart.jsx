@@ -66,7 +66,7 @@ function Cart() {
 											<tbody key={i}>
 												<tr>
 													<td className='text-center'>
-														{product.product_image != '' ? <img crossOrigin="anonymous" src={`${globalProductImageAddress}${product.product_image}`} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
+														{product.product_image != '' ? <img crossOrigin="anonymous" src={product.product_image} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
 													</td>
 													<td>
 														<div className='p-2'>

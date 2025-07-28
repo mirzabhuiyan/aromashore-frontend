@@ -1522,7 +1522,7 @@ export default function Index({ user, customerData }) {
                             <table>
                               <thead>
                                 <tr>
-                                  <th>Product</th>
+                                  <th colSpan={2}>Product</th>
                                   <th className="text-right">Unit Price</th>
                                   <th className="text-right">Total Price</th>
                                 </tr>
@@ -1530,6 +1530,9 @@ export default function Index({ user, customerData }) {
                               <tbody>
                                 {cart.map((product, i) => (
                                   <tr key={i}>
+                                    <td>
+                                      <img src={product.product_image} alt={product.product_name} height={75} width={75} />
+                                    </td>
                                     <td>
                                       <span>
                                         {product.quantity}&nbsp;x&nbsp;
