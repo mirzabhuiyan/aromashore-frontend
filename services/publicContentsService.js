@@ -46,8 +46,10 @@ export function createPaymentIntent(payload) {
   );
 }
 
-export function getAllShippingServices() {
-  return httpService.get(
-    apiUrl + `/shipping/services/all`
+export function getAllShippingServices(payload) {
+  return httpService.post(
+    apiUrl + `/shipping/rates`,
+    payload,
+    headerWithUserAuthToken()
   );
 }

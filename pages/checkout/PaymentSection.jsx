@@ -5,6 +5,8 @@ import { PaymentElement } from "@stripe/react-stripe-js";
 const PaymentSection = ({ shippingAddress }) => {
     const stripe = useStripe();
     const elements = useElements();
+    
+    const [hasMounted, setHasMounted] = useState(false);
     const [useShippingAsBilling, setUseShippingAsBilling] = useState(true);
     const [billingAddress, setBillingAddress] = useState({
       country: shippingAddress?.country_name || "",
@@ -15,6 +17,10 @@ const PaymentSection = ({ shippingAddress }) => {
     });
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+      setHasMounted(true);
+    }, []);
 
     useEffect(() => {
       console.log("elements --------> ", elements);
@@ -53,6 +59,7 @@ const PaymentSection = ({ shippingAddress }) => {
                 },
               },
             },
+            return_url: window.location.origin,
             // return_url: window.location.origin + '/order-complete',
           },
         });
@@ -67,6 +74,7 @@ const PaymentSection = ({ shippingAddress }) => {
       }
       setIsLoading(false);
     };
+    if (!hasMounted) return null;
 
     return (
       <div className="card mt-4">

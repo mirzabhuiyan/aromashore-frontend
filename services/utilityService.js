@@ -28,6 +28,21 @@ export function calculateCart(cart = []) {
 
 }
 
+export function calculateWeight(cart = []) {
+  console.log("Cart", cart);
+  let subWeight = (item) => {
+    const weight = Number(item.weight) || 0;
+    const quantity = Number(item.quantity) || 0;
+    return weight * quantity;
+  }
+  console.log("Cart SubWeight", subWeight);
+  const totalWeight = cart.reduce((prev, current) => {
+    return prev + subWeight(current);
+  }, 0);
+  console.log("Cart TotalWeight", totalWeight);
+  return totalWeight;
+}
+
 export function getFormatedDate(date) {
   let formatedDate = null;
   if (date !== '' && date !== null) {
