@@ -1419,19 +1419,6 @@ export default function Index({ user, customerData }) {
                                     </div>
                                     <div className="col-12 col-md-12 mb-2">
                                       <div className="form-group">
-                                        <label>Phone number</label>
-                                        <input
-                                          type="text"
-                                          name="phone"
-                                          placeholder="Phone number"
-                                          value={shippingAddress.phone}
-                                          onChange={handleChange}
-                                          className="form-control"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="col-12 col-md-12 mb-2">
-                                      <div className="form-group">
                                         <label>Order Note</label>
                                         <input
                                           type="text"
