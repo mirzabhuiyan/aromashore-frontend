@@ -160,7 +160,9 @@ function MyApp({
           "product_no": pd.product_no,
           "product_name": pd.name,
           "product_image": pd.productimages.length > 0 ? pd.productimages[0].image_link : "",
-          "bundle_id": bundleId
+          "bundle_id": 0,
+          "size_unit": unit[indx].size_unit,
+          "measure_unit": unit[indx].measure_unit
         }
         const findCartItems = copyCart.filter((item) => pd.id === item.product_id);
         console.log('findCartItem', findCartItems);
@@ -206,8 +208,10 @@ function MyApp({
         "product_id": productDetails.id,
         "product_no": productDetails.product_no,
         "product_name": productDetails.name,
-        "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image_link : "",
-        "bundle_id": bundleId
+        "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image : "",
+        "bundle_id": 0,
+        "size_unit": unit.size_unit
+
       }
       console.log('_app add_TO_CART', newCart);
       const findCartItems = copyCart.filter((item) => productDetails.id === item.product_id);

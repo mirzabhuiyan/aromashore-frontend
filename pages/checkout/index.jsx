@@ -11,6 +11,7 @@ import {
   calculateCart,
   getFormatedDate,
   getFormatedTime,
+  calculateWeight,
 } from "../../services/utilityService";
 import { validate, validateProperty } from "../../models/shippingAddress";
 import {
@@ -94,6 +95,8 @@ export default function Index({ user, customerData }) {
   const [pendingState, setPendingState] = useState(null);
   const [pendingCity, setPendingCity] = useState(null);
   
+  let totalWeight = calculateWeight(cart);
+  console.log("ShoppingCart Weight", totalWeight);
   const [clientSecret, setClientSecret] = useState("pi_3Ro7ukIAIc3GSTDY04in50dO_secret_1Oc6nJYrCxzgDP1QY9DwEJiGJ");
   let { totalAmount } = calculateCart(cart);
   
@@ -187,6 +190,9 @@ export default function Index({ user, customerData }) {
         service_name: "",
         measure_unit: "Lbs",
         total_weight: "",
+        dial_code: customerData.dial_code || '+1',
+        unit: "inch",
+        
       });
 
       // 2. State
@@ -271,10 +277,17 @@ export default function Index({ user, customerData }) {
 
   useEffect(() => {
     if (shippingAddress && totalAmount > 0) {
+      // Calculate total amount including shipping
+      const shippingCost = selectedShippingService ? parseFloat(selectedShippingService.price) : 0;
+      const totalWithShipping = totalAmount + shippingCost;
+      
       console.log("shippingAddress --------> ", shippingAddress);
       console.log("totalAmount --------> ", totalAmount);
+      console.log("shippingCost --------> ", shippingCost);
+      console.log("totalWithShipping --------> ", totalWithShipping);
+      
       createPaymentIntent({
-        amount: totalAmount,
+        amount: totalWithShipping,
         currency: "usd",
       })
         .then((res) => {
@@ -291,23 +304,85 @@ export default function Index({ user, customerData }) {
           console.error("Error fetching client secret:", error);
         });
     }
-  }, [shippingAddress, totalAmount]);
+  }, [shippingAddress, totalAmount, selectedShippingService]);
 
   // Add state for available shipping services and selected shipping service
 
   // Fetch all shipping services when shipping address is set
   useEffect(() => {
-    if (shippingAddress) {
-      getAllShippingServices().then((res) => {
+    console.log('shippingAddress totalweight---->',totalWeight.toString())
+    if (shippingAddress && totalAmount > 0) {
+      const payload = {
+        ...shippingAddress,
+        stateCode: shippingAddress.state_code,
+        total_weight: totalWeight.toString(),
+        totalWeight: totalWeight,
+        measure_unit: "Lbs",
+      };
+      const packageDimension = {
+        length: shippingAddress.length,
+        width: shippingAddress.width,
+        height: shippingAddress.height,
+        unit: shippingAddress.unit,
+        weight: totalWeight.toString(),
+        selectedDimension: `${shippingAddress.length}x${shippingAddress.height}x${shippingAddress.width}x${shippingAddress.unit}`,
+      }
+      payload.packages = [packageDimension];
+      console.log('payload-------->',payload)
+      getAllShippingServices(payload).then((res) => {
         if (res.data.appStatus && res.data.appData) {
           // Flatten all services into a single array with carrier info
           const allServices = [];
-          console.log("res.data.appData --------> ", res.data.appData);
-          Object.entries(res.data.appData).forEach(([carrier, services]) => {
-            services.forEach((svc) => {
-              allServices.push({ ...svc, carrier });
-            });
-          });
+          console.log("get all shipping services --------> ", res.data.appData);
+          res.data.appData.forEach((carrierData) => {
+            const { carrier, rates } = carrierData;
+            if (Array.isArray(rates)) {
+              rates.forEach((rate) => {
+                let service = {
+                  carrier: carrier,
+                  code: "",
+                  name: "",
+                  price: "",
+                  currency: "USD",
+                  deliveryTime: ""
+                };
+                
+                // Handle different carrier response structures
+                if (carrier === "UPS") {
+                  service.code = rate.Service?.Code || "";
+                  service.name = rate.Service?.Description || "";
+                  service.price = rate.TotalCharges?.MonetaryValue || "0";
+                  service.currency = rate.TotalCharges?.CurrencyCode || "USD";
+                  service.deliveryTime = rate.GuaranteedDelivery?.BusinessDaysInTransit + " Business Days";
+                  
+                } else if (carrier === "FedEx") {
+                  service.code = rate.serviceDescription?.code || "";
+                  service.name = rate.serviceName || "";
+                  service.price = rate.ratedShipmentDetails?.[0]?.totalNetFedExCharge || "0";
+                  service.currency = rate.ratedShipmentDetails?.[0]?.currency || "USD";
+                  
+                  service.deliveryTime = rate.GuaranteedDelivery || "2-5 Business Days";
+                  
+                } else if (carrier === "USPS") {
+                  service.code = rate.serviceDescription?.code || "";
+                  service.name = rate.serviceName?.replace(/_/g, " ") || "";
+                  service.price = rate.ratedShipmentDetails?.[0]?.totalNetFedExCharge || "0";
+                  service.currency = rate.ratedShipmentDetails?.[0]?.currency || "USD";
+                  
+                  // Set delivery time based on USPS service type
+                  const uspsDeliveryTimes = {
+                    "USPS_GROUND_ADVANTAGE": "3-5 Business Days",
+                    "PRIORITY_MAIL": "2-3 Business Days",
+                    "PRIORITY_MAIL_EXPRESS": "1-2 Business Days",
+                    "FIRST_CLASS_MAIL": "3-5 Business Days"
+                  };
+                  service.deliveryTime = uspsDeliveryTimes[rate.serviceType] || "2-5 Business Days";
+                }
+                
+                allServices.push(service);
+              });
+            }
+          })
           setAvailableShippingServices(allServices);
           // Optionally select the first as default
           if (allServices.length > 0) setSelectedShippingService(allServices[0]);
@@ -507,6 +582,13 @@ export default function Index({ user, customerData }) {
     if (cart.length > 0) {
       e.preventDefault();
       console.log("cart", cart);
+      
+      // Validate shipping method selection
+      if (!selectedShippingService) {
+        toast.error("Please select a shipping method");
+        return;
+      }
+      
       // console.log("shipping", shippingAddress);
       let totalWeight = 0;
       const cartProducts = [];
@@ -529,12 +611,24 @@ export default function Index({ user, customerData }) {
         // console.log(cartItem.quantity)
         cartProducts.push(cartData);
       });
+      
+      // Calculate total with shipping
+      const shippingCost = parseFloat(selectedShippingService.price) || 0;
+      const totalWithShipping = totalAmount + shippingCost;
+      
       let shippingAddressCopy = { ...shippingAddress };
       shippingAddressCopy.products = JSON.stringify(cartProducts);
-      shippingAddressCopy.amount = totalAmount;
+      shippingAddressCopy.amount = totalWithShipping;
       shippingAddressCopy.total_weight = totalWeight;
       shippingAddressCopy.customer_name =
         shippingAddressCopy.firstname + " " + shippingAddressCopy.lastname;
+      
+      // Add shipping service information
+      shippingAddressCopy.service_code = selectedShippingService.code;
+      shippingAddressCopy.service_name = selectedShippingService.name;
+      shippingAddressCopy.carrier = selectedShippingService.carrier;
+      shippingAddressCopy.shipping_cost = shippingCost;
+      
       // setShippingAddress(shippingAddressCopy);
 
       // console.log("all info", shippingAddressCopy);
@@ -1003,6 +1097,7 @@ export default function Index({ user, customerData }) {
   return (
     <>
       <ToastContainer />
+
       <Layout>
         <div className="breadcrumb">
           <div className="container mt-3">
@@ -1265,16 +1360,38 @@ export default function Index({ user, customerData }) {
                                             getSuggestionItemProps,
                                             loading,
                                           }) => (
-                                            <div>
+                                            <div style={{ position: "relative" }}>
                                               <input
                                                 {...getInputProps({
                                                   placeholder: "Street address",
                                                   className: "form-control",
                                                   onBlur:
                                                     handleAddressLineOneBlur,
+                                                  style: {
+                                                    color: "#333",
+                                                    backgroundColor: "#fff",
+                                                    border: "1px solid #ced4da",
+                                                    borderRadius: "4px",
+                                                    padding: "8px 12px",
+                                                    fontSize: "14px",
+                                                    width: "100%"
+                                                  }
                                                 })}
                                               />
-                                              <div className="autocomplete-dropdown-container">
+                                              <div 
+                                                className="autocomplete-dropdown-container"
+                                                style={{
+                                                  border: "1px solid #ced4da",
+                                                  borderTop: "none",
+                                                  backgroundColor: "#fff",
+                                                  maxHeight: "200px",
+                                                  overflowY: "auto",
+                                                  zIndex: 1000,
+                                                  position: "absolute",
+                                                  width: "100%",
+                                                  borderRadius: "0 0 4px 4px"
+                                                }}
+                                              >
                                                 {loading && (
                                                   <div>Loading...</div>
                                                 )}
@@ -1297,6 +1414,13 @@ export default function Index({ user, customerData }) {
                                                       <div
                                                         key={key}
                                                         {...otherProps}
+                                                        style={{
+                                                          padding: "10px",
+                                                          cursor: "pointer",
+                                                          borderBottom: "1px solid #f0f0f0",
+                                                          backgroundColor: suggestion.active ? "#f8f9fa" : "#fff",
+                                                          color: "#333"
+                                                        }}
                                                       >
                                                         <span>
                                                           {
@@ -1419,19 +1543,6 @@ export default function Index({ user, customerData }) {
                                     </div>
                                     <div className="col-12 col-md-12 mb-2">
                                       <div className="form-group">
-                                        <label>Phone number</label>
-                                        <input
-                                          type="text"
-                                          name="phone"
-                                          placeholder="Phone number"
-                                          value={shippingAddress.phone}
-                                          onChange={handleChange}
-                                          className="form-control"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="col-12 col-md-12 mb-2">
-                                      <div className="form-group">
                                         <label>Order Note</label>
                                         <input
                                           type="text"
@@ -1459,36 +1570,70 @@ export default function Index({ user, customerData }) {
                                   availableShippingServices.map((svc, idx) => (
                                     <div
                                       key={svc.carrier + svc.code}
-                                      className={`shipping-method-option card mb-2 ${
+                                      className={`shipping-method-option mb-3 ${
                                         selectedShippingService && selectedShippingService.code === svc.code && selectedShippingService.carrier === svc.carrier
-                                          ? "border-primary bg-light"
+                                          ? "selected"
                                           : ""
                                       }`}
-                                      style={{ border: "1px solid #d1d5db", borderRadius: 8 }}
+                                      style={{ 
+                                        border: selectedShippingService && selectedShippingService.code === svc.code && selectedShippingService.carrier === svc.carrier
+                                          ? "2px solid #007bff"
+                                          : "1px solid #e0e0e0",
+                                        borderRadius: 8,
+                                        backgroundColor: selectedShippingService && selectedShippingService.code === svc.code && selectedShippingService.carrier === svc.carrier
+                                          ? "#f8f9ff"
+                                          : "#ffffff",
+                                        padding: "16px",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s ease"
+                                      }}
+                                      onClick={() => setSelectedShippingService(svc)}
                                     >
-                                      <label
-                                        className="d-flex align-items-center p-3 w-100"
-                                        style={{ cursor: "pointer" }}
-                                      >
-                                        <input
-                                          type="radio"
-                                          name="shippingMethod"
-                                          value={svc.code}
-                                          checked={
-                                            selectedShippingService &&
-                                            selectedShippingService.code === svc.code &&
-                                            selectedShippingService.carrier === svc.carrier
-                                          }
-                                          onChange={() => setSelectedShippingService(svc)}
-                                          style={{ marginRight: 12 }}
-                                        />
-                                        <div className="flex-grow-1">
+                                      <div className="d-flex align-items-center justify-content-between">
+                                        <div className="d-flex align-items-center">
+                                          <input
+                                            type="radio"
+                                            name="shippingMethod"
+                                            value={svc.code}
+                                            checked={
+                                              selectedShippingService &&
+                                              selectedShippingService.code === svc.code &&
+                                              selectedShippingService.carrier === svc.carrier
+                                            }
+                                            onChange={() => setSelectedShippingService(svc)}
+                                            style={{ 
+                                              marginRight: 12,
+                                              width: "18px",
+                                              height: "18px",
+                                              accentColor: "#007bff"
+                                            }}
+                                          />
                                           <div>
-                                            <strong>{svc.carrier} - {svc.name}</strong>
+                                            <div style={{ 
+                                              fontWeight: "bold", 
+                                              fontSize: "16px",
+                                              color: "#333",
+                                              marginBottom: "4px"
+                                            }}>
+                                              {svc.name}
+                                            </div>
+                                            <div style={{ 
+                                              color: "#666", 
+                                              fontSize: "14px",
+                                              fontStyle: "italic"
+                                            }}>
+                                              ({svc.carrier} - {svc.deliveryTime || "2-5 Business Days"})
+                                            </div>
                                           </div>
-                                          <div style={{ color: "#888", fontSize: 14 }}>{svc.type}</div>
                                         </div>
-                                      </label>
+                                        <div style={{ 
+                                          fontWeight: "bold", 
+                                          fontSize: "18px",
+                                          color: "#333"
+                                        }}>
+                                          ${parseFloat(svc.price).toFixed(2)}
+                                        </div>
+                                      </div>
                                     </div>
                                   ))
                                 )}
@@ -1522,7 +1667,7 @@ export default function Index({ user, customerData }) {
                             <table>
                               <thead>
                                 <tr>
-                                  <th>Product</th>
+                                  <th colSpan={2}>Product</th>
                                   <th className="text-right">Unit Price</th>
                                   <th className="text-right">Total Price</th>
                                 </tr>
@@ -1530,6 +1675,9 @@ export default function Index({ user, customerData }) {
                               <tbody>
                                 {cart.map((product, i) => (
                                   <tr key={i}>
+                                    <td>
+                                      {product.product_image ? <img src={product.product_image} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
+                                    </td>
                                     <td>
                                       <span>
                                         {product.quantity}&nbsp;x&nbsp;
@@ -1551,9 +1699,36 @@ export default function Index({ user, customerData }) {
                               <table>
                                 <tbody>
                                   <tr>
-                                    <td>Total</td>
+                                    <td className="text-start">Total Weight: &nbsp;</td>
+                                    <td className="text-end">
+                                      {totalWeight}{cart[0]?.size_unit || 'lbs'}&nbsp;
+                                    </td>
+                                    <td>Subtotal:</td>
                                     <td className="text-end">
                                       $&nbsp;{totalAmount.toFixed(2)}
+                                    </td>
+                                  </tr>
+                                  {selectedShippingService && (
+                                    <tr>
+                                      <td className="text-start">Shipping:</td>
+                                      <td className="text-end">
+                                        {selectedShippingService.name} ({selectedShippingService.deliveryTime})
+                                      </td>
+                                      <td>Shipping Cost:</td>
+                                      <td className="text-end">
+                                        $&nbsp;{parseFloat(selectedShippingService.price).toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  )}
+                                  <tr style={{ borderTop: '1px solid #ddd', fontWeight: 'bold' }}>
+                                    <td className="text-start">Total:</td>
+                                    <td className="text-end">{totalWeight}{cart[0]?.size_unit || 'lbs'}&nbsp;</td>
+                                    <td>Total Amount:</td>
+                                    <td className="text-end">
+                                      $&nbsp;{selectedShippingService 
+                                        ? (totalAmount + parseFloat(selectedShippingService.price)).toFixed(2)
+                                        : totalAmount.toFixed(2)
+                                      }
                                     </td>
                                   </tr>
                                 </tbody>

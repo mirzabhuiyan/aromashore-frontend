@@ -5,6 +5,8 @@ import { PaymentElement } from "@stripe/react-stripe-js";
 const PaymentSection = ({ shippingAddress }) => {
     const stripe = useStripe();
     const elements = useElements();
+    
+    const [hasMounted, setHasMounted] = useState(false);
     const [useShippingAsBilling, setUseShippingAsBilling] = useState(true);
     const [billingAddress, setBillingAddress] = useState({
       country: shippingAddress?.country_name || "",
@@ -15,6 +17,10 @@ const PaymentSection = ({ shippingAddress }) => {
     });
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+      setHasMounted(true);
+    }, []);
 
     useEffect(() => {
       console.log("elements --------> ", elements);
@@ -40,28 +46,35 @@ const PaymentSection = ({ shippingAddress }) => {
       if (!stripe || !elements) return;
       setIsLoading(true);
       setMessage(null);
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          payment_method_data: {
-            billing_details: {
-              name: `${billingAddress.firstname} ${billingAddress.lastname}`.trim(),
-              address: {
-                line1: billingAddress.address,
-                country: billingAddress.country,
+      try {
+        const response = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            payment_method_data: {
+              billing_details: {
+                name: `${billingAddress.firstname} ${billingAddress.lastname}`.trim(),
+                address: {
+                  line1: billingAddress.address,
+                  country: billingAddress.country,
+                },
               },
             },
+            return_url: window.location.origin,
+            // return_url: window.location.origin + '/order-complete',
           },
-          // return_url: window.location.origin + '/order-complete',
-        },
-      });
-      if (error) {
-        setMessage(error.message);
-      } else {
-        setMessage("Payment successful!");
+        });
+        console.log("PAYMENTresponse --------> ", response);
+        if (response.error) {
+          setMessage(response.error.message);
+        } else {
+          setMessage("Payment successful!");
+        }
+      } catch (error) {
+        console.log("error --------> ", error);
       }
       setIsLoading(false);
     };
+    if (!hasMounted) return null;
 
     return (
       <div className="card mt-4">
