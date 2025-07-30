@@ -18,6 +18,7 @@ import {
   getCitiesByStateId,
   getCountriesList,
   getStatesByCountryId,
+  createPaymentIntent,
   getAllShippingServices,
 } from "../../services/publicContentsService";
 import {
@@ -30,6 +31,7 @@ import PlacesAutocomplete, {
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
+  PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -68,11 +70,6 @@ export default function Index({ user, customerData }) {
   // Cookies.set("Card_visited", true);
   const router = useRouter();
   const { cart, clearCart } = useContext(AppStore);
-  
-  // Debug: Check if clearCart function is available
-  console.log("clearCart function available:", typeof clearCart === 'function');
-  console.log("Current cart length:", cart?.length || 0);
-  console.log("Current cart items:", cart);
 
   const [availableShippingServices, setAvailableShippingServices] = useState(
     []
@@ -101,21 +98,25 @@ export default function Index({ user, customerData }) {
   const [pendingState, setPendingState] = useState(null);
   const [pendingCity, setPendingCity] = useState(null);
 
+  // Add missing state variables for payment flow
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false);
   const [paymentConfirmationModalState, setPaymentConfirmationModalState] =
     useState(false);
   const [hasRedirected, setHasRedirected] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState(null);
-  const [paymentRetryCount, setPaymentRetryCount] = useState(0);
+  const [isCartLoading, setIsCartLoading] = useState(true);
 
-  let totalWeight = calculateWeight(cart);
+  let totalWeight = calculateWeight(cart || []);
   console.log("ShoppingCart Weight", totalWeight);
   const [clientSecret, setClientSecret] = useState(
     "pi_3Ro7ukIAIc3GSTDY04in50dO_secret_1Oc6nJYrCxzgDP1QY9DwEJiGJ"
   );
-  let { totalAmount } = calculateCart(cart);
+  let { totalAmount } = calculateCart(cart || []);
 
+  // const options = {
+  //   clientSecret,
+  //   theme: "stripe",
+  // };
   useEffect(() => {
     getCountriesList()
       .then(function (response) {
@@ -138,6 +139,27 @@ export default function Index({ user, customerData }) {
         console.log(error);
       });
   }, []);
+
+  // Handle cart loading and empty cart redirect
+  useEffect(() => {
+    // Set loading to false once cart data is available
+    if (cart !== undefined) {
+      setIsCartLoading(false);
+    }
+    
+    // Only redirect if cart is actually empty (not null/undefined) and we haven't redirected yet
+    // Also add a small delay to ensure cart data is loaded from localStorage
+    if (cart && cart.length === 0 && !hasRedirected && !orderCreated && !isCartLoading) {
+      const timer = setTimeout(() => {
+        setHasRedirected(true);
+        toast.error("Your cart is empty. Redirecting to home page.");
+        router.push("/");
+      }, 1000); // 1 second delay to allow cart to load
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cart, router, hasRedirected, orderCreated, isCartLoading]);
+
   useEffect(() => {
     async function initializeLocation() {
       if (!profileCountryList.length) return;
@@ -258,14 +280,6 @@ export default function Index({ user, customerData }) {
     initializeLocation();
   }, [profileCountryList]);
 
-  // Redirect to home if cart is empty
-  useEffect(() => {
-    if (cart.length === 0 && !hasRedirected && !orderCreated) {
-      setHasRedirected(true);
-    }
-  }, [cart, router, hasRedirected, orderCreated]);
-
-
   useEffect(() => {
     if (pendingState && profileStateList.length > 0) {
       const stateOption = profileStateList.find(
@@ -306,6 +320,23 @@ export default function Index({ user, customerData }) {
       console.log("shippingCost --------> ", shippingCost);
       console.log("totalWithShipping --------> ", totalWithShipping);
 
+      createPaymentIntent({
+        amount: totalWithShipping,
+        currency: "usd",
+      })
+        .then((res) => {
+          console.log("res --------> ", res);
+          return res.data;
+        })
+        .then((data) => {
+          console.log("data --------> ", data);
+          if (data.appStatus && data.appData?.clientSecret) {
+            setClientSecret(data.appData.clientSecret);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching client secret:", error);
+        });
     }
   }, [shippingAddress, totalAmount, selectedShippingService]);
 
@@ -590,19 +621,14 @@ export default function Index({ user, customerData }) {
 
   // Validate form and update validation state
   useEffect(() => {
-    if (cart.length === 0) {
+    // Check if cart exists and has items
+    if (!cart || cart.length === 0) {
       setIsFormValid(false);
       return;
     }
 
     // Validate shipping method selection
     if (!selectedShippingService) {
-      setIsFormValid(false);
-      return;
-    }
-
-    // Don't allow form submission while payment is processing
-    if (isProcessingPayment) {
       setIsFormValid(false);
       return;
     }
@@ -632,29 +658,20 @@ export default function Index({ user, customerData }) {
     cart.length,
     selectedShippingService,
     shippingAddress,
-    isProcessingPayment,
   ]);
-
-  // Utility function to force clear cart
-  const forceClearCart = () => {
-    try {
-      localStorage.removeItem("cart");
-      sessionStorage.removeItem("cart");
-      console.log("Cart forcefully cleared from all storage");
-      return true;
-    } catch (error) {
-      console.error("Failed to force clear cart:", error);
-      return false;
-    }
-  };
 
   // Function to create order after successful payment
   const createOrderAfterPayment = async (paymentResult) => {
     try {
+      setIsProcessingPayment(true);
       console.log("Creating order after payment:", paymentResult);
 
       let totalWeight = 0;
       const cartProducts = [];
+      if (!cart || cart.length === 0) {
+        toast.error("No items in cart to process");
+        return;
+      }
       cart.forEach((cartItem) => {
         console.log(cartItem);
         const cartData = {
@@ -703,97 +720,26 @@ export default function Index({ user, customerData }) {
       console.log("Order payload:", shippingAddressCopy);
 
       let data = await placeOrder(shippingAddressCopy);
-      console.log("Order creation response:", data.data);
+      console.log("Order creation response:", data);
 
-      if (data.data.appStatus) {
+      if (data.appStatus) {
         toast.success("Order placed successfully! Redirecting to home...");
-        
-        // Clear cart with error handling
-        try {
-          console.log("Clearing cart...");
-          console.log("Cart before clearing:", cart);
-          
-          if (typeof clearCart === 'function') {
-            clearCart();
-            console.log("Cart cleared successfully via context function");
-          } else {
-            console.warn("clearCart function not available, using fallback");
-            // Fallback: manually clear localStorage and force page reload
-            forceClearCart();
-          }
-        } catch (error) {
-          console.error("Error clearing cart:", error);
-          // Fallback: manually clear localStorage
-          try {
-            forceClearCart();
-          } catch (localStorageError) {
-            console.error("Error clearing localStorage:", localStorageError);
-          }
-        }
-        
+        clearCart();
         setOrderCreated(true);
-        
-        // Verify cart is cleared
-        setTimeout(() => {
-          const remainingCart = localStorage.getItem("cart");
-          console.log("Cart verification after clearing:", remainingCart);
-          if (remainingCart && remainingCart !== "[]") {
-            console.warn("Cart may not have been cleared properly");
-            // Force clear if verification fails
-            forceClearCart();
-          }
-        }, 500);
-        
         // Add a small delay to ensure the toast is visible before redirect
         setTimeout(() => {
-          // Final verification before redirect
-          const finalCartCheck = localStorage.getItem("cart");
-          if (finalCartCheck && finalCartCheck !== "[]") {
-            console.warn("Cart still has items, forcing clear before redirect");
-            forceClearCart();
-          }
           router.push("/");
         }, 1500);
       } else {
         toast.error(data.appMessage || "Failed to create order");
-        // Revert payment state on order creation failure
-        setIsProcessingPayment(false);
-        setPaymentConfirmationModalState(false);
-        setPaymentError("Order creation failed. Please try again.");
       }
     } catch (error) {
-      console.log("[createOrderAfterPayment] Error creating order:", error);
+      console.error("Error creating order:", error);
       toast.error("Failed to create order after payment");
-      // Revert payment state on error
+    } finally {
       setIsProcessingPayment(false);
       setPaymentConfirmationModalState(false);
-      setPaymentError("Order creation failed. Please try again.");
     }
-  };
-
-  // Function to handle payment failure and revert state
-  const handlePaymentFailure = (error) => {
-    console.error("Payment failed:", error);
-    setIsProcessingPayment(false);
-    setPaymentConfirmationModalState(false);
-    setPaymentError(error);
-    setPaymentRetryCount(prev => prev + 1);
-
-    // Show error toast
-    toast.error(`Payment failed: ${error}`);
-
-    // Clear error after 5 seconds
-    setTimeout(() => {
-      setPaymentError(null);
-    }, 5000);
-  };
-
-  // Function to clear payment error and allow form modification
-  const handleClearPaymentError = () => {
-    setPaymentError(null);
-    setPaymentRetryCount(0);
-    setIsProcessingPayment(false);
-    setPaymentConfirmationModalState(false);
   };
 
   const handleAddressLineOneBlur = async (e) => {
@@ -892,6 +838,14 @@ export default function Index({ user, customerData }) {
         </div>
         <div className="shop">
           <div className="container">
+            {isCartLoading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border" role="status">
+                  <span className="visually-hidden">Loading cart...</span>
+                </div>
+                <p className="mt-3">Loading your cart...</p>
+              </div>
+            ) : (
             <div className="checkout">
               <div className="container">
                 <div className="row">
@@ -1064,7 +1018,7 @@ export default function Index({ user, customerData }) {
                                                       if (
                                                         countryCode &&
                                                         optCode.toLowerCase() ===
-                                                        countryCode.toLowerCase()
+                                                          countryCode.toLowerCase()
                                                       )
                                                         return true;
                                                       // Accept 'USA' as 'United States'
@@ -1252,7 +1206,7 @@ export default function Index({ user, customerData }) {
                                           <span className="text-danger">*</span>
                                         </label>
                                         {shippingAddress.country !== "" &&
-                                          profileStateList.length > 0 ? (
+                                        profileStateList.length > 0 ? (
                                           <Select
                                             options={profileStateList}
                                             value={selectedProfileState}
@@ -1281,7 +1235,7 @@ export default function Index({ user, customerData }) {
                                           <span className="text-danger">*</span>
                                         </label>
                                         {shippingAddress.state !== "" &&
-                                          profileCityList.length > 0 ? (
+                                        profileCityList.length > 0 ? (
                                           <Select
                                             options={profileCityList}
                                             value={selectedProfileCity}
@@ -1353,29 +1307,30 @@ export default function Index({ user, customerData }) {
                                   availableShippingServices.map((svc, idx) => (
                                     <div
                                       key={svc.carrier + svc.code}
-                                      className={`shipping-method-option mb-3 ${selectedShippingService &&
-                                          selectedShippingService.code ===
+                                      className={`shipping-method-option mb-3 ${
+                                        selectedShippingService &&
+                                        selectedShippingService.code ===
                                           svc.code &&
-                                          selectedShippingService.carrier ===
+                                        selectedShippingService.carrier ===
                                           svc.carrier
                                           ? "selected"
                                           : ""
-                                        }`}
+                                      }`}
                                       style={{
                                         border:
                                           selectedShippingService &&
-                                            selectedShippingService.code ===
+                                          selectedShippingService.code ===
                                             svc.code &&
-                                            selectedShippingService.carrier ===
+                                          selectedShippingService.carrier ===
                                             svc.carrier
                                             ? "2px solid #007bff"
                                             : "1px solid #e0e0e0",
                                         borderRadius: 8,
                                         backgroundColor:
                                           selectedShippingService &&
-                                            selectedShippingService.code ===
+                                          selectedShippingService.code ===
                                             svc.code &&
-                                            selectedShippingService.carrier ===
+                                          selectedShippingService.carrier ===
                                             svc.carrier
                                             ? "#f8f9ff"
                                             : "#ffffff",
@@ -1396,9 +1351,9 @@ export default function Index({ user, customerData }) {
                                             checked={
                                               selectedShippingService &&
                                               selectedShippingService.code ===
-                                              svc.code &&
+                                                svc.code &&
                                               selectedShippingService.carrier ===
-                                              svc.carrier
+                                                svc.carrier
                                             }
                                             onChange={() =>
                                               setSelectedShippingService(svc)
@@ -1454,61 +1409,31 @@ export default function Index({ user, customerData }) {
                           <div>
                             {clientSecret ? (
                               isFormValid ? (
-                                <>
-                                  {isProcessingPayment && (
-                                    <div className="alert alert-info mb-3">
-                                      <div className="d-flex align-items-center">
-                                        <div className="spinner-border spinner-border-sm me-2" role="status">
-                                          <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                        <strong>Processing payment...</strong> Please wait while we complete your transaction.
-                                      </div>
-                                    </div>
-                                  )}
-                                  {paymentError && (
-                                    <div className="alert alert-danger mb-3">
-                                      <div className="d-flex align-items-center justify-content-between">
-                                        <div>
-                                          <i className="bi bi-exclamation-triangle me-2"></i>
-                                          <strong>Payment Error:</strong> {paymentError}
-                                          {paymentRetryCount > 0 && (
-                                            <div className="mt-1 text-muted">
-                                              Attempt {paymentRetryCount} failed
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  <Elements
-                                    stripe={stripePromise}
-                                    options={{
-                                      clientSecret: clientSecret,
-                                      theme: "stripe",
+                                <Elements
+                                  stripe={stripePromise}
+                                  options={{
+                                    clientSecret: clientSecret,
+                                    theme: "stripe",
+                                  }}
+                                >
+                                  <PaymentSection
+                                    shippingAddress={shippingAddress}
+                                    onPaymentSuccess={(paymentResult) => {
+                                      console.log(
+                                        "Payment successful:",
+                                        paymentResult
+                                      );
+                                      // Create order after successful payment
+                                      createOrderAfterPayment(paymentResult);
                                     }}
-                                  >
-                                    <PaymentSection
-                                      shippingAddress={shippingAddress}
-                                      clientSecret={clientSecret}
-                                      amount={totalAmount + (parseFloat(selectedShippingService?.price) || 0)}
-                                      onPaymentSuccess={(paymentResult) => {
-                                        console.log(
-                                          "Payment successful:",
-                                          paymentResult
-                                        );
-                                        // setIsProcessingPayment(true);
-                                        // setPaymentConfirmationModalState(true);
-                                        // Create order after successful payment
-                                        if (paymentResult && paymentResult.id)
-                                          createOrderAfterPayment(paymentResult);
-
-                                      }}
-                                      onPaymentError={(error) => {
-                                        handlePaymentFailure(error);
-                                      }}
-                                    />
-                                  </Elements>
-                                </>
+                                    onPaymentError={(error) => {
+                                      console.error("Payment failed:", error);
+                                      toast.error(`Payment failed: ${error}`);
+                                      setIsProcessingPayment(false);
+                                      setPaymentConfirmationModalState(false);
+                                    }}
+                                  />
+                                </Elements>
                               ) : (
                                 <div className="alert alert-info">
                                   <i className="bi bi-info-circle me-2"></i>
@@ -1544,7 +1469,7 @@ export default function Index({ user, customerData }) {
                                 </tr>
                               </thead>
                               <tbody>
-                                {cart.map((product, i) => (
+                                {cart && cart.length > 0 ? cart.map((product, i) => (
                                   <tr key={i}>
                                     <td>
                                       {product.product_image ? (
@@ -1577,7 +1502,13 @@ export default function Index({ user, customerData }) {
                                       $&nbsp;{product.price * product.quantity}
                                     </td>
                                   </tr>
-                                ))}
+                                )) : (
+                                  <tr>
+                                    <td colSpan={4} className="text-center">
+                                      No items in cart
+                                    </td>
+                                  </tr>
+                                )}
                               </tbody>
                             </table>
                             <div className="checkout__total__price__total-count">
@@ -1623,11 +1554,11 @@ export default function Index({ user, customerData }) {
                                       $&nbsp;
                                       {selectedShippingService
                                         ? (
-                                          totalAmount +
-                                          parseFloat(
-                                            selectedShippingService.price
-                                          )
-                                        ).toFixed(2)
+                                            totalAmount +
+                                            parseFloat(
+                                              selectedShippingService.price
+                                            )
+                                          ).toFixed(2)
                                         : totalAmount.toFixed(2)}
                                     </td>
                                   </tr>
@@ -1642,6 +1573,9 @@ export default function Index({ user, customerData }) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+            )}
           </div>
         </div>
       </Layout>
