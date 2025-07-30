@@ -12,6 +12,7 @@ import {
   getFormatedDate,
   getFormatedTime,
   calculateWeight,
+  calculateStripeFee,
 } from "../../services/utilityService";
 import { validate, validateProperty } from "../../models/shippingAddress";
 import {
@@ -115,6 +116,22 @@ export default function Index({ user, customerData }) {
     "pi_3Ro7ukIAIc3GSTDY04in50dO_secret_1Oc6nJYrCxzgDP1QY9DwEJiGJ"
   );
   let { totalAmount } = calculateCart(cart);
+
+
+
+  const [stripeFeeCalculation, setStripeFeeCalculation] = useState({
+    originalAmount: 0,
+    feeAmount: 0,
+    adjustedAmount: 0
+  });
+
+  // Recalculate fee when shipping service or total amount changes
+  useEffect(() => {
+    const shippingCost = selectedShippingService ? parseFloat(selectedShippingService.price) : 0;
+    const totalWithShipping = totalAmount + shippingCost;
+    const feeCalc = calculateStripeFee(totalWithShipping);
+    setStripeFeeCalculation(feeCalc);
+  }, [totalAmount, selectedShippingService]);
 
   useEffect(() => {
     getCountriesList()
@@ -1490,7 +1507,7 @@ export default function Index({ user, customerData }) {
                                     <PaymentSection
                                       shippingAddress={shippingAddress}
                                       clientSecret={clientSecret}
-                                      amount={totalAmount + (parseFloat(selectedShippingService?.price) || 0)}
+                                      amount={stripeFeeCalculation.adjustedAmount}
                                       onPaymentSuccess={(paymentResult) => {
                                         console.log(
                                           "Payment successful:",
@@ -1607,6 +1624,18 @@ export default function Index({ user, customerData }) {
                                       </td>
                                     </tr>
                                   )}
+                                  {stripeFeeCalculation.feeAmount > 0 && (
+                                    <tr>
+                                      <td className="text-start">Payment Processing:</td>
+                                      <td className="text-end">
+                                        Stripe Fee (2.9% + $0.30)
+                                      </td>
+                                      <td>Processing Fee:</td>
+                                      <td className="text-end">
+                                        $&nbsp;{stripeFeeCalculation.feeAmount.toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  )}
                                   <tr
                                     style={{
                                       borderTop: "1px solid #ddd",
@@ -1620,15 +1649,7 @@ export default function Index({ user, customerData }) {
                                     </td>
                                     <td>Total Amount:</td>
                                     <td className="text-end">
-                                      $&nbsp;
-                                      {selectedShippingService
-                                        ? (
-                                          totalAmount +
-                                          parseFloat(
-                                            selectedShippingService.price
-                                          )
-                                        ).toFixed(2)
-                                        : totalAmount.toFixed(2)}
+                                      $&nbsp;{stripeFeeCalculation.adjustedAmount.toFixed(2)}
                                     </td>
                                   </tr>
                                 </tbody>
