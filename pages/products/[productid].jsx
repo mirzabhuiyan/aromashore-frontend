@@ -16,7 +16,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { globalProductImageAddress } from '../../config';
 
-function AddToCart({ addToCart, removeFromCart, ...props }) {
+function AddToCart({ ...props }) {
 	const [status, setStatus] = React.useState("removed");
 
 	useEffect(() => {
@@ -32,19 +32,11 @@ function AddToCart({ addToCart, removeFromCart, ...props }) {
 	}, [status]);
 
 	function handleClickX() {
-		console.log('animation cart');
 		if (status === "removed") {
 			setStatus("adding");
 
-			// if (typeof addToCart === "function") {
-			// 	addToCart();
-			// }
 		} else if (status === "added") {
 			setStatus("removed");
-
-			// if (typeof removeFromCart === "function") {
-			// 	removeFromCart();
-			// }
 		}
 	}
 
@@ -73,7 +65,6 @@ function ProductDetail() {
 	const [productpro, setProductpro] = useState(null);
 	const ref = useRef(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const [cartStatus, setCartStatus] = useState(false);
 	const router = useRouter();
 	const query = router.query;
 	const [productDetails, setProductDetails] = useState(null);
@@ -413,27 +404,6 @@ function ProductDetail() {
 																}>
 																<AddToCart />
 															</div>
-															{/* {cartStatus ? (
-													<button>Adding...</button>
-												) : (
-													<button
-														className='btn cartbtn'
-														onClick={() =>
-															addToCartHandler({
-																product,
-																unit: {
-																	...productpro,
-																	qty: qty
-																}
-															})
-														}>
-														<i className='fas fa-shopping-cart me-2'></i>
-														Add To Cart
-													</button>
-												)} */}
-															{/* <a className='wishbtn -round -white' href='#'>
-													<i className='fas fa-heart'></i>
-												</a> */}
 														</div>
 														{productpro ? <ProductBundle productId={Number(query.productid)} selectedProperty={productpro} /> : <></>}
 													</div>

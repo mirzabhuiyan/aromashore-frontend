@@ -38,10 +38,10 @@ export function updateCcProfile(customerId, payload) {
   );
 }
 
-export function createPaymentIntent(payload) {
+export function createPaymentIntent(amount) {
   return httpService.post(
     apiUrl + `/web/customer/stripe/create-payment-intent`,
-    payload,
+    { amount: amount },
     headerWithUserAuthToken()
   );
 }
