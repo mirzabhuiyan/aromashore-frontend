@@ -68,3 +68,34 @@ export function getFormatedTime(date) {
   }
   return formatedTime;
 };
+
+/**
+ * Calculate Stripe payment fee and adjusted amount
+ * Stripe fee: 2.9% + $0.30 (online card and wallet payments)
+ * @param {number} originalAmount - The original amount in dollars
+ * @returns {object} Object containing fee amount and adjusted amount
+ */
+export function calculateStripeFee(originalAmount) {
+  if (!originalAmount || originalAmount <= 0) {
+    return {
+      originalAmount: 0,
+      feeAmount: 0,
+      adjustedAmount: 0
+    };
+  }
+
+  // Stripe fee: 2.9% + $0.30 (online card and wallet payments)
+  const percentageFee = originalAmount * 0.029; // 2.9%
+  const fixedFee = 0.30; // $0.30
+  const totalFee = percentageFee + fixedFee;
+  
+  // Calculate the amount needed to cover the fee
+  // If we want the customer to pay the fee, we need to add it to the original amount
+  const adjustedAmount = originalAmount + totalFee;
+
+  return {
+    originalAmount: parseFloat(originalAmount.toFixed(2)),
+    feeAmount: parseFloat(totalFee.toFixed(2)),
+    adjustedAmount: parseFloat(adjustedAmount.toFixed(2))
+  };
+}
