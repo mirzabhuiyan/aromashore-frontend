@@ -29,11 +29,7 @@ import PlacesAutocomplete, {
   geocodeByAddress,
 } from "react-places-autocomplete";
 import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import axios from "axios";
 
 // Stripe promise will be memoized inside the component
@@ -68,14 +64,18 @@ export default function Index({ user, customerData }) {
   // Cookies.set("Card_visited", true);
   const router = useRouter();
   const { cart, clearCart } = useContext(AppStore);
-  
+
   // Memoize the stripePromise so it is not recreated on every render
-  const stripePromise = useMemo(() => loadStripe(
-    "pk_test_51Rdb3oIAIc3GSTDYeIvAayHBig6fRvOos4VmhtT4L9azBJgRTyGqinTFI18qBIG0ZGirRYTP6VlYoFBVt5hfrMAy007RvMrZne"
-  ), []);
-  
+  const stripePromise = useMemo(
+    () =>
+      loadStripe(
+        "pk_test_51Rdb3oIAIc3GSTDYeIvAayHBig6fRvOos4VmhtT4L9azBJgRTyGqinTFI18qBIG0ZGirRYTP6VlYoFBVt5hfrMAy007RvMrZne"
+      ),
+    []
+  );
+
   // Debug: Check if clearCart function is available
-  console.log("clearCart function available:", typeof clearCart === 'function');
+  console.log("clearCart function available:", typeof clearCart === "function");
   console.log("Current cart length:", cart?.length || 0);
   console.log("Current cart items:", cart);
 
@@ -121,17 +121,17 @@ export default function Index({ user, customerData }) {
   );
   let { totalAmount } = calculateCart(cart);
 
-
-
   const [stripeFeeCalculation, setStripeFeeCalculation] = useState({
     originalAmount: 0,
     feeAmount: 0,
-    adjustedAmount: 0
+    adjustedAmount: 0,
   });
 
   // Recalculate fee when shipping service or total amount changes
   useEffect(() => {
-    const shippingCost = selectedShippingService ? parseFloat(selectedShippingService.price) : 0;
+    const shippingCost = selectedShippingService
+      ? parseFloat(selectedShippingService.price)
+      : 0;
     const totalWithShipping = totalAmount + shippingCost;
     const feeCalc = calculateStripeFee(totalWithShipping);
     setStripeFeeCalculation(feeCalc);
@@ -227,7 +227,10 @@ export default function Index({ user, customerData }) {
       };
 
       setShippingAddress(initialShippingAddress);
-      console.log("[CHECKOUT] Initial shipping address set:", initialShippingAddress);
+      console.log(
+        "[CHECKOUT] Initial shipping address set:",
+        initialShippingAddress
+      );
 
       // 2. State
       if (customerData?.customercontact?.state) {
@@ -284,7 +287,10 @@ export default function Index({ user, customerData }) {
 
   // Separate useEffect to log shipping address changes
   useEffect(() => {
-    console.log("[CHECKOUT] shippingAddress updated --------> ", shippingAddress);
+    console.log(
+      "[CHECKOUT] shippingAddress updated --------> ",
+      shippingAddress
+    );
   }, [shippingAddress]);
 
   // Redirect to home if cart is empty
@@ -293,7 +299,6 @@ export default function Index({ user, customerData }) {
       setHasRedirected(true);
     }
   }, [cart, router, hasRedirected, orderCreated]);
-
 
   useEffect(() => {
     if (pendingState && profileStateList.length > 0) {
@@ -334,7 +339,6 @@ export default function Index({ user, customerData }) {
       console.log("totalAmount --------> ", totalAmount);
       console.log("shippingCost --------> ", shippingCost);
       console.log("totalWithShipping --------> ", totalWithShipping);
-
     }
   }, [shippingAddress, totalAmount, selectedShippingService]);
 
@@ -354,7 +358,9 @@ export default function Index({ user, customerData }) {
         height: shippingAddress?.height || "",
         unit: shippingAddress?.unit || "inch",
         weight: totalWeight.toString(),
-        selectedDimension: `${shippingAddress?.length || ""}x${shippingAddress?.height || ""}x${shippingAddress?.width || ""}x${shippingAddress?.unit || "inch"}`,
+        selectedDimension: `${shippingAddress?.length || ""}x${
+          shippingAddress?.height || ""
+        }x${shippingAddress?.width || ""}x${shippingAddress?.unit || "inch"}`,
       };
       payload.packages = [packageDimension];
       console.log("payload-------->", payload);
@@ -712,7 +718,9 @@ export default function Index({ user, customerData }) {
       shippingAddressCopy.amount = totalWithShipping;
       shippingAddressCopy.total_weight = totalWeight;
       shippingAddressCopy.customer_name =
-        (shippingAddressCopy?.firstname || "") + " " + (shippingAddressCopy?.lastname || "");
+        (shippingAddressCopy?.firstname || "") +
+        " " +
+        (shippingAddressCopy?.lastname || "");
 
       // Add shipping service information
       shippingAddressCopy.service_code = selectedShippingService.code;
@@ -736,13 +744,13 @@ export default function Index({ user, customerData }) {
 
       if (data.data.appStatus) {
         toast.success("Order placed successfully! Redirecting to home...");
-        
+
         // Clear cart with error handling
         try {
           console.log("Clearing cart...");
           console.log("Cart before clearing:", cart);
-          
-          if (typeof clearCart === 'function') {
+
+          if (typeof clearCart === "function") {
             clearCart();
             console.log("Cart cleared successfully via context function");
           } else {
@@ -759,9 +767,9 @@ export default function Index({ user, customerData }) {
             console.error("Error clearing localStorage:", localStorageError);
           }
         }
-        
+
         setOrderCreated(true);
-        
+
         // Verify cart is cleared
         setTimeout(() => {
           const remainingCart = localStorage.getItem("cart");
@@ -772,7 +780,7 @@ export default function Index({ user, customerData }) {
             forceClearCart();
           }
         }, 500);
-        
+
         // Add a small delay to ensure the toast is visible before redirect
         setTimeout(() => {
           // Final verification before redirect
@@ -806,7 +814,7 @@ export default function Index({ user, customerData }) {
     setIsProcessingPayment(false);
     setPaymentConfirmationModalState(false);
     setPaymentError(error);
-    setPaymentRetryCount(prev => prev + 1);
+    setPaymentRetryCount((prev) => prev + 1);
 
     // Show error toast
     toast.error(`Payment failed: ${error}`);
@@ -934,10 +942,17 @@ export default function Index({ user, customerData }) {
                               {shippingAddress === null ? (
                                 <>
                                   <div className="text-center py-4">
-                                    <div className="spinner-border" role="status">
-                                      <span className="visually-hidden">Loading...</span>
+                                    <div
+                                      className="spinner-border"
+                                      role="status"
+                                    >
+                                      <span className="visually-hidden">
+                                        Loading...
+                                      </span>
                                     </div>
-                                    <div className="mt-2">Loading your address information...</div>
+                                    <div className="mt-2">
+                                      Loading your address information...
+                                    </div>
                                   </div>
                                 </>
                               ) : (
@@ -973,7 +988,9 @@ export default function Index({ user, customerData }) {
                                           id="firstname"
                                           name="firstname"
                                           placeholder="First name"
-                                          value={shippingAddress?.firstname || ""}
+                                          value={
+                                            shippingAddress?.firstname || ""
+                                          }
                                           onChange={handleChange}
                                           className="form-control"
                                         />
@@ -994,7 +1011,9 @@ export default function Index({ user, customerData }) {
                                           type="text"
                                           name="lastname"
                                           placeholder="Last name"
-                                          value={shippingAddress?.lastname || ""}
+                                          value={
+                                            shippingAddress?.lastname || ""
+                                          }
                                           onChange={handleChange}
                                           className="form-control"
                                         />
@@ -1013,7 +1032,8 @@ export default function Index({ user, customerData }) {
                                         </label>
                                         <PlacesAutocomplete
                                           value={
-                                            shippingAddress?.address_line_one || ""
+                                            shippingAddress?.address_line_one ||
+                                            ""
                                           }
                                           onChange={(val) =>
                                             setShippingAddress((prev) => ({
@@ -1098,7 +1118,7 @@ export default function Index({ user, customerData }) {
                                                       if (
                                                         countryCode &&
                                                         optCode.toLowerCase() ===
-                                                        countryCode.toLowerCase()
+                                                          countryCode.toLowerCase()
                                                       )
                                                         return true;
                                                       // Accept 'USA' as 'United States'
@@ -1270,7 +1290,8 @@ export default function Index({ user, customerData }) {
                                           name="address_line_two"
                                           placeholder="Steet address"
                                           value={
-                                            shippingAddress?.address_line_two || ""
+                                            shippingAddress?.address_line_two ||
+                                            ""
                                           }
                                           onChange={handleChangeOptional}
                                           className="form-control"
@@ -1286,7 +1307,7 @@ export default function Index({ user, customerData }) {
                                           <span className="text-danger">*</span>
                                         </label>
                                         {shippingAddress?.country !== "" &&
-                                          profileStateList.length > 0 ? (
+                                        profileStateList.length > 0 ? (
                                           <Select
                                             options={profileStateList}
                                             value={selectedProfileState}
@@ -1302,7 +1323,9 @@ export default function Index({ user, customerData }) {
                                             className="form-control"
                                             type="text"
                                             name="state_name"
-                                            value={shippingAddress?.state_name || ""}
+                                            value={
+                                              shippingAddress?.state_name || ""
+                                            }
                                             onChange={handleChange}
                                           />
                                         )}
@@ -1315,7 +1338,7 @@ export default function Index({ user, customerData }) {
                                           <span className="text-danger">*</span>
                                         </label>
                                         {shippingAddress?.state !== "" &&
-                                          profileCityList.length > 0 ? (
+                                        profileCityList.length > 0 ? (
                                           <Select
                                             options={profileCityList}
                                             value={selectedProfileCity}
@@ -1331,7 +1354,9 @@ export default function Index({ user, customerData }) {
                                             className="form-control"
                                             type="text"
                                             name="city_name"
-                                            value={shippingAddress?.city_name || ""}
+                                            value={
+                                              shippingAddress?.city_name || ""
+                                            }
                                             onChange={handleChange}
                                           />
                                         )}
@@ -1387,29 +1412,30 @@ export default function Index({ user, customerData }) {
                                   availableShippingServices.map((svc, idx) => (
                                     <div
                                       key={svc.carrier + svc.code}
-                                      className={`shipping-method-option mb-3 ${selectedShippingService &&
-                                          selectedShippingService.code ===
+                                      className={`shipping-method-option mb-3 ${
+                                        selectedShippingService &&
+                                        selectedShippingService.code ===
                                           svc.code &&
-                                          selectedShippingService.carrier ===
+                                        selectedShippingService.carrier ===
                                           svc.carrier
                                           ? "selected"
                                           : ""
-                                        }`}
+                                      }`}
                                       style={{
                                         border:
                                           selectedShippingService &&
-                                            selectedShippingService.code ===
+                                          selectedShippingService.code ===
                                             svc.code &&
-                                            selectedShippingService.carrier ===
+                                          selectedShippingService.carrier ===
                                             svc.carrier
                                             ? "2px solid #007bff"
                                             : "1px solid #e0e0e0",
                                         borderRadius: 8,
                                         backgroundColor:
                                           selectedShippingService &&
-                                            selectedShippingService.code ===
+                                          selectedShippingService.code ===
                                             svc.code &&
-                                            selectedShippingService.carrier ===
+                                          selectedShippingService.carrier ===
                                             svc.carrier
                                             ? "#f8f9ff"
                                             : "#ffffff",
@@ -1430,9 +1456,9 @@ export default function Index({ user, customerData }) {
                                             checked={
                                               selectedShippingService &&
                                               selectedShippingService.code ===
-                                              svc.code &&
+                                                svc.code &&
                                               selectedShippingService.carrier ===
-                                              svc.carrier
+                                                svc.carrier
                                             }
                                             onChange={() =>
                                               setSelectedShippingService(svc)
@@ -1489,7 +1515,9 @@ export default function Index({ user, customerData }) {
                             {!shippingAddress ? (
                               <div className="alert alert-info">
                                 <i className="bi bi-info-circle me-2"></i>
-                                <strong>Loading address information...</strong>{" "}
+                                <strong>
+                                  Loading address information...
+                                </strong>{" "}
                                 Please wait while we load your shipping details.
                               </div>
                             ) : !clientSecret ? (
@@ -1509,10 +1537,17 @@ export default function Index({ user, customerData }) {
                                 {isProcessingPayment && (
                                   <div className="alert alert-info mb-3">
                                     <div className="d-flex align-items-center">
-                                      <div className="spinner-border spinner-border-sm me-2" role="status">
-                                        <span className="visually-hidden">Loading...</span>
+                                      <div
+                                        className="spinner-border spinner-border-sm me-2"
+                                        role="status"
+                                      >
+                                        <span className="visually-hidden">
+                                          Loading...
+                                        </span>
                                       </div>
-                                      <strong>Processing payment...</strong> Please wait while we complete your transaction.
+                                      <strong>Processing payment...</strong>{" "}
+                                      Please wait while we complete your
+                                      transaction.
                                     </div>
                                   </div>
                                 )}
@@ -1521,7 +1556,8 @@ export default function Index({ user, customerData }) {
                                     <div className="d-flex align-items-center justify-content-between">
                                       <div>
                                         <i className="bi bi-exclamation-triangle me-2"></i>
-                                        <strong>Payment Error:</strong> {paymentError}
+                                        <strong>Payment Error:</strong>{" "}
+                                        {paymentError}
                                         {paymentRetryCount > 0 && (
                                           <div className="mt-1 text-muted">
                                             Attempt {paymentRetryCount} failed
@@ -1552,7 +1588,6 @@ export default function Index({ user, customerData }) {
                                       // Create order after successful payment
                                       if (paymentResult && paymentResult.id)
                                         createOrderAfterPayment(paymentResult);
-
                                     }}
                                     onPaymentError={(error) => {
                                       handlePaymentFailure(error);
@@ -1587,6 +1622,7 @@ export default function Index({ user, customerData }) {
                                     <td>
                                       {product.product_image ? (
                                         <img
+                                          crossorigin="anonymous"
                                           src={product.product_image}
                                           alt={product.product_name}
                                           height={75}
@@ -1647,13 +1683,18 @@ export default function Index({ user, customerData }) {
                                   )}
                                   {stripeFeeCalculation.feeAmount > 0 && (
                                     <tr>
-                                      <td className="text-start">Payment Processing:</td>
+                                      <td className="text-start">
+                                        Payment Processing:
+                                      </td>
                                       <td className="text-end">
                                         Stripe Fee (2.9% + $0.30)
                                       </td>
                                       <td>Processing Fee:</td>
                                       <td className="text-end">
-                                        $&nbsp;{stripeFeeCalculation.feeAmount.toFixed(2)}
+                                        $&nbsp;
+                                        {stripeFeeCalculation.feeAmount.toFixed(
+                                          2
+                                        )}
                                       </td>
                                     </tr>
                                   )}
@@ -1670,7 +1711,10 @@ export default function Index({ user, customerData }) {
                                     </td>
                                     <td>Total Amount:</td>
                                     <td className="text-end">
-                                      $&nbsp;{stripeFeeCalculation.adjustedAmount.toFixed(2)}
+                                      $&nbsp;
+                                      {stripeFeeCalculation.adjustedAmount.toFixed(
+                                        2
+                                      )}
                                     </td>
                                   </tr>
                                 </tbody>
