@@ -12,6 +12,7 @@ import { getprofileByCustomer } from "../services/webCustomerService";
 import { calculateCart } from "../services/utilityService";
 import { toast, ToastContainer } from "react-toastify";
 import Script from 'next/script';
+import { globalProductImageAddress } from '../config';
 
 function MyApp({
   Component,
@@ -20,6 +21,20 @@ function MyApp({
   const [cart, setCart] = useState([]);
   const [user, setUser] = useState(userInfo);
   const [customerData, setCustomerData] = useState(null);
+
+  // Helper function to get proper product image URL
+  const getProductImageUrl = (imageData) => {
+    if (!imageData) return "";
+    
+    // Handle both old base64 and new file-based images
+    if (imageData.startsWith('data:')) {
+      return imageData; // Base64 image
+    } else if (imageData.startsWith('http')) {
+      return imageData; // Already a full URL
+    } else {
+      return `${globalProductImageAddress}${imageData}`; // File-based image
+    }
+  };
 
   // Load cart from localStorage on app initialization
   useEffect(() => {
@@ -82,7 +97,7 @@ function MyApp({
           "product_id": pd.id,
           "product_no": pd.product_no,
           "product_name": pd.name,
-          "product_image": pd.productimages.length > 0 ? pd.productimages[0].image_link : "",
+          "product_image": pd.productimages.length > 0 ? getProductImageUrl(pd.productimages[0].image) : "",
           "bundle_id": bundleId,
           "measure_unit": unit[indx].measure_unit
         }
@@ -128,7 +143,7 @@ function MyApp({
         "product_id": productDetails.id,
         "product_no": productDetails.product_no,
         "product_name": productDetails.name,
-        "product_image": productDetails.productimages.length > 0 ? productDetails.productimages[0].image : "",
+        "product_image": productDetails.productimages.length > 0 ? getProductImageUrl(productDetails.productimages[0].image) : "",
         "bundle_id": 0
       }
       

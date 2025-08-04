@@ -11,6 +11,20 @@ import Cookies from "js-cookie";
 import Image from "next/image";
 import { globalProductImageAddress } from '../config';
 
+// Helper function to get proper product image URL
+const getProductImageUrl = (imageData) => {
+  if (!imageData) return "/app/assets/images/200.svg";
+  
+  // Handle both old base64 and new file-based images
+  if (imageData.startsWith('data:')) {
+    return imageData; // Base64 image
+  } else if (imageData.startsWith('http')) {
+    return imageData; // Already a full URL
+  } else {
+    return imageData; // Already processed by _app.js
+  }
+};
+
 function Cart() {
 	const router = useRouter();
 	const { cart, increment_TO_CART_ITEM, decrement_TO_CART_ITEM, delete_ITEM_FROM_CART, clearCart } = useContext(AppStore);
@@ -66,7 +80,7 @@ function Cart() {
 											<tbody key={i}>
 												<tr>
 													<td className='text-center'>
-														{product.product_image != '' ? <img crossOrigin="anonymous" src={product.product_image} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
+														{product.product_image != '' ? <img crossOrigin="anonymous" src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
 													</td>
 													<td>
 														<div className='p-2'>

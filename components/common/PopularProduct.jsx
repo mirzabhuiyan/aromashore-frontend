@@ -2,7 +2,21 @@ import { useState, useEffect } from "react";
 import Slider from "react-slick";
 import Link from "next/link";
 import axios from "axios";
-import {apiUrl} from "../../config";
+import {apiUrl, globalProductImageAddress} from "../../config";
+
+// Helper function to get proper product image URL
+const getProductImageUrl = (imageData) => {
+  if (!imageData) return "/app/assets/images/200.svg";
+  
+  // Handle both old base64 and new file-based images
+  if (imageData.startsWith('data:')) {
+    return imageData; // Base64 image
+  } else if (imageData.startsWith('http')) {
+    return imageData; // Already a full URL
+  } else {
+    return `${globalProductImageAddress}${imageData}`; // File-based image
+  }
+};
 import Product from "../shop/Product";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
@@ -71,7 +85,7 @@ export default function PopularProduct({ categoryId = null }) {
 											console.log(product, index);
 											return (
 												<SwiperSlide key={product.id}>
-													{product.productimages[0] ? <img src={product.productimages[0]?.image} alt={product.productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}
+													{product.productimages[0] ? <img src={getProductImageUrl(product.productimages[0]?.image)} alt={product.productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}
 												</SwiperSlide>
 											)
 										}

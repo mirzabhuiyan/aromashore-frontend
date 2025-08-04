@@ -6,6 +6,20 @@ import Card from "react-bootstrap/Card";
 import Image from "next/image";
 import { globalProductImageAddress } from '../../config';
 
+// Helper function to get proper product image URL
+const getProductImageUrl = (imageData) => {
+  if (!imageData) return "/app/assets/images/200.svg";
+  
+  // Handle both old base64 and new file-based images
+  if (imageData.startsWith('data:')) {
+    return imageData; // Base64 image
+  } else if (imageData.startsWith('http')) {
+    return imageData; // Already a full URL
+  } else {
+    return `${globalProductImageAddress}${imageData}`; // File-based image
+  }
+};
+
 export default function Product({ product, viewType = true, shopPage = false }) {
 	const { customerData } = useContext(AppStore);
 	const isDistributor = customerData?.customercategory?.title?.toLowerCase() === "distributor";
@@ -60,7 +74,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								)} */}
 								<div className='product-thumb'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages[0] ? <img crossOrigin="anonymous" src={`${productimages[0]?.image}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages[0] ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 									<div className='product-thumb__actions'>
 										{/* <div className='product-btn'>
@@ -127,7 +141,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 							<div className='row'>
 								<div className='col-12 col-md-5'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages.length > 0 ? <img crossOrigin="anonymous" src={`${productimages[0]?.image}`} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages.length > 0 ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 								</div>
 								<div className='col-12 col-md-7'>

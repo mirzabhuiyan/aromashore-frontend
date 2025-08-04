@@ -1,6 +1,20 @@
 import { useState, useEffect, useContext } from "react";
 import Image from "next/image";
 import { apiUrl, globalProductImageAddress } from "../../config";
+
+// Helper function to get proper product image URL
+const getProductImageUrl = (imageData) => {
+  if (!imageData) return "/app/assets/images/200.svg";
+  
+  // Handle both old base64 and new file-based images
+  if (imageData.startsWith('data:')) {
+    return imageData; // Base64 image
+  } else if (imageData.startsWith('http')) {
+    return imageData; // Already a full URL
+  } else {
+    return `${globalProductImageAddress}${imageData}`; // File-based image
+  }
+};
 import axios from "axios";
 import { AppStore } from "../../store/AppStore";
 
@@ -114,7 +128,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 									<div className="card-body pt-3 pb-3" style={{ overflowX: 'auto' }}>
 										<div className="d-flex justify-content-start align-items-center gap-2" key={bpl.id}>
 											{/* <div className="border border-secondary rounded p-2">
-										{productVeriation.product_image ? <><Image src={`${globalProductImageAddress}${productVeriation.product_image}`} width={75} height={75} /><br /></> : ""}
+										{productVeriation.product_image ? <><Image src={getProductImageUrl(productVeriation.product_image)} width={75} height={75} /><br /></> : ""}
 										<p className="mb-1"><b>{productVeriation.product_name}</b></p>
 										<p className="mb-0"><b>SKU:</b>&nbsp;{productVeriation.variation_no}</p>
 										<p className="mb-0"><b>Size:</b>&nbsp;{productVeriation.size} {productVeriation.size_unit}</p>
@@ -127,7 +141,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 												{
 													bundleProducts.map(bp =>
 														<div key={bp.variation_id} className="border border-secondary rounded p-2 w-100">
-															{bp.product_image ? <><img crossOrigin="anonymous" src={`${globalProductImageAddress}${bp.product_image}`} width={75} height={75} /><br /></> : ""}
+															{bp.product_image ? <><img crossOrigin="anonymous" src={getProductImageUrl(bp.product_image)} width={75} height={75} /><br /></> : ""}
 															<p className="mb-1"><b>{bp.product_name}</b></p>
 															<p className="mb-0"><b>SKU:</b>&nbsp;{bp.variation_no}</p>
 															<p className="mb-0"><b>Size:</b>&nbsp;{bp.size} {bp.size_unit}</p>
