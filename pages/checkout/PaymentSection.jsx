@@ -46,13 +46,13 @@ const PaymentSection = ({
   
   if (shippingAddress) {
     console.log("[PaymentSection] shippingAddress details:", {
-      firstname: shippingAddress.firstname,
-      lastname: shippingAddress.lastname,
-      address_line_one: shippingAddress.address_line_one,
-      city: shippingAddress.city_name,
-      state: shippingAddress.state_code,
-      postal_code: shippingAddress.zipcode,
-      country: shippingAddress.country_code
+      firstname: shippingAddress?.firstname || "",
+      lastname: shippingAddress?.lastname || "",
+      address_line_one: shippingAddress?.address_line_one || "",
+      city: shippingAddress?.city_name || "",
+      state: shippingAddress?.state_code || "",
+      postal_code: shippingAddress?.zipcode || "",
+      country: shippingAddress?.country_code || ""
     });
   }
 

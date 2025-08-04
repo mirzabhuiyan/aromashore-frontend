@@ -36,9 +36,7 @@ import {
 } from "@stripe/react-stripe-js";
 import axios from "axios";
 
-const stripePromise = loadStripe(
-  "pk_test_51Rdb3oIAIc3GSTDYeIvAayHBig6fRvOos4VmhtT4L9azBJgRTyGqinTFI18qBIG0ZGirRYTP6VlYoFBVt5hfrMAy007RvMrZne"
-);
+// Stripe promise will be memoized inside the component
 
 function toTitleCase(str) {
   return str.replace(
@@ -66,9 +64,15 @@ function getUSCountryOption(countryList) {
 }
 
 export default function Index({ user, customerData }) {
+  console.log("[CHECKOUT] customerData --------> ", customerData);
   // Cookies.set("Card_visited", true);
   const router = useRouter();
   const { cart, clearCart } = useContext(AppStore);
+  
+  // Memoize the stripePromise so it is not recreated on every render
+  const stripePromise = useMemo(() => loadStripe(
+    "pk_test_51Rdb3oIAIc3GSTDYeIvAayHBig6fRvOos4VmhtT4L9azBJgRTyGqinTFI18qBIG0ZGirRYTP6VlYoFBVt5hfrMAy007RvMrZne"
+  ), []);
   
   // Debug: Check if clearCart function is available
   console.log("clearCart function available:", typeof clearCart === 'function');
@@ -175,7 +179,7 @@ export default function Index({ user, customerData }) {
       setSelectedProfileCountry(countryOption);
 
       // Set initial shipping address with all customer info and selected country
-      setShippingAddress({
+      const initialShippingAddress = {
         order_date: getFormatedDate(new Date()),
         order_time: getFormatedTime(new Date()),
         amount: 0,
@@ -220,7 +224,10 @@ export default function Index({ user, customerData }) {
         total_weight: "",
         dial_code: customerData.dial_code || "+1",
         unit: "inch",
-      });
+      };
+
+      setShippingAddress(initialShippingAddress);
+      console.log("[CHECKOUT] Initial shipping address set:", initialShippingAddress);
 
       // 2. State
       if (customerData?.customercontact?.state) {
@@ -273,7 +280,12 @@ export default function Index({ user, customerData }) {
       }
     }
     initializeLocation();
-  }, [profileCountryList]);
+  }, [profileCountryList, customerData]);
+
+  // Separate useEffect to log shipping address changes
+  useEffect(() => {
+    console.log("[CHECKOUT] shippingAddress updated --------> ", shippingAddress);
+  }, [shippingAddress]);
 
   // Redirect to home if cart is empty
   useEffect(() => {
@@ -331,18 +343,18 @@ export default function Index({ user, customerData }) {
     if (shippingAddress && totalAmount > 0) {
       const payload = {
         ...shippingAddress,
-        stateCode: shippingAddress.state_code,
+        stateCode: shippingAddress?.state_code || "",
         total_weight: totalWeight.toString(),
         totalWeight: totalWeight,
         measure_unit: "Lbs",
       };
       const packageDimension = {
-        length: shippingAddress.length,
-        width: shippingAddress.width,
-        height: shippingAddress.height,
-        unit: shippingAddress.unit,
+        length: shippingAddress?.length || "",
+        width: shippingAddress?.width || "",
+        height: shippingAddress?.height || "",
+        unit: shippingAddress?.unit || "inch",
         weight: totalWeight.toString(),
-        selectedDimension: `${shippingAddress.length}x${shippingAddress.height}x${shippingAddress.width}x${shippingAddress.unit}`,
+        selectedDimension: `${shippingAddress?.length || ""}x${shippingAddress?.height || ""}x${shippingAddress?.width || ""}x${shippingAddress?.unit || "inch"}`,
       };
       payload.packages = [packageDimension];
       console.log("payload-------->", payload);
@@ -626,15 +638,15 @@ export default function Index({ user, customerData }) {
 
     // Validate shipping address
     const errorsCopy = validate({
-      customer_id: shippingAddress.customer_id,
-      customer_name: shippingAddress.customer_name,
-      firstname: shippingAddress.firstname,
-      lastname: shippingAddress.lastname,
-      address_line_one: shippingAddress.address_line_one,
-      city_name: shippingAddress.city_name,
-      state_name: shippingAddress.state_name,
-      zipcode: shippingAddress.zipcode,
-      country_name: shippingAddress.country_name,
+      customer_id: shippingAddress?.customer_id || "",
+      customer_name: shippingAddress?.customer_name || "",
+      firstname: shippingAddress?.firstname || "",
+      lastname: shippingAddress?.lastname || "",
+      address_line_one: shippingAddress?.address_line_one || "",
+      city_name: shippingAddress?.city_name || "",
+      state_name: shippingAddress?.state_name || "",
+      zipcode: shippingAddress?.zipcode || "",
+      country_name: shippingAddress?.country_name || "",
     });
     console.log(errorsCopy);
     setErrors(errorsCopy);
@@ -700,7 +712,7 @@ export default function Index({ user, customerData }) {
       shippingAddressCopy.amount = totalWithShipping;
       shippingAddressCopy.total_weight = totalWeight;
       shippingAddressCopy.customer_name =
-        shippingAddressCopy.firstname + " " + shippingAddressCopy.lastname;
+        (shippingAddressCopy?.firstname || "") + " " + (shippingAddressCopy?.lastname || "");
 
       // Add shipping service information
       shippingAddressCopy.service_code = selectedShippingService.code;
@@ -921,7 +933,12 @@ export default function Index({ user, customerData }) {
                             <div className="card-body">
                               {shippingAddress === null ? (
                                 <>
-                                  <div>Please enter your delivery address</div>
+                                  <div className="text-center py-4">
+                                    <div className="spinner-border" role="status">
+                                      <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div className="mt-2">Loading your address information...</div>
+                                  </div>
                                 </>
                               ) : (
                                 <>
@@ -956,7 +973,7 @@ export default function Index({ user, customerData }) {
                                           id="firstname"
                                           name="firstname"
                                           placeholder="First name"
-                                          value={shippingAddress.firstname}
+                                          value={shippingAddress?.firstname || ""}
                                           onChange={handleChange}
                                           className="form-control"
                                         />
@@ -977,7 +994,7 @@ export default function Index({ user, customerData }) {
                                           type="text"
                                           name="lastname"
                                           placeholder="Last name"
-                                          value={shippingAddress.lastname}
+                                          value={shippingAddress?.lastname || ""}
                                           onChange={handleChange}
                                           className="form-control"
                                         />
@@ -996,7 +1013,7 @@ export default function Index({ user, customerData }) {
                                         </label>
                                         <PlacesAutocomplete
                                           value={
-                                            shippingAddress.address_line_one
+                                            shippingAddress?.address_line_one || ""
                                           }
                                           onChange={(val) =>
                                             setShippingAddress((prev) => ({
@@ -1253,7 +1270,7 @@ export default function Index({ user, customerData }) {
                                           name="address_line_two"
                                           placeholder="Steet address"
                                           value={
-                                            shippingAddress.address_line_two
+                                            shippingAddress?.address_line_two || ""
                                           }
                                           onChange={handleChangeOptional}
                                           className="form-control"
@@ -1268,7 +1285,7 @@ export default function Index({ user, customerData }) {
                                           State/Division&nbsp;
                                           <span className="text-danger">*</span>
                                         </label>
-                                        {shippingAddress.country !== "" &&
+                                        {shippingAddress?.country !== "" &&
                                           profileStateList.length > 0 ? (
                                           <Select
                                             options={profileStateList}
@@ -1285,7 +1302,7 @@ export default function Index({ user, customerData }) {
                                             className="form-control"
                                             type="text"
                                             name="state_name"
-                                            value={shippingAddress.state_name}
+                                            value={shippingAddress?.state_name || ""}
                                             onChange={handleChange}
                                           />
                                         )}
@@ -1297,7 +1314,7 @@ export default function Index({ user, customerData }) {
                                           City&nbsp;
                                           <span className="text-danger">*</span>
                                         </label>
-                                        {shippingAddress.state !== "" &&
+                                        {shippingAddress?.state !== "" &&
                                           profileCityList.length > 0 ? (
                                           <Select
                                             options={profileCityList}
@@ -1314,7 +1331,7 @@ export default function Index({ user, customerData }) {
                                             className="form-control"
                                             type="text"
                                             name="city_name"
-                                            value={shippingAddress.city_name}
+                                            value={shippingAddress?.city_name || ""}
                                             onChange={handleChange}
                                           />
                                         )}
@@ -1330,7 +1347,7 @@ export default function Index({ user, customerData }) {
                                           type="text"
                                           name="zipcode"
                                           placeholder="Postcode/ZIP"
-                                          value={shippingAddress.zipcode}
+                                          value={shippingAddress?.zipcode || ""}
                                           onChange={handleChange}
                                           className="form-control"
                                         />
@@ -1348,7 +1365,7 @@ export default function Index({ user, customerData }) {
                                           type="text"
                                           name="remarks"
                                           placeholder="Note about your order, e.g, special note for delivery"
-                                          value={shippingAddress.remarks}
+                                          value={shippingAddress?.remarks || ""}
                                           onChange={handleChangeOptional}
                                           className="form-control"
                                         />
@@ -1469,76 +1486,80 @@ export default function Index({ user, customerData }) {
                             </div>
                           </div>
                           <div>
-                            {clientSecret ? (
-                              isFormValid ? (
-                                <>
-                                  {isProcessingPayment && (
-                                    <div className="alert alert-info mb-3">
-                                      <div className="d-flex align-items-center">
-                                        <div className="spinner-border spinner-border-sm me-2" role="status">
-                                          <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                        <strong>Processing payment...</strong> Please wait while we complete your transaction.
-                                      </div>
-                                    </div>
-                                  )}
-                                  {paymentError && (
-                                    <div className="alert alert-danger mb-3">
-                                      <div className="d-flex align-items-center justify-content-between">
-                                        <div>
-                                          <i className="bi bi-exclamation-triangle me-2"></i>
-                                          <strong>Payment Error:</strong> {paymentError}
-                                          {paymentRetryCount > 0 && (
-                                            <div className="mt-1 text-muted">
-                                              Attempt {paymentRetryCount} failed
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  <Elements
-                                    stripe={stripePromise}
-                                    options={{
-                                      clientSecret: clientSecret,
-                                      theme: "stripe",
-                                    }}
-                                  >
-                                    <PaymentSection
-                                      shippingAddress={shippingAddress}
-                                      clientSecret={clientSecret}
-                                      amount={stripeFeeCalculation.adjustedAmount}
-                                      onPaymentSuccess={(paymentResult) => {
-                                        console.log(
-                                          "Payment successful:",
-                                          paymentResult
-                                        );
-                                        // setIsProcessingPayment(true);
-                                        // setPaymentConfirmationModalState(true);
-                                        // Create order after successful payment
-                                        if (paymentResult && paymentResult.id)
-                                          createOrderAfterPayment(paymentResult);
-
-                                      }}
-                                      onPaymentError={(error) => {
-                                        handlePaymentFailure(error);
-                                      }}
-                                    />
-                                  </Elements>
-                                </>
-                              ) : (
-                                <div className="alert alert-info">
-                                  <i className="bi bi-info-circle me-2"></i>
-                                  <strong>Complete the form above</strong> to
-                                  proceed with payment and place your order.
-                                </div>
-                              )
-                            ) : (
+                            {!shippingAddress ? (
+                              <div className="alert alert-info">
+                                <i className="bi bi-info-circle me-2"></i>
+                                <strong>Loading address information...</strong>{" "}
+                                Please wait while we load your shipping details.
+                              </div>
+                            ) : !clientSecret ? (
                               <div className="alert alert-warning">
                                 <i className="bi bi-exclamation-triangle me-2"></i>
                                 <strong>Loading payment system...</strong>{" "}
                                 Please wait while we prepare your payment.
                               </div>
+                            ) : !isFormValid ? (
+                              <div className="alert alert-info">
+                                <i className="bi bi-info-circle me-2"></i>
+                                <strong>Complete the form above</strong> to
+                                proceed with payment and place your order.
+                              </div>
+                            ) : (
+                              <>
+                                {isProcessingPayment && (
+                                  <div className="alert alert-info mb-3">
+                                    <div className="d-flex align-items-center">
+                                      <div className="spinner-border spinner-border-sm me-2" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                      </div>
+                                      <strong>Processing payment...</strong> Please wait while we complete your transaction.
+                                    </div>
+                                  </div>
+                                )}
+                                {paymentError && (
+                                  <div className="alert alert-danger mb-3">
+                                    <div className="d-flex align-items-center justify-content-between">
+                                      <div>
+                                        <i className="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>Payment Error:</strong> {paymentError}
+                                        {paymentRetryCount > 0 && (
+                                          <div className="mt-1 text-muted">
+                                            Attempt {paymentRetryCount} failed
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                <Elements
+                                  stripe={stripePromise}
+                                  options={{
+                                    clientSecret: clientSecret,
+                                    theme: "stripe",
+                                  }}
+                                >
+                                  <PaymentSection
+                                    shippingAddress={shippingAddress}
+                                    clientSecret={clientSecret}
+                                    amount={stripeFeeCalculation.adjustedAmount}
+                                    onPaymentSuccess={(paymentResult) => {
+                                      console.log(
+                                        "Payment successful:",
+                                        paymentResult
+                                      );
+                                      // setIsProcessingPayment(true);
+                                      // setPaymentConfirmationModalState(true);
+                                      // Create order after successful payment
+                                      if (paymentResult && paymentResult.id)
+                                        createOrderAfterPayment(paymentResult);
+
+                                    }}
+                                    onPaymentError={(error) => {
+                                      handlePaymentFailure(error);
+                                    }}
+                                  />
+                                </Elements>
+                              </>
                             )}
                           </div>
                         </div>
