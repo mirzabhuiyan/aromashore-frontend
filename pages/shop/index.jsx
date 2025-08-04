@@ -190,6 +190,24 @@ export default function Index() {
 		}
 	};
 
+	const clearAllFilters = () => {
+		setIsLoading(true);
+		// Clear brand filters
+		const clearedBrandList = productBrandList.map((brand) => ({
+			...brand,
+			isChecked: false
+		}));
+		setProductBrandList(clearedBrandList);
+		setSelectedBrandIdList([]);
+		
+		// Clear category filter by redirecting to shop without category
+		router.push("/shop");
+		
+		// Reset to show all products
+		setProductList(allProductList);
+		setIsLoading(false);
+	};
+
 	return (
 		<Layout title='Shop Page'>
 			<div id='content'>
@@ -242,9 +260,30 @@ export default function Index() {
 										<div className='shop-sidebar__section -refine'>
 											<div className='section-title -style1 -medium' style={{ marginBottom: "1.875em" }}>
 												<h2 className='sidebar-refine-search'>
-													Brand
+													Inspired By
 												</h2>
-												<i className="fas fa-filter fa-lg mobile-filter" onClick={() => setShowBrandFilter(ov => !ov)}></i>
+												<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+													<i className="fas fa-filter fa-lg mobile-filter" onClick={() => setShowBrandFilter(ov => !ov)}></i>
+													{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all")) && (
+														<button 
+															onClick={clearAllFilters}
+															style={{
+																background: 'none',
+																border: 'none',
+																color: '#dc3545',
+																fontSize: '14px',
+																fontWeight: '500',
+																cursor: 'pointer',
+																padding: '4px 8px',
+																borderRadius: '4px',
+																textDecoration: 'underline'
+															}}
+															title="Clear all filters"
+														>
+															Clear
+														</button>
+													)}
+												</div>
 											</div>
 											<div className="mobile-filter">
 												{showBrandFilter ?
