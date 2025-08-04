@@ -66,7 +66,7 @@ export function getCartDetailsByCustomerId(customerId) {
 }
 
 export function placeOrder(payload) {
-  console.log(payload)
+  console.log("[CHECKOUT] placeOrder payload --------> ", payload);
   return http.post(
     apiUrl + `/web/customer/order/add`,
     payload,
