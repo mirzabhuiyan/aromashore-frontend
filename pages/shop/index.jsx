@@ -7,7 +7,7 @@ import Link from "next/link";
 import Product from "../../components/shop/Product";
 import TablePagination from '@mui/material/TablePagination';
 
-function Pagination({ recordCount = 0, recordPerPage = 10, setPageNo = () => { }, setPageSize = () => { } }) {
+function Pagination({ recordCount = 0, recordPerPage = 24, setPageNo = () => { }, setPageSize = () => { } }) {
 	const [page, setPage] = React.useState(0);
 	const [rowsPerPage, setRowsPerPage] = React.useState(recordPerPage);
 
@@ -36,6 +36,8 @@ function Pagination({ recordCount = 0, recordPerPage = 10, setPageNo = () => { }
 			onPageChange={handleChangePage}
 			rowsPerPage={rowsPerPage}
 			onRowsPerPageChange={handleChangeRowsPerPage}
+			rowsPerPageOptions={[10, 24, 50, 100]}
+			labelRowsPerPage="Item per Page:"
 		/>
 	);
 }
@@ -45,7 +47,8 @@ export default function Index() {
 	const router = useRouter();
 	const query = router.query;
 	const [allProductList, setAllProductList] = useState([]);
-	const [productList, setProductList] = useState([]);
+	const [filteredProductList, setFilteredProductList] = useState([]);
+	const [displayedProductList, setDisplayedProductList] = useState([]);
 	const [productBrandList, setProductBrandList] = useState([]);
 	const [selectedBrandIdList, setSelectedBrandIdList] = useState([]);
 	const [categoryList, setCategoryList] = useState([]);
@@ -53,10 +56,12 @@ export default function Index() {
 
 	const [totalCount, setTotalCount] = useState(0);
 	const [pageNo, setPageNo] = useState(0);
-	const [pageSize, setPageSize] = useState(10);
+	const [pageSize, setPageSize] = useState(24);
 
 	const [showBrandFilter, setShowBrandFilter] = useState(false);
 	const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+	const [perfumeNotes, setPerfumeNotes] = useState("");
+	const [season, setSeason] = useState("");
 
 	useEffect(() => {
 		axios.get(apiUrl + "/web/getall/brand").then((response) => {
@@ -81,60 +86,70 @@ export default function Index() {
 	useEffect(() => {
 		axios
 			.post(apiUrl + "/web/getall/product", {
-				pageSize: pageSize,
-				pageNo: pageNo
+				pageSize: 1000, // Get all products for client-side filtering
+				pageNo: 0
 			})
 			.then((response) => {
 				// console.log(response);
 				if (response.data.appStatus) {
 					setAllProductList(response.data.appData.rows);
-					const allProducts = response.data.appData.rows;
-					if (query.category && query.category !== "" && query.category !== "all") {
-						const localProductList = allProducts.filter((pl) => pl.productcategory.id === Number(query.category));
-						setProductList(localProductList);
-					} else {
-						setProductList(response.data.appData.rows);
-						setTotalCount(response.data.appData.count);
-					}
 					setIsLoading(false);
 				}
 			});
-	}, [query.category, pageNo, pageSize]);
+	}, []);
+
+	// Handle filtering and pagination
+	useEffect(() => {
+		let filtered = [...allProductList];
+
+		// Apply category filter
+		if (query.category && query.category !== "" && query.category !== "all") {
+			filtered = filtered.filter((pl) => pl.productcategory.id === Number(query.category));
+		}
+
+		// Apply brand filter
+		if (selectedBrandIdList.length > 0) {
+			filtered = filtered.filter((pl) => selectedBrandIdList.includes(pl.productbrand.id));
+		}
+
+		// Apply perfume notes filter
+		if (perfumeNotes.trim() !== "") {
+			filtered = filtered.filter((pl) => 
+				pl.perfume_notes && 
+				pl.perfume_notes.toLowerCase().includes(perfumeNotes.toLowerCase())
+			);
+		}
+
+		// Apply season filter
+		if (season.trim() !== "") {
+			filtered = filtered.filter((pl) => 
+				pl.season && 
+				pl.season.toLowerCase().includes(season.toLowerCase())
+			);
+		}
+
+		setFilteredProductList(filtered);
+		setTotalCount(filtered.length);
+
+		// Apply pagination
+		const startIndex = pageNo * pageSize;
+		const endIndex = startIndex + pageSize;
+		const paginatedProducts = filtered.slice(startIndex, endIndex);
+		setDisplayedProductList(paginatedProducts);
+	}, [allProductList, query.category, selectedBrandIdList, perfumeNotes, season, pageNo, pageSize]);
 
 	const handleCategorySelect = (categoryId) => {
 		setIsLoading(true);
-		let href = "/shop?category=" + categoryId;
-		router.push(href);
-
+		setPageNo(0); // Reset to first page when category changes
+		
 		if (categoryId === "all") {
-			if (selectedBrandIdList.length > 0) {
-				let tempLocalProductList = [];
-				selectedBrandIdList.map((brandId) => {
-					const localProduct = allProductList.filter((pl) => pl.productbrand.id === brandId);
-					tempLocalProductList.push(...localProduct);
-				});
-				setProductList([...tempLocalProductList]);
-				setIsLoading(false);
-			} else {
-				const localProductList = [...allProductList];
-				setProductList(localProductList);
-				setIsLoading(false);
-			}
+			router.push("/shop");
 		} else {
-			const localProductList = allProductList.filter((pl) => pl.productcategory.id === categoryId);
-			if (selectedBrandIdList.length > 0) {
-				let tempLocalProductList = [];
-				selectedBrandIdList.map((brandId) => {
-					const localProduct = localProductList.filter((pl) => pl.productbrand.id === brandId);
-					tempLocalProductList.push(...localProduct);
-				});
-				setProductList([...tempLocalProductList]);
-				setIsLoading(false);
-			} else {
-				setProductList(localProductList);
-				setIsLoading(false);
-			}
+			let href = "/shop?category=" + categoryId;
+			router.push(href);
 		}
+		
+		setIsLoading(false);
 	};
 
 	const handleBandSelect = (event, brand) => {
@@ -155,39 +170,8 @@ export default function Index() {
 				selectedBrandIds.push(brand.id);
 			}
 		});
-		setIsLoading(true);
 		setSelectedBrandIdList(selectedBrandIds);
-
-		if (query.category && query.category !== "" && query.category !== "all") {
-			const localProducts = allProductList.filter((pl) => pl.productcategory.id === Number(query.category));
-			if (selectedBrandIds.length > 0) {
-				let localProductList = [];
-				selectedBrandIds.map((brandId) => {
-					const localProduct = localProducts.filter((pl) => pl.productbrand.id === brandId);
-					localProductList.push(...localProduct);
-				});
-				setProductList([...localProductList]);
-				setIsLoading(false);
-			} else {
-				const localProductList = [...localProducts];
-				setProductList(localProductList);
-				setIsLoading(false);
-			}
-		} else {
-			if (selectedBrandIds.length > 0) {
-				let localProductList = [];
-				selectedBrandIds.map((brandId) => {
-					const localProduct = allProductList.filter((pl) => pl.productbrand.id === brandId);
-					localProductList.push(...localProduct);
-				});
-				setProductList([...localProductList]);
-				setIsLoading(false);
-			} else {
-				const localProductList = [...allProductList];
-				setProductList(localProductList);
-				setIsLoading(false);
-			}
-		}
+		setPageNo(0); // Reset to first page when brand filter changes
 	};
 
 	const clearAllFilters = () => {
@@ -200,11 +184,15 @@ export default function Index() {
 		setProductBrandList(clearedBrandList);
 		setSelectedBrandIdList([]);
 		
+		// Clear search fields
+		setPerfumeNotes("");
+		setSeason("");
+		
 		// Clear category filter by redirecting to shop without category
 		router.push("/shop");
 		
-		// Reset to show all products
-		setProductList(allProductList);
+		// Reset pagination
+		setPageNo(0);
 		setIsLoading(false);
 	};
 
@@ -224,22 +212,114 @@ export default function Index() {
 				<div className='shop'>
 					<div className='container'>
 						<div className='row'>
-							<div className='col-12 col-md-4 col-lg-3'>
-								<div className='shop-sidebar'>
+							<div className='col-12 col-md-5 col-lg-4'>
+								<div className='shop-sidebar' style={{
+									background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+									borderRadius: '16px',
+									boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+									border: '1px solid rgba(255, 255, 255, 0.2)',
+									backdropFilter: 'blur(10px)',
+									padding: '28px',
+									marginBottom: '24px',
+									minWidth: '280px'
+								}}>
 									<div className='shop-sidebar__content'>
-										<div className='shop-sidebar__section -categories'>
-											<div className='section-title -style1 -medium' style={{ marginBottom: "1.875em" }}>
-												<h2 className='sidebar-categories'>
+										<div className='shop-sidebar__section -categories' style={{
+											marginBottom: '32px',
+											padding: '20px',
+											background: 'rgba(255, 255, 255, 0.7)',
+											borderRadius: '12px',
+											border: '1px solid rgba(255, 255, 255, 0.3)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+										}}>
+											<div className='section-title -style1 -medium' style={{ 
+												marginBottom: "1.5em",
+												display: 'flex',
+												justifyContent: 'space-between',
+												alignItems: 'center',
+												borderBottom: '2px solid #e9ecef',
+												paddingBottom: '12px'
+											}}>
+												<h2 className='sidebar-categories' style={{
+													fontSize: '18px',
+													fontWeight: '600',
+													color: '#2c3e50',
+													margin: 0,
+													display: 'flex',
+													alignItems: 'center',
+													gap: '8px'
+												}}>
+													<i className="fas fa-tags" style={{ color: '#6c757d' }}></i>
 													Categories
 												</h2>
-												<i className="fas fa-filter fa-lg mobile-filter" onClick={() => setShowCategoryFilter(ov => !ov)}></i>
+												<i className="fas fa-filter fa-lg mobile-filter" 
+													onClick={() => setShowCategoryFilter(ov => !ov)}
+													style={{
+														color: '#6c757d',
+														cursor: 'pointer',
+														padding: '8px',
+														borderRadius: '6px',
+														transition: 'all 0.3s ease',
+														background: 'rgba(108, 117, 125, 0.1)'
+													}}
+													onMouseEnter={(e) => {
+														e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+														e.target.style.transform = 'scale(1.1)';
+													}}
+													onMouseLeave={(e) => {
+														e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+														e.target.style.transform = 'scale(1)';
+													}}
+												></i>
 											</div>
 											<div className="mobile-filter">
 												{showCategoryFilter ?
-													<ul>
-														<li onClick={() => handleCategorySelect("all")} style={{ cursor: 'pointer' }}>All</li>
+													<ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+														<li onClick={() => handleCategorySelect("all")} style={{ 
+															cursor: 'pointer',
+															padding: '10px 12px',
+															marginBottom: '6px',
+															borderRadius: '8px',
+															background: 'rgba(255, 255, 255, 0.5)',
+															border: '1px solid rgba(255, 255, 255, 0.3)',
+															transition: 'all 0.3s ease',
+															fontWeight: '500',
+															color: '#495057'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+															e.target.style.transform = 'translateX(4px)';
+															e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+															e.target.style.transform = 'translateX(0)';
+															e.target.style.boxShadow = 'none';
+														}}
+														>All</li>
 														{categoryList.map((category) =>
-															<li key={category.id} onClick={() => handleCategorySelect(category.id)} style={{ cursor: 'pointer' }}>
+															<li key={category.id} onClick={() => handleCategorySelect(category.id)} style={{ 
+																cursor: 'pointer',
+																padding: '10px 12px',
+																marginBottom: '6px',
+																borderRadius: '8px',
+																background: 'rgba(255, 255, 255, 0.5)',
+																border: '1px solid rgba(255, 255, 255, 0.3)',
+																transition: 'all 0.3s ease',
+																fontWeight: '500',
+																color: '#495057'
+															}}
+															onMouseEnter={(e) => {
+																e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+																e.target.style.transform = 'translateX(4px)';
+																e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+															}}
+															onMouseLeave={(e) => {
+																e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+																e.target.style.transform = 'translateX(0)';
+																e.target.style.boxShadow = 'none';
+															}}
+															>
 																{category.category_name}
 															</li>
 														)}
@@ -247,51 +327,179 @@ export default function Index() {
 												}
 											</div>
 											<div className="desktop-filter">
-												<ul>
-													<li onClick={() => handleCategorySelect("all")} style={{ cursor: 'pointer' }}>All</li>
+												<ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+													<li onClick={() => handleCategorySelect("all")} style={{ 
+														cursor: 'pointer',
+														padding: '10px 12px',
+														marginBottom: '6px',
+														borderRadius: '8px',
+														background: 'rgba(255, 255, 255, 0.5)',
+														border: '1px solid rgba(255, 255, 255, 0.3)',
+														transition: 'all 0.3s ease',
+														fontWeight: '500',
+														color: '#495057'
+													}}
+													onMouseEnter={(e) => {
+														e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+														e.target.style.transform = 'translateX(4px)';
+														e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+													}}
+													onMouseLeave={(e) => {
+														e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+														e.target.style.transform = 'translateX(0)';
+														e.target.style.boxShadow = 'none';
+													}}
+													>All</li>
 													{categoryList.map((category) =>
-														<li key={category.id} onClick={() => handleCategorySelect(category.id)} style={{ cursor: 'pointer' }}>
+														<li key={category.id} onClick={() => handleCategorySelect(category.id)} style={{ 
+															cursor: 'pointer',
+															padding: '10px 12px',
+															marginBottom: '6px',
+															borderRadius: '8px',
+															background: 'rgba(255, 255, 255, 0.5)',
+															border: '1px solid rgba(255, 255, 255, 0.3)',
+															transition: 'all 0.3s ease',
+															fontWeight: '500',
+															color: '#495057'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+															e.target.style.transform = 'translateX(4px)';
+															e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+															e.target.style.transform = 'translateX(0)';
+															e.target.style.boxShadow = 'none';
+														}}
+														>
 															{category.category_name}
 														</li>
 													)}
 												</ul>
 											</div>
 										</div>
-										<div className='shop-sidebar__section -refine'>
-											<div className='section-title -style1 -medium' style={{ marginBottom: "1.875em" }}>
-												<h2 className='sidebar-refine-search'>
-													Inspired By
-												</h2>
-												<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-													<i className="fas fa-filter fa-lg mobile-filter" onClick={() => setShowBrandFilter(ov => !ov)}></i>
-													{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all")) && (
+										<div className='shop-sidebar__section -refine' style={{
+											marginBottom: '32px',
+											padding: '20px',
+											background: 'rgba(255, 255, 255, 0.7)',
+											borderRadius: '12px',
+											border: '1px solid rgba(255, 255, 255, 0.3)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+										}}>
+											<div className='section-title -style1 -medium' style={{ 
+												marginBottom: "1.5em",
+												borderBottom: '2px solid #e9ecef',
+												paddingBottom: '12px'
+											}}>
+												<div style={{ 
+													display: 'flex', 
+													justifyContent: 'space-between', 
+													alignItems: 'center',
+													marginBottom: '12px'
+												}}>
+													<h2 className='sidebar-refine-search' style={{
+														fontSize: '18px',
+														fontWeight: '600',
+														color: '#2c3e50',
+														margin: 0,
+														display: 'flex',
+														alignItems: 'center',
+														gap: '8px'
+													}}>
+														<i className="fas fa-star" style={{ color: '#6c757d' }}></i>
+														Inspired By
+													</h2>
+													<i className="fas fa-filter fa-lg mobile-filter" 
+														onClick={() => setShowBrandFilter(ov => !ov)}
+														style={{
+															color: '#6c757d',
+															cursor: 'pointer',
+															padding: '8px',
+															borderRadius: '6px',
+															transition: 'all 0.3s ease',
+															background: 'rgba(108, 117, 125, 0.1)'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+															e.target.style.transform = 'scale(1.1)';
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+															e.target.style.transform = 'scale(1)';
+														}}
+													></i>
+												</div>
+												{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
+													<div style={{ 
+														display: 'flex', 
+														justifyContent: 'flex-end',
+														marginTop: '8px'
+													}}>
 														<button 
 															onClick={clearAllFilters}
 															style={{
-																background: 'none',
+																background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
 																border: 'none',
-																color: '#dc3545',
-																fontSize: '14px',
-																fontWeight: '500',
+																color: 'white',
+																fontSize: '12px',
+																fontWeight: '600',
 																cursor: 'pointer',
-																padding: '4px 8px',
-																borderRadius: '4px',
-																textDecoration: 'underline'
+																padding: '8px 16px',
+																borderRadius: '20px',
+																boxShadow: '0 2px 8px rgba(220, 53, 69, 0.3)',
+																transition: 'all 0.3s ease',
+																display: 'flex',
+																alignItems: 'center',
+																gap: '6px'
+															}}
+															onMouseEnter={(e) => {
+																e.target.style.transform = 'translateY(-2px)';
+																e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.4)';
+															}}
+															onMouseLeave={(e) => {
+																e.target.style.transform = 'translateY(0)';
+																e.target.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.3)';
 															}}
 															title="Clear all filters"
 														>
-															Clear
+															<i className="fas fa-times" style={{ fontSize: '10px' }}></i>
+															Clear All
 														</button>
-													)}
-												</div>
+													</div>
+												)}
 											</div>
 											<div className="mobile-filter">
 												{showBrandFilter ?
 													<div className='shop-sidebar__section__item'>
-														<ul>
+														<ul style={{ margin: 0, padding: 0 }}>
 															{productBrandList?.map((brand, i) =>
-																<li key={i}>
-																	<label htmlFor={"brand_id_" + brand.id}>
+																<li key={i} style={{ 
+																	marginBottom: '8px', 
+																	listStyle: 'none',
+																	padding: '8px 12px',
+																	borderRadius: '8px',
+																	background: 'rgba(255, 255, 255, 0.5)',
+																	border: '1px solid rgba(255, 255, 255, 0.3)',
+																	transition: 'all 0.3s ease'
+																}}
+																onMouseEnter={(e) => {
+																	e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+																	e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+																}}
+																onMouseLeave={(e) => {
+																	e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+																	e.target.style.boxShadow = 'none';
+																}}
+																>
+																	<label htmlFor={"brand_id_" + brand.id} style={{ 
+																		display: 'flex', 
+																		alignItems: 'center', 
+																		gap: '12px', 
+																		cursor: 'pointer',
+																		fontWeight: '500',
+																		color: '#495057'
+																	}}>
 																		<input
 																			type='checkbox'
 																			checked={brand.isChecked}
@@ -299,6 +507,12 @@ export default function Index() {
 																			id={"brand_id_" + brand.id}
 																			onChange={(e) => {
 																				handleBandSelect(e.target.checked, brand);
+																			}}
+																			style={{
+																				width: '18px',
+																				height: '18px',
+																				accentColor: '#007bff',
+																				cursor: 'pointer'
 																			}}
 																		/>
 																		{brand.name}
@@ -311,10 +525,34 @@ export default function Index() {
 											</div>
 											<div className="desktop-filter">
 												<div className='shop-sidebar__section__item'>
-													<ul>
+													<ul style={{ margin: 0, padding: 0 }}>
 														{productBrandList?.map((brand, i) =>
-															<li key={i}>
-																<label htmlFor={"brand_id_" + brand.id}>
+															<li key={i} style={{ 
+																marginBottom: '8px', 
+																listStyle: 'none',
+																padding: '8px 12px',
+																borderRadius: '8px',
+																background: 'rgba(255, 255, 255, 0.5)',
+																border: '1px solid rgba(255, 255, 255, 0.3)',
+																transition: 'all 0.3s ease'
+															}}
+															onMouseEnter={(e) => {
+																e.target.style.background = 'rgba(255, 255, 255, 0.8)';
+																e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+															}}
+															onMouseLeave={(e) => {
+																e.target.style.background = 'rgba(255, 255, 255, 0.5)';
+																e.target.style.boxShadow = 'none';
+															}}
+															>
+																<label htmlFor={"brand_id_" + brand.id} style={{ 
+																	display: 'flex', 
+																	alignItems: 'center', 
+																	gap: '12px', 
+																	cursor: 'pointer',
+																	fontWeight: '500',
+																	color: '#495057'
+																}}>
 																	<input
 																		type='checkbox'
 																		checked={brand.isChecked}
@@ -322,6 +560,12 @@ export default function Index() {
 																		id={"brand_id_" + brand.id}
 																		onChange={(e) => {
 																			handleBandSelect(e.target.checked, brand);
+																		}}
+																		style={{
+																			width: '18px',
+																			height: '18px',
+																			accentColor: '#007bff',
+																			cursor: 'pointer'
 																		}}
 																	/>
 																	{brand.name}
@@ -332,10 +576,126 @@ export default function Index() {
 												</div>
 											</div>
 										</div>
+										
+										{/* Perfume Notes Search */}
+										<div className='shop-sidebar__section -search' style={{
+											marginBottom: '32px',
+											padding: '20px',
+											background: 'rgba(255, 255, 255, 0.7)',
+											borderRadius: '12px',
+											border: '1px solid rgba(255, 255, 255, 0.3)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+										}}>
+											<div className='section-title -style1 -medium' style={{ 
+												marginBottom: "1.5em",
+												borderBottom: '2px solid #e9ecef',
+												paddingBottom: '12px'
+											}}>
+												<h2 className='sidebar-search' style={{
+													fontSize: '18px',
+													fontWeight: '600',
+													color: '#2c3e50',
+													margin: 0,
+													display: 'flex',
+													alignItems: 'center',
+													gap: '8px'
+												}}>
+													<i className="fas fa-spray-can" style={{ color: '#6c757d' }}></i>
+													Perfume Notes
+												</h2>
+											</div>
+											<div className='shop-sidebar__section__item'>
+												<input
+													type='text'
+													placeholder='Search by perfume notes...'
+													value={perfumeNotes}
+													onChange={(e) => {
+														setPerfumeNotes(e.target.value);
+														setPageNo(0); // Reset to first page when search changes
+													}}
+													style={{
+														width: '100%',
+														padding: '12px 16px',
+														border: '2px solid rgba(255, 255, 255, 0.5)',
+														borderRadius: '10px',
+														fontSize: '14px',
+														background: 'rgba(255, 255, 255, 0.8)',
+														transition: 'all 0.3s ease',
+														boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+													}}
+													onFocus={(e) => {
+														e.target.style.borderColor = '#007bff';
+														e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+													}}
+													onBlur={(e) => {
+														e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+														e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+													}}
+												/>
+											</div>
+										</div>
+
+										{/* Season Search */}
+										<div className='shop-sidebar__section -search' style={{
+											marginBottom: '32px',
+											padding: '20px',
+											background: 'rgba(255, 255, 255, 0.7)',
+											borderRadius: '12px',
+											border: '1px solid rgba(255, 255, 255, 0.3)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+										}}>
+											<div className='section-title -style1 -medium' style={{ 
+												marginBottom: "1.5em",
+												borderBottom: '2px solid #e9ecef',
+												paddingBottom: '12px'
+											}}>
+												<h2 className='sidebar-search' style={{
+													fontSize: '18px',
+													fontWeight: '600',
+													color: '#2c3e50',
+													margin: 0,
+													display: 'flex',
+													alignItems: 'center',
+													gap: '8px'
+												}}>
+													<i className="fas fa-sun" style={{ color: '#6c757d' }}></i>
+													Season
+												</h2>
+											</div>
+											<div className='shop-sidebar__section__item'>
+												<input
+													type='text'
+													placeholder='Search by season...'
+													value={season}
+													onChange={(e) => {
+														setSeason(e.target.value);
+														setPageNo(0); // Reset to first page when search changes
+													}}
+													style={{
+														width: '100%',
+														padding: '12px 16px',
+														border: '2px solid rgba(255, 255, 255, 0.5)',
+														borderRadius: '10px',
+														fontSize: '14px',
+														background: 'rgba(255, 255, 255, 0.8)',
+														transition: 'all 0.3s ease',
+														boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+													}}
+													onFocus={(e) => {
+														e.target.style.borderColor = '#007bff';
+														e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+													}}
+													onBlur={(e) => {
+														e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+														e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+													}}
+												/>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
-							<div className='col-12 col-md-8 col-lg-9'>
+							<div className='col-12 col-md-7 col-lg-8'>
 								<div className='shop-header'>
 									<div className='shop-header__view'>
 										<div className='shop-header__view__icon'>
@@ -366,8 +726,8 @@ export default function Index() {
 											<div className='shop-products__gird'>
 												<div className='row'>
 													{
-														productList.length > 0 &&
-														productList.map((product, i) => <Product key={i} product={product} viewType={isGridView} shopPage={true} />)
+														displayedProductList.length > 0 &&
+														displayedProductList.map((product, i) => <Product key={i} product={product} viewType={isGridView} shopPage={true} />)
 													}
 												</div>
 												<div className='row'>
