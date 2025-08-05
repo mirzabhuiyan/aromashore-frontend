@@ -13,6 +13,7 @@ import { calculateCart } from "../services/utilityService";
 import { toast, ToastContainer } from "react-toastify";
 import Script from 'next/script';
 import { globalProductImageAddress } from '../config';
+import PromotionalPopup from '../components/common/PromotionalPopup';
 
 function MyApp({
   Component,
@@ -269,6 +270,7 @@ function MyApp({
       <ToastContainer />
       <AppStore.Provider value={storeValue}>
         <Component {...pageProps} />
+        <PromotionalPopup />
       </AppStore.Provider>
     </>
   );
