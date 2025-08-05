@@ -151,11 +151,6 @@ const PromotionalPopup = () => {
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className={styles.footer}>
-          Powered by AfterShip
-        </div>
       </div>
     </div>
   );
