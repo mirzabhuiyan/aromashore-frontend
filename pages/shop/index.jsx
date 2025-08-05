@@ -410,64 +410,60 @@ export default function Index() {
 														<i className="fas fa-star" style={{ color: '#6c757d' }}></i>
 														Inspired By
 													</h2>
-													<i className="fas fa-filter fa-lg mobile-filter" 
-														onClick={() => setShowBrandFilter(ov => !ov)}
-														style={{
-															color: '#6c757d',
-															cursor: 'pointer',
-															padding: '8px',
-															borderRadius: '6px',
-															transition: 'all 0.3s ease',
-															background: 'rgba(108, 117, 125, 0.1)'
-														}}
-														onMouseEnter={(e) => {
-															e.target.style.background = 'rgba(108, 117, 125, 0.2)';
-															e.target.style.transform = 'scale(1.1)';
-														}}
-														onMouseLeave={(e) => {
-															e.target.style.background = 'rgba(108, 117, 125, 0.1)';
-															e.target.style.transform = 'scale(1)';
-														}}
-													></i>
-												</div>
-												{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
-													<div style={{ 
-														display: 'flex', 
-														justifyContent: 'flex-end',
-														marginTop: '8px'
-													}}>
-														<button 
-															onClick={clearAllFilters}
+													<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+														{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
+															<button 
+																onClick={clearAllFilters}
+																style={{
+																	background: 'rgba(108, 117, 125, 0.1)',
+																	border: '1px solid rgba(108, 117, 125, 0.2)',
+																	color: '#6c757d',
+																	cursor: 'pointer',
+																	padding: '6px 8px',
+																	borderRadius: '6px',
+																	transition: 'all 0.3s ease',
+																	display: 'flex',
+																	alignItems: 'center',
+																	justifyContent: 'center',
+																	minWidth: '32px',
+																	height: '32px'
+																}}
+																onMouseEnter={(e) => {
+																	e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+																	e.target.style.borderColor = 'rgba(108, 117, 125, 0.4)';
+																	e.target.style.transform = 'scale(1.05)';
+																}}
+																onMouseLeave={(e) => {
+																	e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+																	e.target.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+																	e.target.style.transform = 'scale(1)';
+																}}
+																title="Clear all filters"
+															>
+																<i className="fas fa-eraser" style={{ fontSize: '14px' }}></i>
+															</button>
+														)}
+														<i className="fas fa-filter fa-lg mobile-filter" 
+															onClick={() => setShowBrandFilter(ov => !ov)}
 															style={{
-																background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-																border: 'none',
-																color: 'white',
-																fontSize: '12px',
-																fontWeight: '600',
+																color: '#6c757d',
 																cursor: 'pointer',
-																padding: '8px 16px',
-																borderRadius: '20px',
-																boxShadow: '0 2px 8px rgba(220, 53, 69, 0.3)',
+																padding: '8px',
+																borderRadius: '6px',
 																transition: 'all 0.3s ease',
-																display: 'flex',
-																alignItems: 'center',
-																gap: '6px'
+																background: 'rgba(108, 117, 125, 0.1)'
 															}}
 															onMouseEnter={(e) => {
-																e.target.style.transform = 'translateY(-2px)';
-																e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.4)';
+																e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+																e.target.style.transform = 'scale(1.1)';
 															}}
 															onMouseLeave={(e) => {
-																e.target.style.transform = 'translateY(0)';
-																e.target.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.3)';
+																e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+																e.target.style.transform = 'scale(1)';
 															}}
-															title="Clear all filters"
-														>
-															<i className="fas fa-times" style={{ fontSize: '10px' }}></i>
-															Clear All
-														</button>
+														></i>
 													</div>
-												)}
+												</div>
 											</div>
 											<div className="mobile-filter">
 												{showBrandFilter ?
