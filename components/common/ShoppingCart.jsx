@@ -63,18 +63,22 @@ const ShoppingCart = ({ isCartOpen }) => {
 												<div key={i}>
 													<ul>
 														<li>
+															Name&nbsp;
+															<p>{product.product_name}</p>
+														</li>
+														<li>
 															Size&nbsp;
 															<p>
 																{product.size}&nbsp;{product.size_unit}
 															</p>
 														</li>
 														<li>
-															Price&nbsp;
-															<p>{product.price}</p>
-														</li>
-														<li>
 															Qty.&nbsp;
 															<p>{product.quantity}</p>
+														</li>
+														<li>
+															Price&nbsp;
+															<p>{product.price}</p>
 														</li>
 														{/* <li>
 															<a

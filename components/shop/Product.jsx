@@ -27,14 +27,19 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 	// const { add_TO_CART } = useContext(AppStore);
 	// const [tabType, setTabType] = useState(1);
 	// const [qty, setQty] = useState(1);
-	const { id, product_no, name, productcategory, productbrand, productdetail, productreviews, productimages, productproperties } = product;
+	const { id, product_no, name, productcategory, productbrands, productdetail, productreviews, productimages, productproperties } = product;
+	
+	// Handle both productbrand (singular) and productbrands (plural) for compatibility
+	const productbrand = productbrands && Array.isArray(productbrands) && productbrands.length > 0 ? productbrands[0] : productbrands;
 
 	let totalReviewers = 0;
 	let totalRating = 0;
-	productreviews.forEach(function (item) {
-		totalReviewers++;
-		totalRating = totalRating + item.ratings;
-	});
+	if (productreviews && Array.isArray(productreviews)) {
+		productreviews.forEach(function (item) {
+			totalReviewers++;
+			totalRating = totalRating + item.ratings;
+		});
+	}
 	let avgRating = 0;
 	let totalRatingFrac = 0;
 	if (totalReviewers) {
@@ -49,7 +54,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 		return index + 1;
 	});
 
-	const productpro = productproperties.length > 0 ? productproperties[0] : [];
+	const productpro = productproperties && Array.isArray(productproperties) && productproperties.length > 0 ? productproperties[0] : {};
 
 	// Determine which price to show
 	const displayPrice = isDistributor && productpro.dist_price
@@ -74,7 +79,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								)} */}
 								<div className='product-thumb'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages[0] ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages && Array.isArray(productimages) && productimages[0] ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 									<div className='product-thumb__actions'>
 										{/* <div className='product-btn'>
@@ -109,7 +114,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								</div>
 								<div className='product-content'>
 									<div className='product-content__header'>
-										<div className='product-category text-uppercase'>{productcategory.category_name}</div>
+										<div className='product-category text-uppercase'>{productcategory && productcategory.category_name ? productcategory.category_name : 'Uncategorized'}</div>
 										<div className='rate'>
 											{avgRatingRange.map((item, i) => {
 												return <i key={i} className='fas fa-star text-warning'></i>;
@@ -141,7 +146,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 							<div className='row'>
 								<div className='col-12 col-md-5'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages.length > 0 ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages && Array.isArray(productimages) && productimages.length > 0 ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 								</div>
 								<div className='col-12 col-md-7'>

@@ -515,9 +515,17 @@ function ProductDetail() {
 							}
 						</div>
 						{
-							productDetails.productbrandId ?
-								<SimilarProduct brandId={productDetails.productbrandId} />
-								: <></>
+							productDetails.productbrand && productDetails.productbrand.id ? (
+								<>
+									{console.log('Product brand info:', productDetails.productbrand)}
+									<SimilarProduct brandId={productDetails.productbrand.id} currentProductId={productDetails.id} />
+								</>
+							) : (
+								<>
+									{console.log('No product brand found:', productDetails.productbrand)}
+									<></>
+								</>
+							)
 						}
 						<PopularProduct />
 					</>
