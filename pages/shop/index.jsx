@@ -212,7 +212,7 @@ export default function Index() {
 				<div className='shop'>
 					<div className='container'>
 						<div className='row'>
-							<div className='col-12 col-md-5 col-lg-4'>
+							<div className='col-12 col-md-4 col-lg-3'>
 								<div className='shop-sidebar' style={{
 									background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
 									borderRadius: '16px',
@@ -695,7 +695,7 @@ export default function Index() {
 									</div>
 								</div>
 							</div>
-							<div className='col-12 col-md-7 col-lg-8'>
+							<div className='col-12 col-md-8 col-lg-9'>
 								<div className='shop-header'>
 									<div className='shop-header__view'>
 										<div className='shop-header__view__icon'>
