@@ -16,6 +16,20 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { globalProductImageAddress } from '../../config';
 
+// Helper function to get proper product image URL
+const getProductImageUrl = (imageData) => {
+  if (!imageData) return "/app/assets/images/200.svg";
+  
+  // Handle both old base64 and new file-based images
+  if (imageData.startsWith('data:')) {
+    return imageData; // Base64 image
+  } else if (imageData.startsWith('http')) {
+    return imageData; // Already a full URL
+  } else {
+    return `${globalProductImageAddress}${imageData}`; // File-based image
+  }
+};
+
 function AddToCart({ ...props }) {
 	const [status, setStatus] = React.useState("removed");
 
@@ -270,7 +284,7 @@ function ProductDetail() {
 																return (
 																	<SwiperSlide key={index}>
 																		<div key={item.id} className='slider__item'>
-																			<img crossOrigin="anonymous" src={item.image ? item.image : "/app/assets/images/200.svg"} alt={item.name} width={500} height={500} />
+																			<img crossOrigin="anonymous" src={getProductImageUrl(item.image)} alt={item.name} width={500} height={500} />
 																		</div>
 																	</SwiperSlide>
 																);
@@ -501,9 +515,17 @@ function ProductDetail() {
 							}
 						</div>
 						{
-							productDetails.productbrandId ?
-								<SimilarProduct brandId={productDetails.productbrandId} />
-								: <></>
+							productDetails.productbrand && productDetails.productbrand.id ? (
+								<>
+									{console.log('Product brand info:', productDetails.productbrand)}
+									<SimilarProduct brandId={productDetails.productbrand.id} currentProductId={productDetails.id} />
+								</>
+							) : (
+								<>
+									{console.log('No product brand found:', productDetails.productbrand)}
+									<></>
+								</>
+							)
 						}
 						<PopularProduct />
 					</>
