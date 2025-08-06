@@ -20,25 +20,47 @@ function ForgotPassword({ host }) {
 	};
 
 	const handleSubmit = async (e) => {
-		// console.log('handleSubmit', inputs);
 		e.preventDefault();
-		if (!inputs.email || !inputs.username) return;
+		
+		// Validation
+		if (!inputs.email || !inputs.username) {
+			toast.error('Please fill in all fields');
+			return;
+		}
+		
+		// Email validation
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(inputs.email)) {
+			toast.error('Please enter a valid email address');
+			return;
+		}
+		
+		// Phone number validation (basic)
+		if (inputs.username.length < 10) {
+			toast.error('Please enter a valid phone number');
+			return;
+		}
+		
 		try {
 			let response = await forgotPassword(inputs);
-			// console.log(response.data)
 			toast(response.data.appMessage);
 			if (response.data.appStatus) {
-				// console.log(response.data.appStatus)
 				setInputs({
 					email: '',
 					username: ''
 				});
+				// Navigate to reset password page with tokenId
 				router.push({
-					pathname: `../reset-password/[email]`,
-					query: { email: inputs.email },
-				})
+					pathname: `/reset-password/${encodeURIComponent(inputs.email)}`,
+					query: { 
+						email: inputs.email,
+						tokenId: response.data.appData.tokenId 
+					},
+				});
 			}
-		} catch (error) { }
+		} catch (error) {
+			toast.error('An error occurred. Please try again.');
+		}
 	};
 
 	return (
@@ -57,7 +79,7 @@ function ForgotPassword({ host }) {
 										<form className='mt-4' onSubmit={handleSubmit}>
 											<div className='myform-group'>
 												<div className='col-12'>
-													<input className='form-control myform-control' type='text' name='username' value={inputs.username} onChange={handleChange} placeholder='Enter Username' />
+													<input className='form-control myform-control' type='text' name='username' value={inputs.username} onChange={handleChange} placeholder='Enter Phone Number' />
 												</div>
 											</div>
 											<div className='myform-group'>
