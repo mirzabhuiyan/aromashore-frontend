@@ -127,15 +127,39 @@ export default function Index({ user, customerData }) {
     adjustedAmount: 0,
   });
 
+  // Add state to track original shipping cost and markup
+  const [shippingCostBreakdown, setShippingCostBreakdown] = useState({
+    originalCost: 0,
+    markupAmount: 0,
+    totalCost: 0,
+  });
+
+  // Add state for discount code
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+
   // Recalculate fee when shipping service or total amount changes
   useEffect(() => {
-    const shippingCost = selectedShippingService
+    const originalShippingCost = selectedShippingService
       ? parseFloat(selectedShippingService.price)
       : 0;
-    const totalWithShipping = totalAmount + shippingCost;
-    const feeCalc = calculateStripeFee(totalWithShipping);
+    const markupAmount = originalShippingCost * 0.6; // 60% markup (1.6x total)
+    const totalShippingCost = originalShippingCost + markupAmount;
+    
+    setShippingCostBreakdown({
+      originalCost: originalShippingCost,
+      markupAmount: markupAmount,
+      totalCost: totalShippingCost,
+    });
+    
+    const subtotalWithShipping = totalAmount + totalShippingCost;
+    const taxAmount = shippingAddress?.tax_rate ? (subtotalWithShipping * parseFloat(shippingAddress.tax_rate) / 100) : 0;
+    const subtotalAfterTax = subtotalWithShipping + taxAmount;
+    const totalAfterDiscount = subtotalAfterTax - discountAmount;
+    const feeCalc = calculateStripeFee(totalAfterDiscount);
     setStripeFeeCalculation(feeCalc);
-  }, [totalAmount, selectedShippingService]);
+  }, [totalAmount, selectedShippingService, shippingAddress?.tax_rate, discountAmount]);
 
   useEffect(() => {
     getCountriesList()
@@ -329,15 +353,19 @@ export default function Index({ user, customerData }) {
 
   useEffect(() => {
     if (shippingAddress && totalAmount > 0) {
-      // Calculate total amount including shipping
-      const shippingCost = selectedShippingService
+      // Calculate total amount including shipping (with 1.6x markup)
+      const originalShippingCost = selectedShippingService
         ? parseFloat(selectedShippingService.price)
         : 0;
-      const totalWithShipping = totalAmount + shippingCost;
+      const markupAmount = originalShippingCost * 0.6;
+      const totalShippingCost = originalShippingCost + markupAmount;
+      const totalWithShipping = totalAmount + totalShippingCost;
 
       console.log("shippingAddress --------> ", shippingAddress);
       console.log("totalAmount --------> ", totalAmount);
-      console.log("shippingCost --------> ", shippingCost);
+      console.log("originalShippingCost --------> ", originalShippingCost);
+      console.log("markupAmount --------> ", markupAmount);
+      console.log("totalShippingCost --------> ", totalShippingCost);
       console.log("totalWithShipping --------> ", totalWithShipping);
     }
   }, [shippingAddress, totalAmount, selectedShippingService]);
@@ -709,14 +737,23 @@ export default function Index({ user, customerData }) {
         cartProducts.push(cartData);
       });
 
-      // Calculate total with shipping
-      const shippingCost = parseFloat(selectedShippingService.price) || 0;
-      const totalWithShipping = totalAmount + shippingCost;
+      // Calculate total with shipping (using the 1.6x markup)
+      const originalShippingCost = parseFloat(selectedShippingService.price) || 0;
+      const markupAmount = originalShippingCost * 0.6;
+      const totalShippingCost = originalShippingCost + markupAmount;
+      const subtotalWithShipping = totalAmount + totalShippingCost;
+      const taxAmount = shippingAddress?.tax_rate ? (subtotalWithShipping * parseFloat(shippingAddress.tax_rate) / 100) : 0;
+      const subtotalAfterTax = subtotalWithShipping + taxAmount;
+      const totalAfterDiscount = subtotalAfterTax - discountAmount;
+      const finalTotal = totalAfterDiscount;
 
       let shippingAddressCopy = { ...shippingAddress };
       shippingAddressCopy.products = JSON.stringify(cartProducts);
-      shippingAddressCopy.amount = totalWithShipping;
+      shippingAddressCopy.amount = finalTotal;
       shippingAddressCopy.total_weight = totalWeight;
+      shippingAddressCopy.tax_amount = taxAmount;
+      shippingAddressCopy.discount_amount = discountAmount;
+      shippingAddressCopy.discount_code = discountCode;
       shippingAddressCopy.customer_name =
         (shippingAddressCopy?.firstname || "") +
         " " +
@@ -726,7 +763,9 @@ export default function Index({ user, customerData }) {
       shippingAddressCopy.service_code = selectedShippingService.code;
       shippingAddressCopy.service_name = selectedShippingService.name;
       shippingAddressCopy.carrier = selectedShippingService.carrier;
-      shippingAddressCopy.shipping_cost = shippingCost;
+      shippingAddressCopy.shipping_cost = totalShippingCost;
+      shippingAddressCopy.original_shipping_cost = originalShippingCost;
+      shippingAddressCopy.shipping_markup = markupAmount;
 
       // Add payment information
       shippingAddressCopy.payment_intent_id =
@@ -831,6 +870,40 @@ export default function Index({ user, customerData }) {
     setPaymentRetryCount(0);
     setIsProcessingPayment(false);
     setPaymentConfirmationModalState(false);
+  };
+
+  // Function to apply discount code
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      toast.error("Please enter a discount code");
+      return;
+    }
+
+    setIsApplyingDiscount(true);
+    try {
+      // This would typically call an API to validate the discount code
+      // For now, we'll simulate a 10% discount
+      const discountPercent = 10;
+      const subtotalWithShipping = totalAmount + shippingCostBreakdown.totalCost;
+      const taxAmount = shippingAddress?.tax_rate ? (subtotalWithShipping * parseFloat(shippingAddress.tax_rate) / 100) : 0;
+      const subtotalAfterTax = subtotalWithShipping + taxAmount;
+      const calculatedDiscount = (subtotalAfterTax * discountPercent) / 100;
+      
+      setDiscountAmount(calculatedDiscount);
+      toast.success(`Discount code applied! You saved $${calculatedDiscount.toFixed(2)}`);
+    } catch (error) {
+      toast.error("Invalid discount code");
+      setDiscountAmount(0);
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  // Function to remove discount
+  const handleRemoveDiscount = () => {
+    setDiscountCode("");
+    setDiscountAmount(0);
+    toast.info("Discount code removed");
   };
 
   const handleAddressLineOneBlur = async (e) => {
@@ -1403,7 +1476,12 @@ export default function Index({ user, customerData }) {
                           </div>
                           {/* Shipping Method Card - Added below Delivery Card */}
                           <div className="card mt-4">
-                            <div className="card-header">Shipping method</div>
+                            <div className="card-header">
+                              Shipping method
+                              <small className="text-muted ms-2">
+                                (Prices include service & handling fees)
+                              </small>
+                            </div>
                             <div className="card-body">
                               <div className="shipping-method-options">
                                 {availableShippingServices.length === 0 ? (
@@ -1490,8 +1568,15 @@ export default function Index({ user, customerData }) {
                                             >
                                               ({svc.carrier} -{" "}
                                               {svc.deliveryTime ||
-                                                "2-5 Business Days"}
-                                              )
+                                                "2-5 Business Days"})
+                                            </div>
+                                            <div
+                                              style={{
+                                                color: "#888",
+                                                fontSize: "12px",
+                                              }}
+                                            >
+                                              Base: ${parseFloat(svc.price).toFixed(2)} + Service Fee
                                             </div>
                                           </div>
                                         </div>
@@ -1502,13 +1587,66 @@ export default function Index({ user, customerData }) {
                                             color: "#333",
                                           }}
                                         >
-                                          ${parseFloat(svc.price).toFixed(2)}
+                                          ${(parseFloat(svc.price) * 1.6).toFixed(2)}
                                         </div>
                                       </div>
                                     </div>
                                   ))
                                 )}
                               </div>
+                            </div>
+                          </div>
+                          
+                          {/* Discount Code Card */}
+                          <div className="card mt-4">
+                            <div className="card-header">Discount Code</div>
+                            <div className="card-body">
+                              <div className="row">
+                                <div className="col-md-8">
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Enter discount code"
+                                    value={discountCode}
+                                    onChange={(e) => setDiscountCode(e.target.value)}
+                                    disabled={isApplyingDiscount}
+                                  />
+                                </div>
+                                <div className="col-md-4">
+                                  {discountAmount > 0 ? (
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-danger w-100"
+                                      onClick={handleRemoveDiscount}
+                                      disabled={isApplyingDiscount}
+                                    >
+                                      Remove
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary w-100"
+                                      onClick={handleApplyDiscount}
+                                      disabled={isApplyingDiscount || !discountCode.trim()}
+                                    >
+                                      {isApplyingDiscount ? (
+                                        <>
+                                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                          Applying...
+                                        </>
+                                      ) : (
+                                        "Apply"
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              {discountAmount > 0 && (
+                                <div className="mt-2 text-success">
+                                  <i className="bi bi-check-circle me-1"></i>
+                                  Discount applied: -${discountAmount.toFixed(2)}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div>
@@ -1658,43 +1796,62 @@ export default function Index({ user, customerData }) {
                               <table>
                                 <tbody>
                                   <tr>
-                                    <td className="text-start" colSpan={2}>
+                                    <td className="text-start">
                                       Subtotal:
                                     </td>
-                                    <td className="text-end" colSpan={2}>
+                                    <td className="text-end">
                                       $&nbsp;{totalAmount.toFixed(2)}
                                     </td>
                                   </tr>
                                   {selectedShippingService && (
+                                    <>
+                                      <tr>
+                                        <td className="text-start">
+                                          {selectedShippingService.carrier} {selectedShippingService.name}:
+                                        </td>
+                                        <td className="text-end">
+                                          $&nbsp;{shippingCostBreakdown.originalCost.toFixed(2)}
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <td className="text-start">
+                                          Service & Handling Fee:
+                                        </td>
+                                        <td className="text-end">
+                                          $&nbsp;{shippingCostBreakdown.markupAmount.toFixed(2)}
+                                        </td>
+                                      </tr>
+                                    </>
+                                  )}
+                                  {shippingAddress?.tax_rate !== undefined && (
                                     <tr>
-                                      <td className="text-start">Shipping:</td>
-                                      <td className="text-end">
-                                        {selectedShippingService.name} (
-                                        {selectedShippingService.deliveryTime})
+                                      <td className="text-start">
+                                        Sales Tax ({shippingAddress.tax_rate || 0}%):
                                       </td>
-                                      <td>Shipping Cost:</td>
                                       <td className="text-end">
                                         $&nbsp;
-                                        {parseFloat(
-                                          selectedShippingService.price
-                                        ).toFixed(2)}
+                                        {((totalAmount + shippingCostBreakdown.totalCost) * parseFloat(shippingAddress.tax_rate || 0) / 100).toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  )}
+                                  {discountAmount > 0 && (
+                                    <tr>
+                                      <td className="text-start">
+                                        Discount:
+                                      </td>
+                                      <td className="text-end text-success">
+                                        -$&nbsp;{discountAmount.toFixed(2)}
                                       </td>
                                     </tr>
                                   )}
                                   {stripeFeeCalculation.feeAmount > 0 && (
                                     <tr>
                                       <td className="text-start">
-                                        Payment Processing:
+                                        Payment Processing Fee:
                                       </td>
-                                      <td className="text-end">
-                                        Stripe Fee (2.9% + $0.30)
-                                      </td>
-                                      <td>Processing Fee:</td>
                                       <td className="text-end">
                                         $&nbsp;
-                                        {stripeFeeCalculation.feeAmount.toFixed(
-                                          2
-                                        )}
+                                        {stripeFeeCalculation.feeAmount.toFixed(2)}
                                       </td>
                                     </tr>
                                   )}
@@ -1706,15 +1863,8 @@ export default function Index({ user, customerData }) {
                                   >
                                     <td className="text-start">Total:</td>
                                     <td className="text-end">
-                                      {totalWeight}
-                                      {cart[0]?.size_unit || "lbs"}&nbsp;
-                                    </td>
-                                    <td>Total Amount:</td>
-                                    <td className="text-end">
                                       $&nbsp;
-                                      {stripeFeeCalculation.adjustedAmount.toFixed(
-                                        2
-                                      )}
+                                      {stripeFeeCalculation.adjustedAmount.toFixed(2)}
                                     </td>
                                   </tr>
                                 </tbody>
