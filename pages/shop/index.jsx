@@ -84,11 +84,34 @@ export default function Index() {
 	}, []);
 
 	useEffect(() => {
+		// Build filter parameters
+		const filterParams = {
+			pageSize: 1000, // Get all products for client-side filtering
+			pageNo: 0
+		};
+
+		// Add category filter
+		if (query.category && query.category !== "" && query.category !== "all") {
+			filterParams.categoryId = query.category;
+		}
+
+		// Add brand filter
+		if (selectedBrandIdList.length > 0) {
+			filterParams.brandIds = selectedBrandIdList;
+		}
+
+		// Add perfume notes filter
+		if (perfumeNotes.trim() !== "") {
+			filterParams.perfumeNotes = perfumeNotes;
+		}
+
+		// Add season filter
+		if (season.trim() !== "") {
+			filterParams.season = season;
+		}
+
 		axios
-			.post(apiUrl + "/web/getall/product", {
-				pageSize: 1000, // Get all products for client-side filtering
-				pageNo: 0
-			})
+			.post(apiUrl + "/web/getall/product", filterParams)
 			.then((response) => {
 				// console.log(response);
 				if (response.data.appStatus) {
@@ -96,47 +119,17 @@ export default function Index() {
 					setIsLoading(false);
 				}
 			});
-	}, []);
+	}, [query.category, selectedBrandIdList, perfumeNotes, season]);
 
-	// Handle filtering and pagination
+	// Handle pagination only (filtering is now done on backend)
 	useEffect(() => {
-		let filtered = [...allProductList];
-
-		// Apply category filter
-		if (query.category && query.category !== "" && query.category !== "all") {
-			filtered = filtered.filter((pl) => pl.productcategory.id === Number(query.category));
-		}
-
-		// Apply brand filter
-		if (selectedBrandIdList.length > 0) {
-			filtered = filtered.filter((pl) => selectedBrandIdList.includes(pl.productbrand.id));
-		}
-
-		// Apply perfume notes filter
-		if (perfumeNotes.trim() !== "") {
-			filtered = filtered.filter((pl) => 
-				pl.perfume_notes && 
-				pl.perfume_notes.toLowerCase().includes(perfumeNotes.toLowerCase())
-			);
-		}
-
-		// Apply season filter
-		if (season.trim() !== "") {
-			filtered = filtered.filter((pl) => 
-				pl.season && 
-				pl.season.toLowerCase().includes(season.toLowerCase())
-			);
-		}
-
-		setFilteredProductList(filtered);
-		setTotalCount(filtered.length);
-
-		// Apply pagination
+		// Apply pagination to the filtered results from backend
 		const startIndex = pageNo * pageSize;
 		const endIndex = startIndex + pageSize;
-		const paginatedProducts = filtered.slice(startIndex, endIndex);
+		const paginatedProducts = allProductList.slice(startIndex, endIndex);
 		setDisplayedProductList(paginatedProducts);
-	}, [allProductList, query.category, selectedBrandIdList, perfumeNotes, season, pageNo, pageSize]);
+		setTotalCount(allProductList.length);
+	}, [allProductList, pageNo, pageSize]);
 
 	const handleCategorySelect = (categoryId) => {
 		setIsLoading(true);
@@ -214,11 +207,10 @@ export default function Index() {
 						<div className='row'>
 							<div className='col-12 col-md-4 col-lg-3'>
 								<div className='shop-sidebar' style={{
-									background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+									background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
 									borderRadius: '16px',
-									boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-									border: '1px solid rgba(255, 255, 255, 0.2)',
-									backdropFilter: 'blur(10px)',
+									boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+									border: '1px solid rgba(0, 0, 0, 0.1)',
 									padding: '28px',
 									marginBottom: '24px',
 									minWidth: '280px'
@@ -227,29 +219,29 @@ export default function Index() {
 										<div className='shop-sidebar__section -categories' style={{
 											marginBottom: '32px',
 											padding: '20px',
-											background: 'rgba(255, 255, 255, 0.7)',
+											background: 'rgba(255, 255, 255, 0.9)',
 											borderRadius: '12px',
-											border: '1px solid rgba(255, 255, 255, 0.3)',
-											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+											border: '1px solid rgba(0, 0, 0, 0.1)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 										}}>
 											<div className='section-title -style1 -medium' style={{ 
 												marginBottom: "1.5em",
 												display: 'flex',
 												justifyContent: 'space-between',
 												alignItems: 'center',
-												borderBottom: '2px solid #e9ecef',
+												borderBottom: '2px solid #007bff',
 												paddingBottom: '12px'
 											}}>
 												<h2 className='sidebar-categories' style={{
 													fontSize: '18px',
 													fontWeight: '600',
-													color: '#2c3e50',
+													color: '#1a1a1a',
 													margin: 0,
 													display: 'flex',
 													alignItems: 'center',
 													gap: '8px'
 												}}>
-													<i className="fas fa-tags" style={{ color: '#6c757d' }}></i>
+													<i className="fas fa-tags" style={{ color: '#007bff' }}></i>
 													Categories
 												</h2>
 												<i className="fas fa-filter fa-lg mobile-filter" 
@@ -382,14 +374,14 @@ export default function Index() {
 										<div className='shop-sidebar__section -refine' style={{
 											marginBottom: '32px',
 											padding: '20px',
-											background: 'rgba(255, 255, 255, 0.7)',
+											background: 'rgba(255, 255, 255, 0.9)',
 											borderRadius: '12px',
-											border: '1px solid rgba(255, 255, 255, 0.3)',
-											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+											border: '1px solid rgba(0, 0, 0, 0.1)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 										}}>
 											<div className='section-title -style1 -medium' style={{ 
 												marginBottom: "1.5em",
-												borderBottom: '2px solid #e9ecef',
+												borderBottom: '2px solid #007bff',
 												paddingBottom: '12px'
 											}}>
 												<div style={{ 
@@ -401,13 +393,13 @@ export default function Index() {
 													<h2 className='sidebar-refine-search' style={{
 														fontSize: '18px',
 														fontWeight: '600',
-														color: '#2c3e50',
+														color: '#1a1a1a',
 														margin: 0,
 														display: 'flex',
 														alignItems: 'center',
 														gap: '8px'
 													}}>
-														<i className="fas fa-star" style={{ color: '#6c757d' }}></i>
+														<i className="fas fa-star" style={{ color: '#007bff' }}></i>
 														Inspired By
 													</h2>
 													<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -577,26 +569,26 @@ export default function Index() {
 										<div className='shop-sidebar__section -search' style={{
 											marginBottom: '32px',
 											padding: '20px',
-											background: 'rgba(255, 255, 255, 0.7)',
+											background: 'rgba(255, 255, 255, 0.9)',
 											borderRadius: '12px',
-											border: '1px solid rgba(255, 255, 255, 0.3)',
-											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+											border: '1px solid rgba(0, 0, 0, 0.1)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 										}}>
 											<div className='section-title -style1 -medium' style={{ 
 												marginBottom: "1.5em",
-												borderBottom: '2px solid #e9ecef',
+												borderBottom: '2px solid #007bff',
 												paddingBottom: '12px'
 											}}>
 												<h2 className='sidebar-search' style={{
 													fontSize: '18px',
 													fontWeight: '600',
-													color: '#2c3e50',
+													color: '#1a1a1a',
 													margin: 0,
 													display: 'flex',
 													alignItems: 'center',
 													gap: '8px'
 												}}>
-													<i className="fas fa-spray-can" style={{ color: '#6c757d' }}></i>
+													<i className="fas fa-spray-can" style={{ color: '#007bff' }}></i>
 													Perfume Notes
 												</h2>
 											</div>
@@ -612,10 +604,11 @@ export default function Index() {
 													style={{
 														width: '100%',
 														padding: '12px 16px',
-														border: '2px solid rgba(255, 255, 255, 0.5)',
+														border: '2px solid #e9ecef',
 														borderRadius: '10px',
 														fontSize: '14px',
-														background: 'rgba(255, 255, 255, 0.8)',
+														background: '#ffffff',
+														color: '#333333',
 														transition: 'all 0.3s ease',
 														boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
 													}}
@@ -624,7 +617,7 @@ export default function Index() {
 														e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
 													}}
 													onBlur={(e) => {
-														e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+														e.target.style.borderColor = '#e9ecef';
 														e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
 													}}
 												/>
@@ -635,26 +628,26 @@ export default function Index() {
 										<div className='shop-sidebar__section -search' style={{
 											marginBottom: '32px',
 											padding: '20px',
-											background: 'rgba(255, 255, 255, 0.7)',
+											background: 'rgba(255, 255, 255, 0.9)',
 											borderRadius: '12px',
-											border: '1px solid rgba(255, 255, 255, 0.3)',
-											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+											border: '1px solid rgba(0, 0, 0, 0.1)',
+											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 										}}>
 											<div className='section-title -style1 -medium' style={{ 
 												marginBottom: "1.5em",
-												borderBottom: '2px solid #e9ecef',
+												borderBottom: '2px solid #007bff',
 												paddingBottom: '12px'
 											}}>
 												<h2 className='sidebar-search' style={{
 													fontSize: '18px',
 													fontWeight: '600',
-													color: '#2c3e50',
+													color: '#1a1a1a',
 													margin: 0,
 													display: 'flex',
 													alignItems: 'center',
 													gap: '8px'
 												}}>
-													<i className="fas fa-sun" style={{ color: '#6c757d' }}></i>
+													<i className="fas fa-sun" style={{ color: '#007bff' }}></i>
 													Season
 												</h2>
 											</div>
@@ -670,10 +663,11 @@ export default function Index() {
 													style={{
 														width: '100%',
 														padding: '12px 16px',
-														border: '2px solid rgba(255, 255, 255, 0.5)',
+														border: '2px solid #e9ecef',
 														borderRadius: '10px',
 														fontSize: '14px',
-														background: 'rgba(255, 255, 255, 0.8)',
+														background: '#ffffff',
+														color: '#333333',
 														transition: 'all 0.3s ease',
 														boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
 													}}
@@ -682,7 +676,7 @@ export default function Index() {
 														e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
 													}}
 													onBlur={(e) => {
-														e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+														e.target.style.borderColor = '#e9ecef';
 														e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
 													}}
 												/>
