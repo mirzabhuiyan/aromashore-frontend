@@ -126,6 +126,10 @@ function Login() {
 											<>
 												<div className='mt-2'>
 													<p className='login-em'>Two-Factor Authentication</p>
+													<div className='alert alert-info d-flex align-items-center gap-2 mt-2' role='alert' style={{ fontSize: '0.95rem' }}>
+														<i className='fa fa-envelope-open' aria-hidden='true'></i>
+														<span>A 5-digit verification code has been sent to your registered email address. Please enter it below.</span>
+													</div>
 												</div>
 												<form className='mt-4'>
 													<div className='myform-group'>
@@ -135,7 +139,7 @@ function Login() {
 																type='text' 
 																value={twofaCode} 
 																onChange={(e) => setTwofaCode(e.target.value)} 
-																placeholder='Enter OTP Code' 
+																placeholder='Enter 5-digit verification code' 
 															/>
 														</div>
 													</div>
