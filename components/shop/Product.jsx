@@ -66,7 +66,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 	return (
 		<>
 			{viewType ? (
-				<div className={shopPage ? "col-12 col-md-6 col-lg-4 col-xl-3 mb-4" : "p-0"}>
+				<div className={shopPage ? "col-6 col-md-6 col-lg-4 col-xl-3 mb-4" : "p-0"}>
 					<Card className='shadow'>
 						<Card.Body>
 							<div>
@@ -79,7 +79,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								)} */}
 								<div className='product-thumb'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages && Array.isArray(productimages) && productimages[0] ? <img crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>{productimages && Array.isArray(productimages) && productimages[0] ? <img className='img-fluid' crossOrigin="anonymous" src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img className='img-fluid' src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
 									</Link>
 									<div className='product-thumb__actions'>
 										{/* <div className='product-btn'>

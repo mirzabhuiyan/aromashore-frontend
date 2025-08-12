@@ -1681,3 +1681,18 @@ button:hover .cart__quantity {
 /* responsive end  */
 
 /* Syeda's code end  */
+
+/* Reduce filter title sizes on phones */
+@media screen and (max-width: 576px) {
+  .shop-sidebar__section .section-title h2,
+  .sidebar-categories,
+  .sidebar-refine-search,
+  .sidebar-search {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+
+  .shop-sidebar__section .section-title h2 i {
+    font-size: 14px !important;
+  }
+}
