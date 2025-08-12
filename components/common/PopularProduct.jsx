@@ -297,7 +297,29 @@ export default function PopularProduct({ categoryId = null }) {
 	return (
 		<div className='product-slide'>
 			<style jsx>{`
-				/* Simple, working styles */
+				.product-slider {
+					padding: 8px 0;
+				}
+
+				/* Space out Slick slides and prevent overlap */
+				.product-slider :global(.slick-list) {
+					margin: 0 -12px;
+				}
+				.product-slider :global(.slick-track) {
+					display: flex;
+				}
+				.product-slider :global(.slick-slide) {
+					padding: 0 12px;
+					margin-bottom: 16px;
+					height: auto;
+				}
+				.product-slider :global(.slick-slide > div) {
+					height: 100%;
+				}
+				.product-slider :global(.card) {
+					height: 100%;
+				}
+
 				.arrow-wrapper {
 					position: absolute;
 					z-index: 10;
