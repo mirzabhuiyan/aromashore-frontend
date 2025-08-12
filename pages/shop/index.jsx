@@ -63,6 +63,17 @@ export default function Index() {
 	const [perfumeNotes, setPerfumeNotes] = useState("");
 	const [season, setSeason] = useState("");
 
+	const [brandSearchQuery, setBrandSearchQuery] = useState("");
+	const [brandVisibleCount, setBrandVisibleCount] = useState(5);
+
+	const isBrandSearching = brandSearchQuery.trim() !== "";
+	const filteredBrands = productBrandList.filter((b) =>
+		b?.name?.toLowerCase().includes(brandSearchQuery.toLowerCase())
+	);
+	const brandsToDisplay = isBrandSearching
+		? filteredBrands
+		: filteredBrands.slice(0, brandVisibleCount);
+
 	useEffect(() => {
 		axios.get(apiUrl + "/web/getall/brand").then((response) => {
 			// console.log(response);
@@ -180,6 +191,8 @@ export default function Index() {
 		// Clear search fields
 		setPerfumeNotes("");
 		setSeason("");
+		setBrandSearchQuery("");
+		setBrandVisibleCount(5);
 		
 		// Clear category filter by redirecting to shop without category
 		router.push("/shop");
@@ -244,25 +257,59 @@ export default function Index() {
 													<i className="fas fa-tags" style={{ color: '#007bff' }}></i>
 													Categories
 												</h2>
-												<i className="fas fa-filter fa-lg mobile-filter" 
-													onClick={() => setShowCategoryFilter(ov => !ov)}
-													style={{
-														color: '#6c757d',
-														cursor: 'pointer',
-														padding: '8px',
-														borderRadius: '6px',
-														transition: 'all 0.3s ease',
-														background: 'rgba(108, 117, 125, 0.1)'
-													}}
-													onMouseEnter={(e) => {
-														e.target.style.background = 'rgba(108, 117, 125, 0.2)';
-														e.target.style.transform = 'scale(1.1)';
-													}}
-													onMouseLeave={(e) => {
-														e.target.style.background = 'rgba(108, 117, 125, 0.1)';
-														e.target.style.transform = 'scale(1)';
-													}}
-												></i>
+												<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+													{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
+														<button 
+															onClick={clearAllFilters}
+															style={{
+																background: 'rgba(108, 117, 125, 0.1)',
+																border: '1px solid rgba(108, 117, 125, 0.2)',
+																color: '#6c757d',
+																cursor: 'pointer',
+																padding: '6px 8px',
+																borderRadius: '6px',
+																transition: 'all 0.3s ease',
+																display: 'flex',
+																alignItems: 'center',
+																justifyContent: 'center',
+																minWidth: '32px',
+																height: '32px'
+															}}
+															onMouseEnter={(e) => {
+																e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+																e.target.style.borderColor = 'rgba(108, 117, 125, 0.4)';
+																e.target.style.transform = 'scale(1.05)';
+															}}
+															onMouseLeave={(e) => {
+																e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+																e.target.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+																e.target.style.transform = 'scale(1)';
+															}}
+															title="Clear all filters"
+														>
+															<i className="fas fa-eraser" style={{ fontSize: '14px' }}></i>
+														</button>
+													)}
+													<i className="fas fa-filter fa-lg mobile-filter" 
+														onClick={() => setShowCategoryFilter(ov => !ov)}
+														style={{
+															color: '#6c757d',
+															cursor: 'pointer',
+															padding: '8px',
+															borderRadius: '6px',
+															transition: 'all 0.3s ease',
+															background: 'rgba(108, 117, 125, 0.1)'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+															e.target.style.transform = 'scale(1.1)';
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+															e.target.style.transform = 'scale(1)';
+														}}
+													></i>
+												</div>
 											</div>
 											<div className="mobile-filter">
 												{showCategoryFilter ?
@@ -379,89 +426,78 @@ export default function Index() {
 											border: '1px solid rgba(0, 0, 0, 0.1)',
 											boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 										}}>
-											<div className='section-title -style1 -medium' style={{ 
-												marginBottom: "1.5em",
-												borderBottom: '2px solid #007bff',
-												paddingBottom: '12px'
+											<div style={{ 
+												display: 'flex', 
+												justifyContent: 'space-between', 
+												alignItems: 'center',
+												marginBottom: '12px'
 											}}>
-												<div style={{ 
-													display: 'flex', 
-													justifyContent: 'space-between', 
+												<h2 className='sidebar-refine-search' style={{
+													fontSize: '18px',
+													fontWeight: '600',
+													color: '#1a1a1a',
+													margin: 0,
+													display: 'flex',
 													alignItems: 'center',
-													marginBottom: '12px'
+													gap: '8px'
 												}}>
-													<h2 className='sidebar-refine-search' style={{
-														fontSize: '18px',
-														fontWeight: '600',
-														color: '#1a1a1a',
-														margin: 0,
-														display: 'flex',
-														alignItems: 'center',
-														gap: '8px'
-													}}>
-														<i className="fas fa-star" style={{ color: '#007bff' }}></i>
-														Inspired By
-													</h2>
-													<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-														{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
-															<button 
-																onClick={clearAllFilters}
-																style={{
-																	background: 'rgba(108, 117, 125, 0.1)',
-																	border: '1px solid rgba(108, 117, 125, 0.2)',
-																	color: '#6c757d',
-																	cursor: 'pointer',
-																	padding: '6px 8px',
-																	borderRadius: '6px',
-																	transition: 'all 0.3s ease',
-																	display: 'flex',
-																	alignItems: 'center',
-																	justifyContent: 'center',
-																	minWidth: '32px',
-																	height: '32px'
-																}}
-																onMouseEnter={(e) => {
-																	e.target.style.background = 'rgba(108, 117, 125, 0.2)';
-																	e.target.style.borderColor = 'rgba(108, 117, 125, 0.4)';
-																	e.target.style.transform = 'scale(1.05)';
-																}}
-																onMouseLeave={(e) => {
-																	e.target.style.background = 'rgba(108, 117, 125, 0.1)';
-																	e.target.style.borderColor = 'rgba(108, 117, 125, 0.2)';
-																	e.target.style.transform = 'scale(1)';
-																}}
-																title="Clear all filters"
-															>
-																<i className="fas fa-eraser" style={{ fontSize: '14px' }}></i>
-															</button>
-														)}
-														<i className="fas fa-filter fa-lg mobile-filter" 
-															onClick={() => setShowBrandFilter(ov => !ov)}
-															style={{
-																color: '#6c757d',
-																cursor: 'pointer',
-																padding: '8px',
-																borderRadius: '6px',
-																transition: 'all 0.3s ease',
-																background: 'rgba(108, 117, 125, 0.1)'
-															}}
-															onMouseEnter={(e) => {
-																e.target.style.background = 'rgba(108, 117, 125, 0.2)';
-																e.target.style.transform = 'scale(1.1)';
-															}}
-															onMouseLeave={(e) => {
-																e.target.style.background = 'rgba(108, 117, 125, 0.1)';
-																e.target.style.transform = 'scale(1)';
-															}}
-														></i>
-													</div>
+													<i className="fas fa-star" style={{ color: '#007bff' }}></i>
+													Inspired By
+												</h2>
+												<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+													<i className="fas fa-filter fa-lg mobile-filter" 
+														onClick={() => setShowBrandFilter(ov => !ov)}
+														style={{
+															color: '#6c757d',
+															cursor: 'pointer',
+															padding: '8px',
+															borderRadius: '6px',
+															transition: 'all 0.3s ease',
+															background: 'rgba(108, 117, 125, 0.1)'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+															e.target.style.transform = 'scale(1.1)';
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+															e.target.style.transform = 'scale(1)';
+														}}
+													></i>
 												</div>
 											</div>
 											<div className="mobile-filter">
 												{showBrandFilter ?
 													<div className='shop-sidebar__section__item'>
+														<div style={{ marginBottom: '12px' }}>
+															<input
+																type='text'
+																placeholder='Search brands...'
+																value={brandSearchQuery}
+																onChange={(e) => setBrandSearchQuery(e.target.value)}
+																style={{
+																	width: '100%',
+																	padding: '10px 14px',
+																	border: '2px solid #e9ecef',
+																	borderRadius: '10px',
+																	fontSize: '14px',
+																	background: '#ffffff',
+																	color: '#333333',
+																	transition: 'all 0.3s ease',
+																	boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+																}}
+																onFocus={(e) => {
+																	e.target.style.borderColor = '#007bff';
+																	e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+																}}
+																onBlur={(e) => {
+																	e.target.style.borderColor = '#e9ecef';
+																	e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+																}}
+															/>
+														</div>
 														<ul style={{ margin: 0, padding: 0 }}>
-															{productBrandList?.map((brand, i) =>
+															{brandsToDisplay?.map((brand, i) =>
 																<li key={i} style={{ 
 																	marginBottom: '8px', 
 																	listStyle: 'none',
@@ -508,13 +544,71 @@ export default function Index() {
 																</li>
 															)}
 														</ul>
+														{!isBrandSearching && filteredBrands.length > brandVisibleCount && (
+															<button
+																onClick={() => setBrandVisibleCount((c) => c + 10)}
+																style={{
+																	marginTop: '8px',
+																	background: 'transparent',
+																	border: 'none',
+																	color: '#007bff',
+																	cursor: 'pointer',
+																	padding: 0
+																}}
+															>
+																Show more
+															</button>
+														)}
+														{!isBrandSearching && brandVisibleCount > 5 && (
+															<button
+																onClick={() => setBrandVisibleCount(5)}
+																style={{
+																	marginLeft: '12px',
+																	marginTop: '8px',
+																	background: 'transparent',
+																	border: 'none',
+																	color: '#007bff',
+																	cursor: 'pointer',
+																	padding: 0
+																}}
+															>
+																Show less
+															</button>
+														)}
 													</div> : <></>
 												}
 											</div>
 											<div className="desktop-filter">
 												<div className='shop-sidebar__section__item'>
+													<div style={{ marginBottom: '12px' }}>
+														<input
+															type='text'
+															placeholder='Search brands...'
+															value={brandSearchQuery}
+															onChange={(e) => setBrandSearchQuery(e.target.value)}
+															style={{
+																width: '100%',
+																padding: '10px 14px',
+																border: '2px solid #e9ecef',
+																borderRadius: '10px',
+																fontSize: '14px',
+																background: '#ffffff',
+																color: '#333333',
+																transition: 'all 0.3s ease',
+																boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+															}}
+															onFocus={(e) => {
+																e.target.style.borderColor = '#007bff';
+																e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+															}}
+															onBlur={(e) => {
+																e.target.style.borderColor = '#e9ecef';
+																e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+															}}
+														/>
+													</div>
 													<ul style={{ margin: 0, padding: 0 }}>
-														{productBrandList?.map((brand, i) =>
+														{brandsToDisplay?.map((brand, i) =>
 															<li key={i} style={{ 
 																marginBottom: '8px', 
 																listStyle: 'none',
@@ -559,8 +653,39 @@ export default function Index() {
 																	{brand.name}
 																</label>
 															</li>
-														)}
+															)}
 													</ul>
+													{!isBrandSearching && filteredBrands.length > brandVisibleCount && (
+														<button
+															onClick={() => setBrandVisibleCount((c) => c + 10)}
+															style={{
+																marginTop: '8px',
+																background: 'transparent',
+																border: 'none',
+																color: '#007bff',
+																cursor: 'pointer',
+																padding: 0
+															}}
+														>
+															Show more
+															</button>
+														)}
+														{!isBrandSearching && brandVisibleCount > 5 && (
+															<button
+																onClick={() => setBrandVisibleCount(5)}
+																style={{
+																	marginLeft: '12px',
+																	marginTop: '8px',
+																	background: 'transparent',
+																	border: 'none',
+																	color: '#007bff',
+																	cursor: 'pointer',
+																	padding: 0
+																}}
+															>
+																Show less
+															</button>
+														)}
 												</div>
 											</div>
 										</div>
