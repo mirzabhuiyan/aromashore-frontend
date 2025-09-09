@@ -8,6 +8,9 @@
 		"prod_start": "NODE_ENV=production node server.js",
 		"export": "next export"
 	},
+	"engines": {
+		"node": "18.x"
+	},
 	"dependencies": {
 		"@emotion/react": "^11.11.1",
 		"@emotion/style": "^0.8.0",
@@ -34,7 +37,7 @@
 		"next-redux-wrapper": "^7.0.5",
 		"react": "^18.2.0",
 		"react-bootstrap": "^2.6.0",
-		"react-credit-cards": "^0.8.3",
+		"react-credit-cards-2": "^2.0.0",
 		"react-dom": "^18.2.0",
 		"react-headless-tabs": "^6.0.4",
 		"react-places-autocomplete": "^7.3.0",
@@ -50,5 +53,9 @@
 	"devDependencies": {
 		"eslint": "8.45.0",
 		"eslint-config-next": "13.4.12"
+	},
+	"overrides": {
+		"react": "18.2.0",
+		"react-dom": "18.2.0"
 	}
 }
