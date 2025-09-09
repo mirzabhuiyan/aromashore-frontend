@@ -1,6 +1,6 @@
 import React,{useState} from "react";
-import 'react-credit-cards/es/styles-compiled.css';
-import Cards from 'react-credit-cards';
+import 'react-credit-cards-2/dist/es/styles-compiled.css';
+import Cards from 'react-credit-cards-2';
 import axios from "axios";
 import Router from "next/router";
 import Cookies from "js-cookie";
