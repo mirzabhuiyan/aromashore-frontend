@@ -211,10 +211,10 @@ function Signup() {
 																<input {...getInputProps({ placeholder: 'Address Line 1', className: 'form-control myform-control mb-2' })} />
 																<div className='autocomplete-dropdown-container'>
 																	{loading && <div>Loading...</div>}
-																	{suggestions.map(suggestion => {
+																	{suggestions.map((suggestion, idx) => {
 																		const className = suggestion.active ? 'suggestion-item--active' : 'suggestion-item';
 																		return (
-																			<div {...getSuggestionItemProps(suggestion, { className })}>
+																			<div key={suggestion.placeId || suggestion.description || idx} {...getSuggestionItemProps(suggestion, { className })}>
 																				<span>{suggestion.description}</span>
 																			</div>
 																		);
