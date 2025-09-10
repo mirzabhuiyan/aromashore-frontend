@@ -80,7 +80,11 @@ function Cart() {
 											<tbody key={i}>
 												<tr>
 													<td className='text-center'>
-														{product.product_image != '' ? <img crossOrigin="anonymous" src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
+														{product.product_image != '' ? (
+															<Image crossOrigin="anonymous" src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} />
+														) : (
+															<Image src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />
+														)}
 													</td>
 													<td>
 														<div className='p-2'>
@@ -108,36 +112,36 @@ function Cart() {
 																	}}>
 																	<div
 																		onClick={() => {
-																			if (product.quantity > 1) {
-																				decrement_TO_CART_ITEM({ product });
-																			}
-																		}}
-																		className='btn btn-sm btn-outline-secondary rounded'>
-																		<i className='fas fa-minus'></i>
-																	</div>
-																	<div className='quantity-controller__number'>{product.quantity}</div>
-																	<div
-																		onClick={() => {
-																			increment_TO_CART_ITEM({ product });
-																		}}
-																		className='btn btn-sm btn-outline-secondary rounded'>
-																		<i className='fas fa-plus'></i>
-																	</div>
-																</div> : <div
-																	style={{
-																		display: "flex",
-																		alignItems: "center",
-																		justifyContent: "center",
-																		marginBottom: "5px"
-																	}}>
-																	<div className='quantity-controller__number'>{product.quantity}</div>
+																		if (product.quantity > 1) {
+																			decrement_TO_CART_ITEM({ product });
+																		}
+																	}}
+																	className='btn btn-sm btn-outline-secondary rounded'>
+																	<i className='fas fa-minus'></i>
 																</div>
-															}
-														</div>
-													</td>
-													<td className='text-center'>$&nbsp;{product.price * product.quantity}</td>
-													<td className='text-center' style={{ marginBottom: "5px" }}>
-														<button
+																<div className='quantity-controller__number'>{product.quantity}</div>
+																<div
+																	onClick={() => {
+																		increment_TO_CART_ITEM({ product });
+																	}}
+																	className='btn btn-sm btn-outline-secondary rounded'>
+																	<i className='fas fa-plus'></i>
+																</div>
+															</div> : <div
+																style={{
+																	display: "flex",
+																	alignItems: "center",
+																	justifyContent: "center",
+																	marginBottom: "5px"
+																}}>
+																<div className='quantity-controller__number'>{product.quantity}</div>
+															</div>
+														}
+													</div>
+												</td>
+												<td className='text-center'>$&nbsp;{product.price * product.quantity}</td>
+												<td className='text-center' style={{ marginBottom: "5px" }}>
+													<button
 															className='btn btn-sm btn-outline-danger rounded-circle'
 															onClick={() => {
 																setSelectedProductToDelete(product);

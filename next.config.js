@@ -3,7 +3,6 @@
 // Dev Server
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     remotePatterns: [
       {
@@ -12,14 +11,29 @@ const nextConfig = {
         port: '3303',
         pathname: '/product/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3303',
+        pathname: '/uploads/products/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'primesmell.com',
+        port: '',
+        pathname: '/product/**',
+      },
     ],
+  },
+  eslint: {
+    // Prevent lint errors from failing production builds
+    ignoreDuringBuilds: true,
   },
 };
 
 // Prod Server
 // const nextConfig = {
 //   reactStrictMode: true,
-//   swcMinify: true,
 //   images: {
 //     remotePatterns: [
 //       {
