@@ -5,7 +5,7 @@ const middleware = req => {
     let url = req.url
     
     if (verification === "false" && url.includes("/card")){
-        return NextResponse.redirect("http://localhost:3000/")
+        return NextResponse.redirect(process.env.NEXT_PUBLIC_SITE_URL)
     }
     if (verification === "true" && url === "/checkout"){
         return NextResponse.redirect("/card")
