@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "node server.js",
 		"build": "next build",
-		"prod_start": "NODE_ENV=production node server.js",
+		"build:prod": "NODE_ENV=production next build",
+		"start": "NODE_ENV=production node server.js",
 		"export": "next export",
 		"prebuild": "node -v && npm -v"
 	},
