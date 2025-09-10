@@ -77,6 +77,8 @@ export default function Index() {
 		: filteredBrands.slice(0, brandVisibleCount);
 
 	useEffect(() => {
+		// Only make API calls in browser environment, not during build
+		if (typeof window === "undefined") return;
 		axios.get(apiUrl + "/web/getall/brand").then((response) => {
 			// console.log(response);
 			if (response.data.appStatus) {
@@ -97,6 +99,8 @@ export default function Index() {
 	}, []);
 
 	useEffect(() => {
+		// Only make API calls in browser environment, not during build
+		if (typeof window === "undefined") return;
 		// Build filter parameters
 		const filterParams = {
 			pageSize: 1000, // Get all products for client-side filtering
@@ -136,6 +140,8 @@ export default function Index() {
 
 	// Handle pagination only (filtering is now done on backend)
 	useEffect(() => {
+		// Only make API calls in browser environment, not during build
+		if (typeof window === "undefined") return;
 		// Apply pagination to the filtered results from backend
 		const startIndex = pageNo * pageSize;
 		const endIndex = startIndex + pageSize;
