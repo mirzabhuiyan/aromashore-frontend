@@ -1,26 +1,30 @@
 /** @type {import('next').NextConfig} */
 
-// Dev Server
+// Get environment variables
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3303/api";
+const backendDomain = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || 'localhost:3303';
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Parse the API URL to get protocol and domain
+const url = new URL(apiUrl);
+const protocol = url.protocol.slice(0, -1); // Remove trailing ':'
+const hostname = url.hostname;
+const port = url.port;
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3303',
-        pathname: '/product/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3303',
+        protocol: protocol,
+        hostname: hostname,
+        port: port || '',
         pathname: '/uploads/products/**',
       },
       {
-        protocol: 'https',
-        hostname: 'primesmell.com',
-        port: '',
+        protocol: protocol,
+        hostname: hostname,
+        port: port || '',
         pathname: '/product/**',
       },
     ],
@@ -29,21 +33,10 @@ const nextConfig = {
     // Prevent lint errors from failing production builds
     ignoreDuringBuilds: true,
   },
+  env: {
+    NEXT_PUBLIC_API_URL: apiUrl,
+    NEXT_PUBLIC_BACKEND_DOMAIN: backendDomain,
+  },
 };
-
-// Prod Server
-// const nextConfig = {
-//   reactStrictMode: true,
-//   images: {
-//     remotePatterns: [
-//       {
-//         protocol: 'https',
-//         hostname: 'primesmell.com',
-//         port: '',
-//         pathname: '/product/**',
-//       },
-//     ],
-//   },
-// };
 
 module.exports = nextConfig;
