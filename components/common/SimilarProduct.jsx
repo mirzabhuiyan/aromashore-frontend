@@ -256,6 +256,11 @@ export default function SimilarProduct({ brandId = null, currentProductId = null
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
+		// Only make API calls in browser environment, not during build
+		if (typeof window === "undefined") {
+			setIsLoading(false);
+			return;
+		}
 		console.log('=== SimilarProduct Debug ===');
 		console.log('brandId:', brandId);
 		console.log('currentProductId:', currentProductId);

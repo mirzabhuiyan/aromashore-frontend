@@ -3,12 +3,13 @@
 	"private": true,
 	"main": "server.js",
 	"scripts": {
-		"dev": "node server.js",
+		"dev": "NODE_ENV=development node server.js",
 		"build": "next build",
-		"build:prod": "NODE_ENV=production next build",
 		"start": "NODE_ENV=production node server.js",
 		"export": "next export",
-		"prebuild": "node -v && npm -v"
+		"prebuild": "node -v && npm -v",
+		"build:static": "next build && next export",
+		"build:production": "NODE_ENV=production next build"
 	},
 	"engines": {
 		"node": "18.20.4"
@@ -29,6 +30,7 @@
 		"bootstrap": "^5.2.3",
 		"classnames": "^2.3.1",
 		"country-state-city": "^3.1.4",
+		"critters": "^0.0.23",
 		"date-fns": "^2.30.0",
 		"html-react-parser": "^3.0.1",
 		"joi-browser": "^13.4.0",

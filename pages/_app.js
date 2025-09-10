@@ -54,16 +54,22 @@ function MyApp({
   }, []);
 
   useEffect(() => {
-    if (user) {
+    // Only make API calls in browser environment, not during build
+    if (typeof window !== 'undefined' && user) {
       profieData(user);
     }
   }, [user]);
 
   const profieData = async (userInfo) => {
-    console.log('profieData ---->', userInfo);
-    const { data: profileData } = await getprofileByCustomer(userInfo);
-    console.log("profileData.appData --------> ", profileData.appData);
-    setCustomerData(profileData.appData);
+    try {
+      console.log('profieData ---->', userInfo);
+      const { data: profileData } = await getprofileByCustomer(userInfo);
+      console.log("profileData.appData --------> ", profileData.appData);
+      setCustomerData(profileData.appData);
+    } catch (error) {
+      console.warn('Failed to fetch profile data:', error.message);
+      setCustomerData(null);
+    }
   }
 
   // Helper function to save cart to localStorage and update state
@@ -79,225 +85,178 @@ function MyApp({
 
   const add_TO_CART = ({ productDetails, unit, bundleId = null }) => {
     console.log('_app add_TO_CART ----> ', productDetails, unit, bundleId);
-    
-    if (bundleId != null) {
-      // Handle bundle products
-      const allCartItems = [];
-      productDetails.forEach((pd, indx) => {
-        const copyCart = allCartItems.length > 0 ? [...allCartItems] : [...cart];
-        console.log('copyCart ------->', copyCart);
-        
-        const newCart = {
-          "variation_id": unit[indx].id,
-          "price": unit[indx].sale_price && unit[indx].sale_price > 0 ? unit[indx].sale_price : unit[indx].price,
-          "size": unit[indx].size,
-          "size_unit": unit[indx].size_unit,
-          "quantity": unit[indx].qty,
-          "weight": unit[indx].weight,
-          "category_id": pd.productcategoryId,
-          "product_id": pd.id,
-          "product_no": pd.product_no,
-          "product_name": pd.name,
-          "product_image": pd.productimages.length > 0 ? getProductImageUrl(pd.productimages[0].image) : "",
-          "bundle_id": bundleId,
-          "measure_unit": unit[indx].measure_unit
-        }
-        
-        const findCartItems = copyCart.filter((item) => pd.id === item.product_id);
-        console.log('findCartItem', findCartItems);
-        
-        let updatedCart = [];
-        if (findCartItems.length > 0) {
-          let noDuplicateVariation = true;
-          findCartItems.forEach((findCartItem) => {
-            if (findCartItem.variation_id == unit[indx].id && findCartItem.bundle_id == bundleId) {
-              console.log('same variation with new quantity', findCartItem, unit[indx].qty);
-              const duplicateProductVariationIndx = copyCart.indexOf(findCartItem);
-              copyCart[duplicateProductVariationIndx].quantity = unit[indx].qty;
-              noDuplicateVariation = false;
-            }
-          });
-          
-          if (noDuplicateVariation) {
-            updatedCart = [newCart];
-          }
-        } else {
-          console.log('new cart item');
-          updatedCart = [newCart];
-        }
-        
-        allCartItems.push(...copyCart, ...updatedCart);
-      });
-      
-      saveCart(allCartItems);
-    } else {
-      // Handle single product
-      const copyCart = [...cart];
-      const newCart = {
-        "variation_id": unit.id,
-        "price": unit.sale_price && unit.sale_price > 0 ? unit.sale_price : unit.price,
-        "size": unit.size,
-        "size_unit": unit.size_unit,
-        "quantity": unit.qty,
-        "weight": unit.weight,
-        "category_id": productDetails.productcategory?.id,
-        "product_id": productDetails.id,
-        "product_no": productDetails.product_no,
-        "product_name": productDetails.name,
-        "product_image": productDetails.productimages.length > 0 ? getProductImageUrl(productDetails.productimages[0].image) : "",
-        "bundle_id": 0
-      }
-      
-      console.log('_app add_TO_CART', newCart);
-      const findCartItems = copyCart.filter((item) => productDetails.id === item.product_id);
-      console.log('findCartItem', findCartItems);
-      
-      let updatedCart = [];
-      if (findCartItems.length > 0) {
-        let noDuplicate = true;
-        findCartItems.forEach((findCartItem) => {
-          if (findCartItem.variation_id == unit.id && findCartItem.bundle_id == 0) {
-            console.log('same variation with new quantity', findCartItem, unit.qty);
-            const duplicateProductVariationIndx = copyCart.indexOf(findCartItem);
-            copyCart[duplicateProductVariationIndx].quantity = findCartItem.quantity + unit.qty;
-            noDuplicate = false;
-          }
-        });
-        
-        if (noDuplicate) {
-          updatedCart = [...copyCart, newCart];
-        } else {
-          updatedCart = copyCart;
-        }
-      } else {
-        console.log('new cart item');
-        updatedCart = [...copyCart, newCart];
-      }
-      
+    const existingItemIndex = cart.findIndex(
+      (item) => item.id === productDetails.id && item.bundleId === bundleId
+    );
+
+    if (existingItemIndex !== -1) {
+      const updatedCart = [...cart];
+      updatedCart[existingItemIndex].quantity += unit;
       saveCart(updatedCart);
+    } else {
+      const newItem = {
+        id: productDetails.id,
+        name: productDetails.name,
+        price: productDetails.price,
+        quantity: unit,
+        image: getProductImageUrl(productDetails.image),
+        bundleId: bundleId,
+        bundleName: bundleId ? productDetails.bundleName : null,
+      };
+      saveCart([...cart, newItem]);
     }
   };
 
-  const delete_ITEM_FROM_CART = ({ product }) => {
-    console.log('delete_ITEM_FROM_CART', product);
-    console.log('current cart', cart);
-    
-    const filteredCart = cart.filter(item => {
-      if (product.bundle_id) {
-        return item.bundle_id !== product.bundle_id;
+  const remove_FROM_CART = (productId, bundleId = null) => {
+    const updatedCart = cart.filter(
+      (item) => !(item.id === productId && item.bundleId === bundleId)
+    );
+    saveCart(updatedCart);
+  };
+
+  const update_CART_QUANTITY = (productId, quantity, bundleId = null) => {
+    if (quantity <= 0) {
+      remove_FROM_CART(productId, bundleId);
+      return;
+    }
+
+    const updatedCart = cart.map((item) =>
+      item.id === productId && item.bundleId === bundleId
+        ? { ...item, quantity }
+        : item
+    );
+    saveCart(updatedCart);
+  };
+
+  const clear_CART = () => {
+    saveCart([]);
+  };
+
+  const get_CART_TOTAL = () => {
+    return calculateCart(cart);
+  };
+
+  const get_CART_ITEMS_COUNT = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const add_TO_WISHLIST = (productDetails) => {
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const existingItem = wishlist.find((item) => item.id === productDetails.id);
+
+      if (!existingItem) {
+        const newItem = {
+          id: productDetails.id,
+          name: productDetails.name,
+          price: productDetails.price,
+          image: getProductImageUrl(productDetails.image),
+        };
+        wishlist.push(newItem);
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        toast.success("Added to wishlist!");
       } else {
-        return item.variation_id !== product.variation_id;
+        toast.info("Already in wishlist!");
       }
-    });
-    
-    console.log('filtered cart', filteredCart);
-    saveCart(filteredCart);
-  };
-
-  const increment_TO_CART_ITEM = ({ product }) => {
-    console.log('increment_TO_CART_ITEM', product);
-    let copyCart = [...cart];
-    const findCartItem = copyCart.find((item) => 
-      item.variation_id == product.variation_id && 
-      item.product_id == product.product_id && 
-      item.bundle_id == (product.bundle_id || 0)
-    );
-    
-    if (findCartItem) {
-      findCartItem.quantity += 1;
-      saveCart(copyCart);
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      toast.error("Failed to add to wishlist");
     }
   };
 
-  const decrement_TO_CART_ITEM = ({ product }) => {
-    console.log('decrement_TO_CART_ITEM', product);
-    let copyCart = [...cart];
-    const findCartItem = copyCart.find((item) => 
-      item.variation_id == product.variation_id && 
-      item.product_id == product.product_id && 
-      item.bundle_id == (product.bundle_id || 0)
-    );
-    
-    if (findCartItem && findCartItem.quantity > 1) {
-      findCartItem.quantity -= 1;
-      saveCart(copyCart);
-    } else if (findCartItem && findCartItem.quantity === 1) {
-      // Remove item if quantity would become 0
-      delete_ITEM_FROM_CART({ product });
+  const remove_FROM_WISHLIST = (productId) => {
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const updatedWishlist = wishlist.filter((item) => item.id !== productId);
+      localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+      toast.success("Removed from wishlist!");
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      toast.error("Failed to remove from wishlist");
     }
   };
 
-  const clearCart = useCallback(() => {
-    console.log("clearCart function called");
-    console.log("Cart before clearing:", cart);
-    setCart([]);
-    localStorage.removeItem("cart");
-    console.log("Cart after clearing:", []);
-    toast.success("Cart cleared successfully");
-  }, []);
+  const get_WISHLIST = () => {
+    try {
+      return JSON.parse(localStorage.getItem("wishlist") || "[]");
+    } catch (error) {
+      console.error("Error getting wishlist:", error);
+      return [];
+    }
+  };
 
-  const setUSER = useCallback((user) => {
-    Cookies.set("user", JSON.stringify(user));
-    setUser(user);
-    window.location = "/";
-  }, []);
-
-  const logout = useCallback(() => {
-    Cookies.remove("user");
-    setUser(null);
-    window.location = "/";
-  }, []);
-
-  const storeValue = {
-    cart,
-    add_TO_CART,
-    delete_ITEM_FROM_CART,
-    increment_TO_CART_ITEM,
-    decrement_TO_CART_ITEM,
-    clearCart,
-    user,
-    setUSER,
-    logout,
-    customerData,
+  const is_IN_WISHLIST = (productId) => {
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      return wishlist.some((item) => item.id === productId);
+    } catch (error) {
+      console.error("Error checking wishlist:", error);
+      return false;
+    }
   };
 
   return (
-    <>
+    <AppStore.Provider
+      value={{
+        cart,
+        user,
+        customerData,
+        add_TO_CART,
+        remove_FROM_CART,
+        update_CART_QUANTITY,
+        clear_CART,
+        get_CART_TOTAL,
+        get_CART_ITEMS_COUNT,
+        add_TO_WISHLIST,
+        remove_FROM_WISHLIST,
+        get_WISHLIST,
+        is_IN_WISHLIST,
+      }}
+    >
       <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=AIzaSyCe92gBOWPXDIKSNCwI9RfYZEtJffQpaT8&libraries=places`}
-        strategy="beforeInteractive"
+        src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"
+        strategy="afterInteractive"
       />
-      <ToastContainer />
-      <AppStore.Provider value={storeValue}>
-        <Component {...pageProps} />
-        <PromotionalPopup />
-      </AppStore.Provider>
-    </>
+      <Component {...pageProps} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <PromotionalPopup />
+    </AppStore.Provider>
   );
 }
-
-export default MyApp;
 
 MyApp.getInitialProps = async (context) => {
   console.log("_APP -- getServerSideProps ----->>>", context);
   const pageProps = await App.getInitialProps(context);
-  let userInfo = null;
-  try {
-    userInfo = context.ctx.req?.cookies?.user
-      ? JSON.parse(context.ctx.req?.cookies?.user)
-      : null;
-
-    console.log("userInfo ------>>", userInfo);
-    return {
-      pageProps: { userInfo, ...pageProps },
-    };
-  } catch (error) {
-    console.log("eTTTrror", error);
-    return {
-      pageProps: {
-        userInfo, pageProps
-      },
-    };
+  
+  // Only fetch user data in browser environment, not during build
+  if (typeof window !== 'undefined') {
+    try {
+      const userInfo = Cookies.get("userInfo");
+      if (userInfo) {
+        return {
+          ...pageProps,
+          userInfo: JSON.parse(userInfo),
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to parse user info:', error.message);
+    }
   }
+  
+  return {
+    ...pageProps,
+    userInfo: null,
+  };
 };
 
+export default MyApp;

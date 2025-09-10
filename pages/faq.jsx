@@ -5,7 +5,7 @@ import {apiUrl} from "../config";
 import parse from "html-react-parser";
 import Link from "next/link";
 
-function Faq({ appData }) {
+function FAQ({ appData }) {
 	return (
 		<Layout title='FAQ'>
 			<>
@@ -19,26 +19,15 @@ function Faq({ appData }) {
 						</ul>
 					</div>
 				</div>
-				<div className='container'>
-					<div className='row'>
-						<div className='col-12'>
-							<div className='accordion' id='faqAccordianList'>
-								{appData != null
-									? appData.map((item) => {
-										return (
-											<div className='card mb-2' key={item.id}>
-												<div className='card-header' data-bs-toggle='collapse' data-bs-target={`#faq-answer-section_${item.id}`}>
-													<b>{item.question}</b>
-												</div>
-												<div id={`faq-answer-section_${item.id}`} className='collapse' data-bs-parent='#faqAccordianList'>
-													<div className='card-body'>{parse(item.answer)}</div>
-												</div>
-											</div>
-										);
-									})
-									: appData}
-							</div>
+				<div className='container mb-5'>
+					<div className="row">
+						<div className="col-12">
+							<h2>Frequently Asked Questions</h2>
+							<hr />
 						</div>
+					</div>
+					<div className='row'>
+						<div className='col-12'>{appData != null ? parse(appData.description) : "FAQ content loading..."}</div>
 					</div>
 				</div>
 			</>
@@ -47,21 +36,39 @@ function Faq({ appData }) {
 }
 
 export async function getStaticProps() {
-	let data = { appData: null };
-	try {
-		data = await axios.get(apiUrl + "/public/get/faq");
+	// During build time, don't make API calls if backend is not available
+	if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
 		return {
 			props: {
-				appData: data.data.appData
-			}
+				appData: {
+					description: "<p>Frequently asked questions will be loaded from the backend when available.</p>"
+				}
+			},
+			revalidate: 3600
+		};
+	}
+
+	try {
+		const { data } = await axios.get(apiUrl + "/public/get/faq", {
+			timeout: 5000
+		});
+		return {
+			props: {
+				appData: data.appData
+			},
+			revalidate: 3600
 		};
 	} catch (error) {
+		console.warn('Failed to fetch FAQ content during build:', error.message);
 		return {
 			props: {
-				appData: null
-			}
+				appData: {
+					description: "<p>Frequently asked questions will be loaded from the backend when available.</p>"
+				}
+			},
+			revalidate: 60
 		};
 	}
 }
 
-export default Faq;
+export default FAQ;

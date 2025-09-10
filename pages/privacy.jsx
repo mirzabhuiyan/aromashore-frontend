@@ -7,7 +7,7 @@ import Link from "next/link";
 
 function PrivacyPolicy({ appData }) {
 	return (
-		<Layout title='Privacy And Policy'>
+		<Layout title='Privacy Policy'>
 			<>
 				<div className='breadcrumb'>
 					<div className='container mt-2'>
@@ -22,12 +22,12 @@ function PrivacyPolicy({ appData }) {
 				<div className='container mb-5'>
 					<div className="row">
 						<div className="col-12">
-							<h2>Privacy And Policy</h2>
+							<h2>Privacy Policy</h2>
 							<hr />
 						</div>
 					</div>
 					<div className='row'>
-						<div className='col-12'>{appData != null ? parse(appData.description) : appData}</div>
+						<div className='col-12'>{appData != null ? parse(appData.description) : "Privacy policy content loading..."}</div>
 					</div>
 				</div>
 			</>
@@ -36,20 +36,37 @@ function PrivacyPolicy({ appData }) {
 }
 
 export async function getStaticProps() {
-	let data = { appData: null };
-	try {
-		data = await axios.get(apiUrl + "/public/get/privecy");
-		console.log("privacy----------->>", data.data);
+	// During build time, don't make API calls if backend is not available
+	if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
 		return {
 			props: {
-				appData: data.data.appData
-			}
+				appData: {
+					description: "<p>Privacy policy will be loaded from the backend when available.</p>"
+				}
+			},
+			revalidate: 3600
+		};
+	}
+
+	try {
+		const { data } = await axios.get(apiUrl + "/public/get/privecy", {
+			timeout: 5000
+		});
+		return {
+			props: {
+				appData: data.appData
+			},
+			revalidate: 3600
 		};
 	} catch (error) {
+		console.warn('Failed to fetch privacy content during build:', error.message);
 		return {
 			props: {
-				appData: null
-			}
+				appData: {
+					description: "<p>Privacy policy will be loaded from the backend when available.</p>"
+				}
+			},
+			revalidate: 60
 		};
 	}
 }
