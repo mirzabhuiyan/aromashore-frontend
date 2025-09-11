@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 
 // Get environment variables
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3303/api";
-const backendDomain = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || 'localhost:3303';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const backendDomain = process.env.NEXT_PUBLIC_BACKEND_DOMAIN;
 
 // Parse the API URL to get protocol and domain
-let protocol = 'http';
-let hostname = 'localhost';
+let protocol = 'https';
+let hostname = 'aroma-shore-backend-dirk7.ondigitalocean.app';
 let port = '3303';
 
 try {

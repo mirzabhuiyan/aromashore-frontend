@@ -4,8 +4,14 @@ const { parse } = require("url");
 const next = require("next");
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = process.env.PORT || 3000;
+const hostname = process.env.HOSTNAME;
+const port = process.env.PORT;
+
+// Set API URL based on environment
+const apiUrl = dev 
+  ? 'http://localhost:3303'  // Development
+  : process.env.NEXT_PUBLIC_API_URL + ':' + process.env.NEXT_PUBLIC_API_PORT; // Production
+
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
