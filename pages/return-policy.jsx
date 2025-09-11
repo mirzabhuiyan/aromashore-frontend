@@ -1,9 +1,8 @@
 import React from "react";
 import Layout from "../layouts/Layout";
-import axios from "axios";
-import {apiUrl} from "../config";
 import parse from "html-react-parser";
 import Link from "next/link";
+import { buildTimeApiCall, fallbackContent } from "../utils/buildTimeApi";
 
 function ReturnPolicy({ appData }) {
 	return (
@@ -27,7 +26,7 @@ function ReturnPolicy({ appData }) {
 						</div>
 					</div>
 					<div className='row'>
-						<div className='col-12'>{appData != null ? parse(appData.description) : appData}</div>
+						<div className='col-12'>{appData != null ? parse(appData.description) : "Return policy content loading..."}</div>
 					</div>
 				</div>
 			</>
@@ -36,21 +35,11 @@ function ReturnPolicy({ appData }) {
 }
 
 export async function getStaticProps() {
-	let data = { appData: null };
-	try {
-		data = await axios.get(apiUrl + "/public/get/return-policy");
-		return {
-			props: {
-				appData: data.data.appData
-			}
-		};
-	} catch (error) {
-		return {
-			props: {
-				appData: null
-			}
-		};
-	}
+	return await buildTimeApiCall(
+		"/public/get/return-policy",
+		fallbackContent.returnPolicy,
+		5000 // 5 second timeout
+	);
 }
 
 export default ReturnPolicy;
