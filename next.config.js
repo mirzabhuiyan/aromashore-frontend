@@ -20,6 +20,8 @@ try {
 
 const nextConfig = {
   reactStrictMode: true,
+  // Increase build timeout to handle slow API responses
+  staticPageGenerationTimeout: 120, // 2 minutes instead of default 60 seconds
   images: {
     remotePatterns: [
       {
@@ -46,6 +48,22 @@ const nextConfig = {
   },
   // Configure build output
   output: 'standalone',
+  // Add experimental features for better build performance
+  experimental: {
+    // Enable static optimization for better performance
+    optimizeCss: true,
+  },
+  // Add webpack configuration for better error handling
+  webpack: (config, { isServer }) => {
+    // Add timeout handling for server-side operations
+    if (isServer) {
+      // Set timeout for webpack compilation
+      config.infrastructureLogging = {
+        level: 'error',
+      };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;
