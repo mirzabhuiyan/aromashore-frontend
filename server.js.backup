@@ -10,7 +10,7 @@ const port = process.env.PORT;
 // Set API URL based on environment
 const apiUrl = dev 
   ? 'http://localhost:3303'  // Development
-  : process.env.NEXT_PUBLIC_API_URL; // Production - already includes port and /api path
+  : process.env.NEXT_PUBLIC_API_URL + ':' + process.env.NEXT_PUBLIC_API_PORT; // Production
 
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });
