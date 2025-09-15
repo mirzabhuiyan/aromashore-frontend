@@ -1,7 +1,6 @@
 import React from "react";
 import Layout from "../layouts/Layout";
-import axios from "axios";
-import {apiUrl} from "../config";
+import { buildTimeApiCall, fallbackContent } from "../utils/buildTimeApi";
 import parse from "html-react-parser";
 import Link from "next/link";
 
@@ -36,39 +35,11 @@ function PrivacyPolicy({ appData }) {
 }
 
 export async function getStaticProps() {
-	// During build time, don't make API calls if backend is not available
-	if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
-		return {
-			props: {
-				appData: {
-					description: "<p>Privacy policy will be loaded from the backend when available.</p>"
-				}
-			},
-			revalidate: 3600
-		};
-	}
-
-	try {
-		const { data } = await axios.get(apiUrl + "/public/get/privecy", {
-			timeout: 5000
-		});
-		return {
-			props: {
-				appData: data.appData
-			},
-			revalidate: 3600
-		};
-	} catch (error) {
-		console.warn('Failed to fetch privacy content during build:', error.message);
-		return {
-			props: {
-				appData: {
-					description: "<p>Privacy policy will be loaded from the backend when available.</p>"
-				}
-			},
-			revalidate: 60
-		};
-	}
+	return await buildTimeApiCall(
+		"/public/get/privecy",
+		fallbackContent.privacy,
+		5000
+	);
 }
 
 export default PrivacyPolicy;

@@ -1,7 +1,6 @@
 import React from "react";
 import Layout from "../layouts/Layout";
-import axios from "axios";
-import {apiUrl} from "../config";
+import { buildTimeApiCall, fallbackContent } from "../utils/buildTimeApi";
 import parse from "html-react-parser";
 import Link from "next/link";
 
@@ -36,41 +35,11 @@ function AboutUs({ appData }) {
 }
 
 export async function getStaticProps() {
-	// During build time, don't make API calls if backend is not available
-	if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
-		// For production builds, return static content or fetch from a reliable source
-		return {
-			props: {
-				appData: {
-					description: "<p>Welcome to Aromashore - your premier destination for luxury fragrances and aromatherapy products.</p>"
-				}
-			},
-			revalidate: 3600 // Revalidate every hour
-		};
-	}
-
-	// For development or when backend is available
-	try {
-		const { data } = await axios.get(apiUrl + "/public/get/about", {
-			timeout: 5000 // 5 second timeout
-		});
-		return {
-			props: {
-				appData: data.appData
-			},
-			revalidate: 3600 // Revalidate every hour
-		};
-	} catch (error) {
-		console.warn('Failed to fetch about content during build:', error.message);
-		return {
-			props: {
-				appData: {
-					description: "<p>Welcome to Aromashore - your premier destination for luxury fragrances and aromatherapy products.</p>"
-				}
-			},
-			revalidate: 60 // Revalidate every minute on error
-		};
-	}
+	return await buildTimeApiCall(
+		"/public/get/about",
+		fallbackContent.about,
+		5000
+	);
 }
 
 export default AboutUs;

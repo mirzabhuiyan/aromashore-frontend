@@ -9,19 +9,18 @@ import { apiUrl } from '../config';
  * @returns {Promise<Object>} - Returns the API response or fallback data
  */
 export async function buildTimeApiCall(endpoint, fallbackData, timeout = 5000) {
-  // During build time, don't make API calls if backend is not available
-  if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL?.includes('localhost')) {
+  if (!apiUrl) {
+    console.warn('NEXT_PUBLIC_API_URL is not set; returning fallback content.');
     return {
       props: {
         appData: fallbackData
       },
-      revalidate: 3600 // Revalidate every hour
+      revalidate: 60
     };
   }
 
-  // For development or when backend is available
   try {
-    const { data } = await axios.get(apiUrl + endpoint, {
+    const { data } = await axios.get(`${apiUrl}${endpoint}`, {
       timeout: timeout,
       headers: {
         'Content-Type': 'application/json',
@@ -30,7 +29,7 @@ export async function buildTimeApiCall(endpoint, fallbackData, timeout = 5000) {
     
     return {
       props: {
-        appData: data.appData
+        appData: data?.appData ?? fallbackData
       },
       revalidate: 3600
     };
