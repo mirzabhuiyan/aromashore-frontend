@@ -50,8 +50,8 @@ const nextConfig = {
   output: 'standalone',
   // Add experimental features for better build performance
   experimental: {
-    // Enable static optimization for better performance
-    optimizeCss: true,
+    // Disable Critters to avoid runtime errors during HTML post-processing
+    optimizeCss: false,
   },
   // Add webpack configuration for better error handling
   webpack: (config, { isServer }) => {
