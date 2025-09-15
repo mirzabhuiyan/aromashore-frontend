@@ -5,6 +5,7 @@ import parse from "html-react-parser";
 import Link from "next/link";
 
 function AboutUs({ appData }) {
+	const descriptionHtml = appData && typeof appData.description === 'string' ? appData.description : null;
 	return (
 		<Layout title='About Page'>
 			<>
@@ -26,7 +27,7 @@ function AboutUs({ appData }) {
 						</div>
 					</div>
 					<div className='row'>
-						<div className='col-12'>{appData != null ? parse(appData.description) : "Content loading..."}</div>
+						<div className='col-12'>{descriptionHtml ? parse(descriptionHtml) : "Content loading..."}</div>
 					</div>
 				</div>
 			</>

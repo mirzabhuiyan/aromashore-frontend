@@ -5,6 +5,7 @@ import parse from "html-react-parser";
 import Link from "next/link";
 
 function PrivacyPolicy({ appData }) {
+	const descriptionHtml = appData && typeof appData.description === 'string' ? appData.description : null;
 	return (
 		<Layout title='Privacy Policy'>
 			<>
@@ -26,7 +27,7 @@ function PrivacyPolicy({ appData }) {
 						</div>
 					</div>
 					<div className='row'>
-						<div className='col-12'>{appData != null ? parse(appData.description) : "Privacy policy content loading..."}</div>
+						<div className='col-12'>{descriptionHtml ? parse(descriptionHtml) : "Privacy policy content loading..."}</div>
 					</div>
 				</div>
 			</>
