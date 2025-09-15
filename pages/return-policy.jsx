@@ -5,6 +5,7 @@ import Link from "next/link";
 import { buildTimeApiCall, fallbackContent } from "../utils/buildTimeApi";
 
 function ReturnPolicy({ appData }) {
+	const descriptionHtml = appData && typeof appData.description === 'string' ? appData.description : null;
 	return (
 		<Layout title='Return Policy'>
 			<>
@@ -26,7 +27,7 @@ function ReturnPolicy({ appData }) {
 						</div>
 					</div>
 					<div className='row'>
-						<div className='col-12'>{appData != null ? parse(appData.description) : "Return policy content loading..."}</div>
+						<div className='col-12'>{descriptionHtml ? parse(descriptionHtml) : "Return policy content loading..."}</div>
 					</div>
 				</div>
 			</>
