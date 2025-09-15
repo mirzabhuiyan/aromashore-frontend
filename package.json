@@ -52,14 +52,17 @@
 		"react-multi-carousel": "^2.8.2",
 		"react-places-autocomplete": "^7.3.0",
 		"react-redux": "^8.0.5",
+		"react-select": "^5.10.2",
+		"react-slick": "^0.31.0",
+		"react-toastify": "^11.0.5",
 		"redux": "^4.2.0",
 		"slick-carousel": "^1.8.1",
 		"styled-components": "^5.3.6",
 		"swiper": "^11.2.10"
 	},
 	"devDependencies": {
+		"cross-env": "^7.0.3",
 		"eslint": "8.25.0",
-		"eslint-config-next": "12.3.4",
-		"cross-env": "^7.0.3"
+		"eslint-config-next": "12.3.4"
 	}
 }
