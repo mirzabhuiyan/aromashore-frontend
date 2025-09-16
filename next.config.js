@@ -8,7 +8,7 @@ const backendDomain = process.env.NEXT_PUBLIC_BACKEND_DOMAIN;
 
 // Parse the API URL to get protocol and domain
 let protocol = 'https';
-let hostname = 'primesmell.com';
+let hostname = backendDomain;
 let port = '';
 
 try {
