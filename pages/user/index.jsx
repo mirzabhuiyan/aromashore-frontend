@@ -10,6 +10,7 @@ import PersonalInfo from "../../components/userdetails/personal_info";
 import Layout from "../../layouts/Layout";
 import { getprofileByCustomer, updateprofilePicture } from "../../services/webCustomerService";
 import { useRouter } from "next/router";
+import { uploadsBase } from "../../config";
 
 export default function Index() {
 	const router = useRouter();
@@ -21,7 +22,15 @@ export default function Index() {
 			getprofileByCustomer(user).then(profile => {
 				console.log("profileData.appData --------> ", profile);
 				setCustomerprofile(profile.data.appData);
-				setProfileImgUrl(profile.data.appData?.customerprofile?.image);
+				const img = profile.data.appData?.customerprofile?.image;
+				if (img) {
+					if (typeof img === 'string' && (img.startsWith('data:') || img.startsWith('http'))) {
+						setProfileImgUrl(img);
+					} else {
+						// Assume it is a filename saved by backend; serve via /uploads path
+						setProfileImgUrl(`${uploadsBase}${img}`);
+					}
+				}
 			}).catch(err => console.log('Not found'))
 		} else {
 			window.location = "/";
