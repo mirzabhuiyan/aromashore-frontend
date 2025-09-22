@@ -6,9 +6,11 @@ import { login, verifyOTP } from "../services/authService";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AppStore } from "../store/AppStore";
+import { useRouter } from "next/router";
 
 function Login() {
 	const { setUSER } = useContext(AppStore);
+	const router = useRouter();
 	const [user, setUserForm] = useState({
 		username: "",
 		password: "",
@@ -45,8 +47,13 @@ function Login() {
 				setTwofaUsername(user.username);
 				return;
 			}
-			setUSER(data.appData);
-		} catch (error) { }
+			if (data.appStatus && data.appData) {
+				setUSER(data.appData);
+				router.replace("/");
+			}
+		} catch (error) { 
+			toast.error("Login failed. Please try again.");
+		}
 	};
 
 	// 2FA: Uncomment to enable 2-factor authentication
@@ -56,6 +63,7 @@ function Login() {
 			const res = await verifyOTP({ username: twofaUsername, code: twofaCode });
 			if (res.appStatus) {
 				setUSER(res.appData);
+				router.replace("/");
 			} else {
 				toast(res.appMessage);
 			}
