@@ -76,7 +76,7 @@ export default function HeaderNavigation({ openCart }) {
 		console.log(menu);
 		if (menu !== null) {
 			setSelectedMenu(menu);
-			handleSelectedMenuAllProduct(menu.productcategories);
+			handleSelectedMenuAllProduct(menu.productcategories, menu.id);
 			handleSelectCategory(null);
 		} else {
 			setSelectedMenu(null);
@@ -103,7 +103,7 @@ export default function HeaderNavigation({ openCart }) {
 		}
 	};
 
-	const handleSelectedMenuAllProduct = (allCategoryProduct) => {
+	const handleSelectedMenuAllProduct = (allCategoryProduct, categoryId = null) => {
 		console.log(allCategoryProduct);
 		setSelectedCategory(null);
 		const allProductFromSelectedMenu = [];
@@ -113,11 +113,42 @@ export default function HeaderNavigation({ openCart }) {
 				if (acp.products && Array.isArray(acp.products)) {
 					allProductFromSelectedMenu.push(...acp.products);
 				}
-			})
-			setSelectedCategoryWiseAllProduct(allProductFromSelectedMenu);
-		} else {
-			setSelectedCategoryWiseAllProduct([]);
+			});
+			// De-duplicate and limit to a single row (3 items)
+			const uniqueById = [];
+			const seen = new Set();
+			for (let i = 0; i < allProductFromSelectedMenu.length && uniqueById.length < 3; i++) {
+				const p = allProductFromSelectedMenu[i];
+				if (!seen.has(p.id)) {
+					seen.add(p.id);
+					uniqueById.push(p);
+				}
+			}
+			setSelectedCategoryWiseAllProduct(uniqueById);
+			return;
 		}
+
+		// Fallback: fetch typical products by the menu's own category id
+		const targetCategoryId = categoryId || selectedMenu?.id;
+		if (!targetCategoryId) {
+			setSelectedCategoryWiseAllProduct([]);
+			return;
+		}
+
+		axios
+			.post(apiUrl + "/web/getall/product", {
+				pageSize: 3,
+				pageNo: 0,
+				categoryId: targetCategoryId
+			})
+			.then((response) => {
+				if (response.data.appStatus) {
+					setSelectedCategoryWiseAllProduct(response.data.appData.rows || []);
+				} else {
+					setSelectedCategoryWiseAllProduct([]);
+				}
+			})
+			.catch(() => setSelectedCategoryWiseAllProduct([]));
 	};
 
 	const handleInput = (e) => {
@@ -291,6 +322,11 @@ export default function HeaderNavigation({ openCart }) {
 												<li data-bs-dismiss='offcanvas' onClick={() => goToSelectedCategory('all')}>
 													All
 												</li>
+												{selectedMobileMenu ? (
+													<li data-bs-dismiss='offcanvas' onClick={() => { handleSelectedMenuAllProduct(selectedMobileMenu.productcategories, selectedMobileMenu.id); }}>
+														{selectedMobileMenu?.name || selectedMobileMenu?.category_name}
+													</li>
+												) : <></>}
 												{selectedMobileMenu && selectedMobileMenu.productcategories && Array.isArray(selectedMobileMenu.productcategories) && selectedMobileMenu.productcategories.map(pcat =>
 													<li key={pcat.id} data-bs-dismiss='offcanvas' onClick={() => goToSelectedCategory(pcat.id)}>
 														{pcat.category_name}
@@ -361,8 +397,11 @@ export default function HeaderNavigation({ openCart }) {
 										<i className="mobile-mega-menu-close-button fas fa-times-circle text-danger ms-2"></i>
 									</h4>
 									<ul>
-										<li className='category_name' onClick={() => handleSelectedMenuAllProduct(selectedMenu.productcategories)}>
+										<li className='category_name' onClick={() => handleSelectedMenuAllProduct(selectedMenu.productcategories, selectedMenu?.id)}>
 											All
+										</li>
+										<li className='category_name' onClick={() => handleSelectedMenuAllProduct(selectedMenu.productcategories, selectedMenu?.id)}>
+											{selectedMenu?.name || selectedMenu?.category_name}
 										</li>
 										{selectedMenu.productcategories && Array.isArray(selectedMenu.productcategories) && selectedMenu.productcategories.map(pcat =>
 											<li key={pcat.id} className='category_name' onClick={() => handleSelectCategory(pcat)}>
