@@ -14,6 +14,7 @@ import { toast, ToastContainer } from "react-toastify";
 import Script from 'next/script';
 import { globalProductImageAddress } from '../config';
 import PromotionalPopup from '../components/common/PromotionalPopup';
+import { saveUserSession, getCurrentUser, clearUserSession } from "../services/authService";
 
 function MyApp({
   Component,
@@ -59,6 +60,15 @@ function MyApp({
       profieData(user);
     }
   }, [user]);
+
+  // Hydrate user from cookies on mount if not provided
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!user) {
+      const u = getCurrentUser();
+      if (u) setUser(u);
+    }
+  }, []);
 
   const profieData = async (userInfo) => {
     try {
@@ -200,6 +210,19 @@ function MyApp({
       value={{
         cart,
         user,
+        setUSER: (u) => {
+          if (u) {
+            saveUserSession(u);
+            setUser(u);
+          } else {
+            clearUserSession();
+            setUser(null);
+          }
+        },
+        logout: () => {
+          clearUserSession();
+          setUser(null);
+        },
         customerData,
         add_TO_CART,
         remove_FROM_CART,
