@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import axios from "axios";
-import {apiUrl, globalProductImageAddress} from "../../config";
+import {apiUrl, getImageUrl} from "../../config";
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -14,7 +14,7 @@ const getProductImageUrl = (imageData) => {
   } else if (imageData.startsWith('http')) {
     return imageData; // Already a full URL
   } else {
-    return `${globalProductImageAddress}${imageData}`; // File-based image
+    return getImageUrl(imageData, 'products'); // File-based image using CDN
   }
 };
 import { Card, ListGroup } from "react-bootstrap";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import Image from "next/image";
-import { apiUrl, globalProductImageAddress } from "../../config";
+import { apiUrl, getImageUrl } from "../../config";
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -12,8 +12,8 @@ const getProductImageUrl = (imageData) => {
   } else if (imageData.startsWith('http')) {
     return imageData; // Already a full URL
   } else {
-    // For file-based images, check if the file exists
-    const imageUrl = `${globalProductImageAddress}${imageData}`;
+    // For file-based images, use CDN
+    const imageUrl = getImageUrl(imageData, 'products');
     console.log('Bundle Image URL:', imageUrl);
     return imageUrl; // File-based image
   }

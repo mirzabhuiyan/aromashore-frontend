@@ -9,7 +9,7 @@ import { AppStore } from "../store/AppStore";
 import { calculateCart } from "../services/utilityService";
 import Cookies from "js-cookie";
 import Image from "next/image";
-import { globalProductImageAddress } from '../config';
+import { getImageUrl } from '../config';
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -21,7 +21,7 @@ const getProductImageUrl = (imageData) => {
   } else if (imageData.startsWith('http')) {
     return imageData; // Already a full URL
   } else {
-    return imageData; // Already processed by _app.js
+    return getImageUrl(imageData, 'products'); // Use CDN for file-based images
   }
 };
 
