@@ -81,7 +81,7 @@ function Cart() {
 												<tr>
 													<td className='text-center'>
 														{product.product_image != '' ? (
-															<Image crossOrigin="anonymous" src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} />
+															<Image src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} />
 														) : (
 															<Image src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />
 														)}
