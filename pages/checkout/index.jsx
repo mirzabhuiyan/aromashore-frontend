@@ -1760,7 +1760,7 @@ export default function Index({ user, customerData }) {
                                     <td>
                                       {product.product_image ? (
                                         <img
-                                          crossorigin="anonymous"
+                                          // crossorigin="anonymous"
                                           src={product.product_image}
                                           alt={product.product_name}
                                           height={75}

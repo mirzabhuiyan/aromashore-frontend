@@ -57,7 +57,7 @@ const ShoppingCart = ({ isCartOpen }) => {
 									cart.map((product, i) =>
 										<div key={i} className='cus_cart-item'>
 											<div className='cus_cart-item__image'>
-												{product?.product_image? <img crossOrigin="anonymous" src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
+												{product?.product_image? <img src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
 											</div>
 											<div className='cus_cart-item__info'>
 												<div key={i}>
