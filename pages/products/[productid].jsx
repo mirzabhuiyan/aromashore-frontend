@@ -270,7 +270,7 @@ function ProductDetail() {
 																	<SwiperSlide key={index}>
 																		<div key={item.id} className='slider__item'>
 																			<img 
-																				crossOrigin="anonymous" 
+																				// crossOrigin="anonymous" 
 																				src={getImageUrl(item.image)} 
 																				alt={item.name} 
 																				width={500} 

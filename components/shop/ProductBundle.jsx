@@ -165,7 +165,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 															{bp.product_image ? (
 																<>
 																	<img 
-																		crossOrigin="anonymous" 
+																		// crossOrigin="anonymous" 
 																		src={getProductImageUrl(bp.product_image)} 
 																		width={75} 
 																		height={75}
