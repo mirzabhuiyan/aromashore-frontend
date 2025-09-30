@@ -62,6 +62,21 @@ const nextConfig = {
       };
     }
 
+    // Fix Windows file watching issues
+    if (process.platform === 'win32') {
+      config.watchOptions = {
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/C:/pagefile.sys',
+          '**/C:/hiberfil.sys',
+          '**/C:/swapfile.sys',
+          '**/C:/System Volume Information/**',
+          '**/C:/$Recycle.Bin/**',
+        ],
+      };
+    }
+
     // Enable filesystem build cache for faster rebuilds
     config.cache = {
       type: 'filesystem',
