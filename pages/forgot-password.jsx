@@ -42,7 +42,11 @@ function ForgotPassword({ host }) {
 		}
 		
 		try {
-			let response = await forgotPassword(inputs);
+			const normalized = {
+				email: (inputs.email || '').trim().toLowerCase(),
+				username: (inputs.username || '').replace(/\D/g, '')
+			};
+			let response = await forgotPassword(normalized);
 			toast(response.data.appMessage);
 			if (response.data.appStatus) {
 				setInputs({
@@ -51,9 +55,9 @@ function ForgotPassword({ host }) {
 				});
 				// Navigate to reset password page with tokenId
 				router.push({
-					pathname: `/reset-password/${encodeURIComponent(inputs.email)}`,
+					pathname: `/reset-password/${encodeURIComponent(normalized.email)}`,
 					query: { 
-						email: inputs.email,
+						email: normalized.email,
 						tokenId: response.data.appData.tokenId 
 					},
 				});
