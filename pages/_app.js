@@ -95,26 +95,43 @@ function MyApp({
 
   const add_TO_CART = ({ productDetails, unit, bundleId = null }) => {
     console.log('_app add_TO_CART ----> ', productDetails, unit, bundleId);
-    const existingItemIndex = cart.findIndex(
-      (item) => item.id === productDetails.id && item.bundleId === bundleId
-    );
 
-    if (existingItemIndex !== -1) {
-      const updatedCart = [...cart];
-      updatedCart[existingItemIndex].quantity += unit;
-      saveCart(updatedCart);
-    } else {
-      const newItem = {
-        id: productDetails.id,
-        name: productDetails.name,
-        price: productDetails.price,
-        quantity: unit,
-        image: getProductImageUrl(productDetails.image),
+    // Normalize inputs: productDetails can be single object or array (bundles)
+    const items = Array.isArray(productDetails) ? productDetails.map((pd, idx) => ({ pd, u: Array.isArray(unit) ? unit[idx] : unit })) : [{ pd: productDetails, u: unit }];
+
+    const buildCartItem = (pd, u) => {
+      const quantity = typeof u === 'number' ? u : (Number(u?.qty) || 1);
+      const unitPrice = (u && typeof u === 'object') ? (Number(u.sale_price) > 0 ? Number(u.sale_price) : Number(u.price)) : Number(pd?.price) || 0;
+      return {
+        id: pd.id,
+        name: pd.name,
+        price: unitPrice,
+        quantity: quantity,
+        image: getProductImageUrl(pd?.productimages?.[0]?.image || pd?.image || ''),
         bundleId: bundleId,
-        bundleName: bundleId ? productDetails.bundleName : null,
+        bundleName: bundleId ? pd.bundleName : null,
+        weight: (typeof u === 'object' ? Number(u?.weight) : 0) || 0
       };
-      saveCart([...cart, newItem]);
-    }
+    };
+
+    // Build new items list
+    const newItems = items.map(({ pd, u }) => buildCartItem(pd, u));
+
+    // Merge into cart (by id + bundleId)
+    const updatedCart = [...cart];
+    newItems.forEach((newItem) => {
+      const existingIndex = updatedCart.findIndex((ci) => ci.id === newItem.id && ci.bundleId === newItem.bundleId);
+      if (existingIndex !== -1) {
+        updatedCart[existingIndex] = {
+          ...updatedCart[existingIndex],
+          quantity: Number(updatedCart[existingIndex].quantity || 0) + Number(newItem.quantity || 0),
+        };
+      } else {
+        updatedCart.push(newItem);
+      }
+    });
+
+    saveCart(updatedCart);
   };
 
   const remove_FROM_CART = (productId, bundleId = null) => {
