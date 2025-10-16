@@ -32,10 +32,27 @@ const nextConfig = {
   reactStrictMode: true,
   // Increase build timeout to handle slow API responses
   staticPageGenerationTimeout: 120, // 2 minutes instead of default 60 seconds
+  // Fix HMR issues
+  devIndicators: {
+    buildActivity: false,
+  },
   images: {
     remotePatterns: [
       buildRemotePattern('/uploads/products/**'),
       buildRemotePattern('/product/**'),
+      // Add localhost for development
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3303',
+        pathname: '/uploads/products/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3303',
+        pathname: '/uploads/**',
+      },
     ],
   },
   eslint: {
@@ -74,6 +91,20 @@ const nextConfig = {
           '**/C:/System Volume Information/**',
           '**/C:/$Recycle.Bin/**',
         ],
+        poll: 1000, // Check for changes every second
+        aggregateTimeout: 300, // Delay before rebuilding
+      };
+    }
+
+    // Fix HMR connection issues
+    if (dev) {
+      config.devServer = {
+        ...config.devServer,
+        hot: true,
+        liveReload: true,
+        client: {
+          webSocketURL: 'ws://localhost:3000/_next/webpack-hmr',
+        },
       };
     }
 
