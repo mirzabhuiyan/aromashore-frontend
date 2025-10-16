@@ -53,8 +53,8 @@ const ShoppingCart = ({ isCartOpen }) => {
 						<div className='cart-items__wrapper'>
 							<h2>Shopping Cart</h2>
 							<div>
-								{cart.length > 0 ?
-									cart.map((product, i) =>
+								{cart.length > 0 ? (
+									cart.map((product, i) => (
 										<div key={i} className='cus_cart-item'>
 											<div className='cus_cart-item__image'>
 												{product?.product_image? <img src={getProductImageUrl(product.product_image)} alt={product.product_name} height={75} width={75} /> : <img src='/app/assets/images/200.svg' alt='Placeholder' height={75} width={75} />}
@@ -97,8 +97,10 @@ const ShoppingCart = ({ isCartOpen }) => {
 												</div>
 											</div>
 										</div>
-									) : <>Nothing on Cart!</>
-								}
+									))
+								) : (
+									<>Nothing on Cart!</>
+								)}
 							</div>
 
 							<div className='cart-items__total'>

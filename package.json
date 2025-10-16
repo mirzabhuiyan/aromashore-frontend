@@ -4,6 +4,7 @@
 	"main": "server.js",
 	"scripts": {
 		"dev": "cross-env NODE_ENV=development node server.js",
+		"dev:clean": "node scripts/restart-dev.js",
 		"build": "next build",
 		"build:robust": "node scripts/build-with-fallback.js",
 		"build:deploy": "node scripts/deploy-build.js",

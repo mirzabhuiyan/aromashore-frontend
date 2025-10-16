@@ -253,7 +253,9 @@ export default function Index() {
 														justifyContent: 'space-between',
 														alignItems: 'center',
 														borderBottom: '2px solid #007bff',
-														paddingBottom: '12px'
+														paddingBottom: '12px',
+														flexWrap: 'wrap',
+														gap: '8px'
 													}}>
 														<h2 className='sidebar-categories' style={{
 															fontSize: '18px',
@@ -262,12 +264,14 @@ export default function Index() {
 															margin: 0,
 															display: 'flex',
 															alignItems: 'center',
-															gap: '8px'
+															gap: '8px',
+															flex: '1',
+															minWidth: '0'
 														}}>
-															<i className="fas fa-tags" style={{ color: '#007bff' }}></i>
-															Categories
+															<i className="fas fa-tags" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Categories</span>
 														</h2>
-														<div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
 															{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
 																<button 
 																	onClick={clearAllFilters}
@@ -314,8 +318,18 @@ export default function Index() {
 														</div>
 													</div>
 													<div className="mobile-filter">
-														{showCategoryFilter ?
-															<ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+														{showCategoryFilter ? (
+															<div className='shop-sidebar__section__item'>
+																<label style={{ 
+																	display: 'block', 
+																	fontSize: '14px', 
+																	fontWeight: '500', 
+																	color: '#495057', 
+																	marginBottom: '12px' 
+																}}>
+																	Select Category
+																</label>
+																<ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
 																<li onClick={() => handleCategorySelect("all")} style={{ 
 																	cursor: 'pointer',
 																	padding: '10px 12px',
@@ -364,8 +378,9 @@ export default function Index() {
 																		{category.category_name}
 																	</li>
 																)}
-															</ul> : <></>
-														}
+																</ul>
+															</div>
+														) : null}
 													</div>
 													<div className="desktop-filter">
 														<ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -430,11 +445,15 @@ export default function Index() {
 													border: '1px solid rgba(0, 0, 0, 0.1)',
 													boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
 												}}>
-													<div style={{ 
-														display: 'flex', 
-														justifyContent: 'space-between', 
+													<div className='section-title -style1 -medium' style={{ 
+														marginBottom: "1.5em",
+														display: 'flex',
+														justifyContent: 'space-between',
 														alignItems: 'center',
-														marginBottom: '12px'
+														borderBottom: '2px solid #007bff',
+														paddingBottom: '12px',
+														flexWrap: 'wrap',
+														gap: '8px'
 													}}>
 														<h2 className='sidebar-refine-search' style={{
 															fontSize: '18px',
@@ -443,12 +462,14 @@ export default function Index() {
 															margin: 0,
 															display: 'flex',
 															alignItems: 'center',
-															gap: '8px'
+															gap: '8px',
+															flex: '1',
+															minWidth: '0'
 														}}>
-															<i className="fas fa-star" style={{ color: '#007bff' }}></i>
-															Inspired By
+															<i className="fas fa-star" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Inspired By</span>
 														</h2>
-														<div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
 															{selectedBrandIdList.length > 0 && (
 																<span className="badge bg-primary d-inline-flex align-items-center justify-content-center" style={{ minWidth: 24 }}>{selectedBrandIdList.length}</span>
 															)}
@@ -466,22 +487,31 @@ export default function Index() {
 														</div>
 													</div>
 													<div className="mobile-filter">
-														{showBrandFilter ?
+														{showBrandFilter ? (
 															<div className='shop-sidebar__section__item'>
-																<div style={{ marginBottom: '12px' }}>
+																<div style={{ marginBottom: '16px' }}>
+																	<label style={{ 
+																		display: 'block', 
+																		fontSize: '14px', 
+																		fontWeight: '500', 
+																		color: '#495057', 
+																		marginBottom: '8px' 
+																	}}>
+																		Search Brands
+																	</label>
 																	<input
 																		type='text'
-																		placeholder='Search brands...'
+																		placeholder='Type to search brands...'
 																		value={brandSearchQuery}
 																		onChange={(e) => setBrandSearchQuery(e.target.value)}
 																		style={{
 																			width: '100%',
-																			padding: '10px 14px',
+																			padding: '12px 16px',
 																			border: '2px solid #e9ecef',
 																			borderRadius: '10px',
 																			fontSize: '14px',
 																			background: '#ffffff',
-																			color: '#333333',
+																			color: '#495057',
 																			transition: 'all 0.3s ease',
 																			boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
 																		}}
@@ -574,8 +604,8 @@ export default function Index() {
 																		Show less
 																	</button>
 																)}
-															</div> : <></>
-														}
+															</div>
+														) : null}
 													</div>
 													<div className="desktop-filter">
 														<div className='shop-sidebar__section__item'>
@@ -706,7 +736,11 @@ export default function Index() {
 														marginBottom: "1.5em",
 														borderBottom: '2px solid #007bff',
 														paddingBottom: '12px',
-														display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+														display: 'flex', 
+														justifyContent: 'space-between', 
+														alignItems: 'center',
+														flexWrap: 'wrap',
+														gap: '8px'
 													}}>
 														<h2 className='sidebar-search' style={{
 															fontSize: '18px',
@@ -715,52 +749,106 @@ export default function Index() {
 															margin: 0,
 															display: 'flex',
 															alignItems: 'center',
-															gap: '8px'
+															gap: '8px',
+															flex: '1',
+															minWidth: '0'
 														}}>
-															<i className="fas fa-spray-can" style={{ color: '#007bff' }}></i>
-															Perfume Notes
+															<i className="fas fa-spray-can" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Perfume Notes</span>
 														</h2>
-														<button 
-															className="btn btn-sm btn-light d-lg-none"
-															onClick={() => setShowPerfumeNotes(ov => !ov)}
-															style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 8px', borderRadius: '6px' }}
-															title={showPerfumeNotes ? 'Collapse' : 'Expand'}
-														>
-															<i className={showPerfumeNotes ? "fas fa-chevron-up" : "fas fa-chevron-down"} style={{ color: '#6c757d' }}></i>
-														</button>
+														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+															{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
+																<button 
+																	onClick={clearAllFilters}
+																	style={{
+																		background: 'rgba(108, 117, 125, 0.1)',
+																		border: '1px solid rgba(108, 117, 125, 0.2)',
+																		color: '#6c757d',
+																		cursor: 'pointer',
+																		padding: '6px 8px',
+																		borderRadius: '6px',
+																		transition: 'all 0.3s ease',
+																		display: 'flex',
+																		alignItems: 'center',
+																		justifyContent: 'center',
+																		minWidth: '32px',
+																		height: '32px'
+																	}}
+																	onMouseEnter={(e) => {
+																		e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+																		e.target.style.borderColor = 'rgba(108, 117, 125, 0.4)';
+																		e.target.style.transform = 'scale(1.05)';
+																	}}
+																	onMouseLeave={(e) => {
+																		e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+																		e.target.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+																		e.target.style.transform = 'scale(1)';
+																	}}
+																	title="Clear all filters"
+																>
+																	<i className="fas fa-eraser" style={{ fontSize: '14px' }}></i>
+																</button>
+															)}
+															<button 
+																className="btn btn-sm btn-light d-lg-none"
+																onClick={() => setShowPerfumeNotes(ov => !ov)}
+																style={{ 
+																	display: 'flex', 
+																	alignItems: 'center', 
+																	justifyContent: 'center', 
+																	padding: '6px 8px', 
+																	borderRadius: '6px',
+																	flexShrink: 0
+																}}
+																title={showPerfumeNotes ? 'Collapse' : 'Expand'}
+															>
+																<i className={showPerfumeNotes ? "fas fa-chevron-up" : "fas fa-chevron-down"} style={{ color: '#6c757d' }}></i>
+															</button>
+														</div>
 													</div>
 													{/* Mobile collapsible */}
 													<div className='d-lg-none'>
 														{showPerfumeNotes && (
-															<div className='shop-sidebar__section__item'>
-																<input
-																	type='text'
-																	placeholder='Search by perfume notes...'
-																	value={perfumeNotes}
-																	onChange={(e) => {
-																		setPerfumeNotes(e.target.value);
-																		setPageNo(0);
-																	}}
-																	style={{
-																		width: '100%',
-																		padding: '12px 16px',
-																		border: '2px solid #e9ecef',
-																		borderRadius: '10px',
-																		fontSize: '14px',
-																		background: '#ffffff',
-																		color: '#333333',
-																		transition: 'all 0.3s ease',
-																		boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-																	}}
-																	onFocus={(e) => {
-																		e.target.style.borderColor = '#007bff';
-																		e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
-																	}}
-																	onBlur={(e) => {
-																		e.target.style.borderColor = '#e9ecef';
-																		e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
-																	}}
-																/>
+															<div className='mobile-filter'>
+																<div className='shop-sidebar__section__item'>
+																	<label style={{ 
+																		display: 'block', 
+																		fontSize: '14px', 
+																		fontWeight: '500', 
+																		color: '#495057', 
+																		marginBottom: '8px' 
+																	}}>
+																		Search Perfume Notes
+																	</label>
+																	<input
+																		type='text'
+																		placeholder='Type perfume notes to search...'
+																		value={perfumeNotes}
+																		onChange={(e) => {
+																			setPerfumeNotes(e.target.value);
+																			setPageNo(0);
+																		}}
+																		style={{
+																			width: '100%',
+																			padding: '12px 16px',
+																			border: '2px solid #e9ecef',
+																			borderRadius: '10px',
+																			fontSize: '14px',
+																			background: '#ffffff',
+																			color: '#495057',
+																			transition: 'all 0.3s ease',
+																			boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+																		}}
+																		onFocus={(e) => {
+																			e.target.style.borderColor = '#007bff';
+																			e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+																		}}
+																		onBlur={(e) => {
+																			e.target.style.borderColor = '#e9ecef';
+																			e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+																		}}
+																	/>
+																</div>
 															</div>
 														)}
 													</div>
@@ -813,7 +901,11 @@ export default function Index() {
 														marginBottom: "1.5em",
 														borderBottom: '2px solid #007bff',
 														paddingBottom: '12px',
-														display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+														display: 'flex', 
+														justifyContent: 'space-between', 
+														alignItems: 'center',
+														flexWrap: 'wrap',
+														gap: '8px'
 													}}>
 														<h2 className='sidebar-search' style={{
 															fontSize: '18px',
@@ -822,52 +914,106 @@ export default function Index() {
 															margin: 0,
 															display: 'flex',
 															alignItems: 'center',
-															gap: '8px'
+															gap: '8px',
+															flex: '1',
+															minWidth: '0'
 														}}>
-															<i className="fas fa-sun" style={{ color: '#007bff' }}></i>
-															Season
+															<i className="fas fa-sun" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Season</span>
 														</h2>
-														<button 
-															className="btn btn-sm btn-light d-lg-none"
-															onClick={() => setShowSeason(ov => !ov)}
-															style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 8px', borderRadius: '6px' }}
-															title={showSeason ? 'Collapse' : 'Expand'}
-														>
-															<i className={showSeason ? "fas fa-chevron-up" : "fas fa-chevron-down"} style={{ color: '#6c757d' }}></i>
-														</button>
+														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+															{(selectedBrandIdList.length > 0 || (query.category && query.category !== "" && query.category !== "all") || perfumeNotes.trim() !== "" || season.trim() !== "") && (
+																<button 
+																	onClick={clearAllFilters}
+																	style={{
+																		background: 'rgba(108, 117, 125, 0.1)',
+																		border: '1px solid rgba(108, 117, 125, 0.2)',
+																		color: '#6c757d',
+																		cursor: 'pointer',
+																		padding: '6px 8px',
+																		borderRadius: '6px',
+																		transition: 'all 0.3s ease',
+																		display: 'flex',
+																		alignItems: 'center',
+																		justifyContent: 'center',
+																		minWidth: '32px',
+																		height: '32px'
+																	}}
+																	onMouseEnter={(e) => {
+																		e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+																		e.target.style.borderColor = 'rgba(108, 117, 125, 0.4)';
+																		e.target.style.transform = 'scale(1.05)';
+																	}}
+																	onMouseLeave={(e) => {
+																		e.target.style.background = 'rgba(108, 117, 125, 0.1)';
+																		e.target.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+																		e.target.style.transform = 'scale(1)';
+																	}}
+																	title="Clear all filters"
+																>
+																	<i className="fas fa-eraser" style={{ fontSize: '14px' }}></i>
+																</button>
+															)}
+															<button 
+																className="btn btn-sm btn-light d-lg-none"
+																onClick={() => setShowSeason(ov => !ov)}
+																style={{ 
+																	display: 'flex', 
+																	alignItems: 'center', 
+																	justifyContent: 'center', 
+																	padding: '6px 8px', 
+																	borderRadius: '6px',
+																	flexShrink: 0
+																}}
+																title={showSeason ? 'Collapse' : 'Expand'}
+															>
+																<i className={showSeason ? "fas fa-chevron-up" : "fas fa-chevron-down"} style={{ color: '#6c757d' }}></i>
+															</button>
+														</div>
 													</div>
 													{/* Mobile collapsible */}
 													<div className='d-lg-none'>
 														{showSeason && (
-															<div className='shop-sidebar__section__item'>
-																<input
-																	type='text'
-																	placeholder='Search by season...'
-																	value={season}
-																	onChange={(e) => {
-																		setSeason(e.target.value);
-																		setPageNo(0);
-																	}}
-																	style={{
-																		width: '100%',
-																		padding: '12px 16px',
-																		border: '2px solid #e9ecef',
-																		borderRadius: '10px',
-																		fontSize: '14px',
-																		background: '#ffffff',
-																		color: '#333333',
-																		transition: 'all 0.3s ease',
-																		boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-																	}}
-																	onFocus={(e) => {
-																		e.target.style.borderColor = '#007bff';
-																		e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
-																	}}
-																	onBlur={(e) => {
-																		e.target.style.borderColor = '#e9ecef';
-																		e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
-																	}}
-																/>
+															<div className='mobile-filter'>
+																<div className='shop-sidebar__section__item'>
+																	<label style={{ 
+																		display: 'block', 
+																		fontSize: '14px', 
+																		fontWeight: '500', 
+																		color: '#495057', 
+																		marginBottom: '8px' 
+																	}}>
+																		Search by Season
+																	</label>
+																	<input
+																		type='text'
+																		placeholder='Type season to search...'
+																		value={season}
+																		onChange={(e) => {
+																			setSeason(e.target.value);
+																			setPageNo(0);
+																		}}
+																		style={{
+																			width: '100%',
+																			padding: '12px 16px',
+																			border: '2px solid #e9ecef',
+																			borderRadius: '10px',
+																			fontSize: '14px',
+																			background: '#ffffff',
+																			color: '#495057',
+																			transition: 'all 0.3s ease',
+																			boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+																		}}
+																		onFocus={(e) => {
+																			e.target.style.borderColor = '#007bff';
+																			e.target.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.1)';
+																		}}
+																		onBlur={(e) => {
+																			e.target.style.borderColor = '#e9ecef';
+																			e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+																		}}
+																	/>
+																</div>
 															</div>
 														)}
 													</div>

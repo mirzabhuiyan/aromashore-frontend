@@ -315,7 +315,7 @@ export default function HeaderNavigation({ openCart }) {
 									{menuList?.map((menu, i) => (
 										<li className='nav-item' key={i}>
 											<a className='nav-link' onClick={() => handleSelectMobileMenu(menu)} href='#' data-bs-toggle='dropdown' aria-expanded='false'>
-												{menu.name}
+												{menu.category_name || menu.name}
 												<i className='fas fa-angle-down ms-2'></i>
 											</a>
 											<ul className='dropdown-menu ps-3'>

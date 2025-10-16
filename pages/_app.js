@@ -104,13 +104,19 @@ function MyApp({
       const unitPrice = (u && typeof u === 'object') ? (Number(u.sale_price) > 0 ? Number(u.sale_price) : Number(u.price)) : Number(pd?.price) || 0;
       return {
         id: pd.id,
+        product_id: pd.id,
         name: pd.name,
+        product_name: pd.name,
         price: unitPrice,
         quantity: quantity,
         image: getProductImageUrl(pd?.productimages?.[0]?.image || pd?.image || ''),
+        product_image: getProductImageUrl(pd?.productimages?.[0]?.image || pd?.image || ''),
         bundleId: bundleId,
+        bundle_id: bundleId,
         bundleName: bundleId ? pd.bundleName : null,
-        weight: (typeof u === 'object' ? Number(u?.weight) : 0) || 0
+        weight: (typeof u === 'object' ? Number(u?.weight) : 0) || 0,
+        size: (typeof u === 'object' ? u?.size : '') || '',
+        size_unit: (typeof u === 'object' ? u?.size_unit : '') || ''
       };
     };
 
@@ -247,6 +253,29 @@ function MyApp({
         clear_CART,
         get_CART_TOTAL,
         get_CART_ITEMS_COUNT,
+        // Legacy cart functions for compatibility
+        increment_TO_CART_ITEM: ({ product }) => {
+          const productId = product.id || product.product_id;
+          const bundleId = product.bundleId || product.bundle_id;
+          const currentItem = cart.find(item => (item.id === productId || item.product_id === productId) && (item.bundleId === bundleId || item.bundle_id === bundleId));
+          if (currentItem) {
+            update_CART_QUANTITY(productId, currentItem.quantity + 1, bundleId);
+          }
+        },
+        decrement_TO_CART_ITEM: ({ product }) => {
+          const productId = product.id || product.product_id;
+          const bundleId = product.bundleId || product.bundle_id;
+          const currentItem = cart.find(item => (item.id === productId || item.product_id === productId) && (item.bundleId === bundleId || item.bundle_id === bundleId));
+          if (currentItem && currentItem.quantity > 1) {
+            update_CART_QUANTITY(productId, currentItem.quantity - 1, bundleId);
+          }
+        },
+        delete_ITEM_FROM_CART: ({ product }) => {
+          const productId = product.id || product.product_id;
+          const bundleId = product.bundleId || product.bundle_id;
+          remove_FROM_CART(productId, bundleId);
+        },
+        clearCart: clear_CART,
         add_TO_WISHLIST,
         remove_FROM_WISHLIST,
         get_WISHLIST,

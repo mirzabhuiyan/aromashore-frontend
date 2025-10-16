@@ -1589,14 +1589,43 @@ button:hover .cart__quantity {
 
   .mobile-view {
     display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .mobile-view .nav-item {
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  .mobile-view .dropdown {
+    width: 100% !important;
   }
 
   .search-box {
-    margin-bottom: 10px;
+    margin-bottom: 15px !important;
+    width: 100% !important;
   }
 
   .search-box input{
     font-size: 16px !important;
+    width: 100% !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+  }
+
+  .search-box input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  .search-box input:focus {
+    border-color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
   }
 
   .mobile-view .nav-item .dropdown-menu li{
@@ -1609,6 +1638,23 @@ button:hover .cart__quantity {
     justify-content: space-between;
     font-size: 26px !important;
     font-weight: bold;
+    color: #ffffff !important;
+    text-decoration: none;
+    padding: 10px 15px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-view .nav-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff !important;
+  }
+
+  .mobile-view .nav-link i {
+    color: #ffffff !important;
+    font-size: 20px;
   }
 
   .result-card {
@@ -1632,6 +1678,165 @@ button:hover .cart__quantity {
 
   .desktop-filter {
     display: none;
+  }
+
+  /* Professional mobile filter design */
+  @media screen and (max-width: 768px) {
+    .shop-sidebar__section {
+      background: #ffffff !important;
+      border: 1px solid #e9ecef !important;
+      border-radius: 16px !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+      padding: 20px !important;
+      margin-bottom: 16px !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .shop-sidebar__section:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    .shop-sidebar__section .section-title {
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 12px !important;
+      margin-bottom: 16px !important;
+      padding-bottom: 12px !important;
+      border-bottom: 2px solid #f8f9fa !important;
+      min-height: 40px !important;
+    }
+
+    .shop-sidebar__section .section-title h2 {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      color: #2c3e50 !important;
+      margin: 0 !important;
+      flex: 1 !important;
+      line-height: 1.2 !important;
+    }
+
+    .shop-sidebar__section .section-title h2 i {
+      font-size: 18px !important;
+      color: #007bff !important;
+      flex-shrink: 0 !important;
+      line-height: 1 !important;
+      vertical-align: middle !important;
+    }
+
+    .shop-sidebar__section .section-title h2 span {
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      line-height: 1.2 !important;
+      vertical-align: middle !important;
+    }
+
+    /* Right-align specific filter titles */
+    .shop-sidebar__section.-search .section-title h2 {
+      justify-content: flex-end !important;
+    }
+
+    .shop-sidebar__section.-search .section-title h2 i {
+      order: 2 !important;
+      margin-left: 8px !important;
+      margin-right: 0 !important;
+    }
+
+    .shop-sidebar__section.-search .section-title h2 span {
+      order: 1 !important;
+    }
+
+    .shop-sidebar__section .section-title > div {
+      display: flex !important;
+      gap: 8px !important;
+      align-items: center !important;
+      flex-shrink: 0 !important;
+      height: 100% !important;
+    }
+
+    .shop-sidebar__section .section-title button {
+      background: #f8f9fa !important;
+      border: 1px solid #dee2e6 !important;
+      color: #6c757d !important;
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      font-size: 14px !important;
+      min-width: 36px !important;
+      height: 36px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.2s ease !important;
+      line-height: 1 !important;
+    }
+
+    .shop-sidebar__section .section-title button i {
+      line-height: 1 !important;
+      vertical-align: middle !important;
+      font-size: 14px !important;
+      display: inline-block !important;
+    }
+
+    /* Perfect alignment for all title elements */
+    .shop-sidebar__section .section-title * {
+      vertical-align: middle !important;
+    }
+
+    .shop-sidebar__section .section-title h2,
+    .shop-sidebar__section .section-title h2 i,
+    .shop-sidebar__section .section-title h2 span,
+    .shop-sidebar__section .section-title button,
+    .shop-sidebar__section .section-title button i {
+      vertical-align: middle !important;
+      line-height: 1 !important;
+    }
+
+    .shop-sidebar__section .section-title button:hover {
+      background: #e9ecef !important;
+      border-color: #adb5bd !important;
+      color: #495057 !important;
+    }
+
+    /* Filter content area */
+    .mobile-filter {
+      background: #f8f9fa !important;
+      border-radius: 12px !important;
+      padding: 16px !important;
+      margin-top: 12px !important;
+    }
+
+    /* Ensure filter cards have proper spacing on mobile */
+    .col-6 {
+      margin-bottom: 16px !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+
+    /* Professional input styling */
+    .mobile-filter input {
+      background: #ffffff !important;
+      border: 2px solid #e9ecef !important;
+      border-radius: 10px !important;
+      padding: 12px 16px !important;
+      font-size: 14px !important;
+      color: #495057 !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .mobile-filter input:focus {
+      border-color: #007bff !important;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+      outline: none !important;
+    }
+
+    .mobile-filter input::placeholder {
+      color: #adb5bd !important;
+    }
   }
 
 }
@@ -1669,13 +1874,16 @@ button:hover .cart__quantity {
 }
 
 .mobile-menu-close {
-  position: absolute;
-  bottom: 10%;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  font-size: 5vw;
-  padding: 15px !important;
+  position: relative;
+  margin: 10px auto;
+  font-size: 18px;
+  padding: 10px 20px !important;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff !important;
+  width: fit-content;
+  display: block;
 }
 
 /* responsive end  */
@@ -1693,6 +1901,73 @@ button:hover .cart__quantity {
   }
 
   .shop-sidebar__section .section-title h2 i {
-    font-size: 14px !important;
+    margin-right: 6px !important;
+    font-size: 16px !important;
+  }
+
+  /* Fix mobile filter card layout */
+  .shop-sidebar__section .section-title {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    min-height: 36px !important;
+    align-items: center !important;
+  }
+
+  .shop-sidebar__section .section-title h2 {
+    flex: 1 !important;
+    min-width: 0 !important;
+    margin-right: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .shop-sidebar__section .section-title > div {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    height: 100% !important;
+  }
+
+  /* Ensure proper spacing for filter buttons */
+  .shop-sidebar__section .section-title button {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px !important;
+    margin-left: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .shop-sidebar__section .section-title button i {
+    font-size: 12px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+  }
+
+  /* Fix mobile filter cards spacing */
+  .col-6 {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .shop-sidebar__section {
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Ensure icons don't overlap with text */
+  .shop-sidebar__section .section-title h2 {
+    display: flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .shop-sidebar__section .section-title h2 i {
+    flex-shrink: 0 !important;
+    margin-right: 6px !important;
   }
 }
