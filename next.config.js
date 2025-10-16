@@ -53,6 +53,12 @@ const nextConfig = {
         port: '3303',
         pathname: '/uploads/**',
       },
+      // Add DigitalOcean Spaces CDN for production
+      {
+        protocol: 'https',
+        hostname: 'aroma-shore.nyc3.cdn.digitaloceanspaces.com',
+        pathname: '/uploads/**',
+      },
     ],
   },
   eslint: {
