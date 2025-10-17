@@ -273,10 +273,6 @@ function MyApp({
         is_IN_WISHLIST,
       }}
     >
-      <Script
-        src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"
-        strategy="afterInteractive"
-      />
       <Component {...pageProps} />
       <ToastContainer
         position="top-right"

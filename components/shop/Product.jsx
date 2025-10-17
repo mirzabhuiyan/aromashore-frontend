@@ -5,6 +5,7 @@ import Link from "next/link";
 import Card from "react-bootstrap/Card";
 import Image from "next/image";
 import { getImageUrl } from '../../config';
+import { formatPriceWithCurrency } from '../../utils/priceFormatter';
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -130,7 +131,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 									<span className='product-name'>{name}</span>
 								</Link>
 								<div className='product-price mt-2'>
-									<b>Price: ${displayPrice}</b>
+									<b>Price: {formatPriceWithCurrency(displayPrice)}</b>
 									{isDistributor && productpro.dist_price && (
 										<span className="badge bg-info ms-2">Distributor Price</span>
 									)}
@@ -171,7 +172,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 										<span className='product-name'>{name}</span>
 									</Link>
 									<div className='product-price mt-2'>
-										<b>Price: ${Number(displayPrice).toFixed(2)}</b>
+										<b>Price: {formatPriceWithCurrency(displayPrice)}</b>
 										{isDistributor && productpro.dist_price && (
 											<span className="badge bg-info ms-2">Distributor Price</span>
 										)}

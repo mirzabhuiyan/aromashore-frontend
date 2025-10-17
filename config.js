@@ -1,11 +1,11 @@
 // Environment-based configuration
 const isDev = process.env.NODE_ENV === 'development';
-const apiUrl = isDev ? 'http://localhost:3303/api' : process.env.NEXT_PUBLIC_API_URL;
-const backendDomain = isDev ? 'localhost' : process.env.NEXT_PUBLIC_BACKEND_DOMAIN;
-const siteUrl = isDev ? 'http://localhost:3000' : process.env.NEXT_PUBLIC_SITE_URL;
+const apiUrl = isDev ? 'http://localhost:3303/api' : (process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303/api');
+const backendDomain = isDev ? 'localhost' : (process.env.NEXT_PUBLIC_BACKEND_DOMAIN || 'aroma-shore-backend-dirk7.ondigitalocean.app');
+const siteUrl = isDev ? 'http://localhost:3000' : (process.env.NEXT_PUBLIC_SITE_URL || 'https://aroma-shore-frontend-dirk7.ondigitalocean.app');
 
 // DigitalOcean Spaces configuration
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production' || !isDev;
 const doSpacesCdnBase = process.env.NEXT_PUBLIC_DO_SPACES_CDN_BASE || 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
 
 // Image URL helper function
@@ -18,9 +18,9 @@ const getImageUrl = (filename, uploadType = 'products') => {
   } else if (filename.startsWith('http')) {
     return filename; // Already a full URL
   } else {
-    // File-based image - use appropriate URL based on environment
+    // File-based image - always use CDN for production
     if (isProduction) {
-      // Production: Use DigitalOcean Spaces CDN
+      // Production: Always use DigitalOcean Spaces CDN
       return `${doSpacesCdnBase}/uploads/${uploadType}/${filename}`;
     } else {
       // Development: Use local backend
@@ -29,19 +29,11 @@ const getImageUrl = (filename, uploadType = 'products') => {
   }
 };
 
-// Derive uploads base from API URL (strip trailing /api)
-let uploadsBase = 'http://localhost:3303/uploads/';
-if (!isProduction) {
-  try {
-    const url = new URL(apiUrl);
-    const basePath = url.pathname.endsWith('/api') ? url.pathname.slice(0, -4) : url.pathname;
-    const origin = `${url.protocol}//${url.host}`;
-    uploadsBase = `${origin}${basePath}/uploads/`;
-  } catch (_) {}
-} else {
-  // In production, use DigitalOcean Spaces CDN for uploads
-  uploadsBase = `${doSpacesCdnBase}/uploads/`;
-}
+// Always use CDN for uploads when not in development
+// This ensures product images load from the correct CDN domain
+let uploadsBase = isDev 
+  ? 'http://localhost:3303/uploads/' 
+  : `${doSpacesCdnBase}/uploads/`;
 
 // Backward-compat: product images live under uploads/products
 const globalProductImageAddress = `${uploadsBase}products/`;

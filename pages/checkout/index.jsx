@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Layout from "../../layouts/Layout";
 import { AppStore } from "../../store/AppStore";
 import PaymentSection from "./PaymentSection";
+import { formatPriceWithSpaces, formatPriceWithCurrency } from '../../utils/priceFormatter';
 import {
   calculateCart,
   getFormatedDate,
@@ -890,7 +891,7 @@ export default function Index({ user, customerData }) {
       const calculatedDiscount = (subtotalAfterTax * discountPercent) / 100;
       
       setDiscountAmount(calculatedDiscount);
-      toast.success(`Discount code applied! You saved $${calculatedDiscount.toFixed(2)}`);
+      toast.success(`Discount code applied! You saved ${formatPriceWithCurrency(calculatedDiscount)}`);
     } catch (error) {
       toast.error("Invalid discount code");
       setDiscountAmount(0);
@@ -1576,7 +1577,7 @@ export default function Index({ user, customerData }) {
                                                 fontSize: "12px",
                                               }}
                                             >
-                                              Base: ${parseFloat(svc.price).toFixed(2)} + Service Fee
+                                              Base: {formatPriceWithCurrency(parseFloat(svc.price))} + Service Fee
                                             </div>
                                           </div>
                                         </div>
@@ -1587,7 +1588,7 @@ export default function Index({ user, customerData }) {
                                             color: "#333",
                                           }}
                                         >
-                                          ${(parseFloat(svc.price) * 1.6).toFixed(2)}
+                                          {formatPriceWithCurrency(parseFloat(svc.price) * 1.6)}
                                         </div>
                                       </div>
                                     </div>
@@ -1644,7 +1645,7 @@ export default function Index({ user, customerData }) {
                               {discountAmount > 0 && (
                                 <div className="mt-2 text-success">
                                   <i className="bi bi-check-circle me-1"></i>
-                                  Discount applied: -${discountAmount.toFixed(2)}
+                                  Discount applied: -{formatPriceWithCurrency(discountAmount)}
                                 </div>
                               )}
                             </div>
@@ -1783,10 +1784,10 @@ export default function Index({ user, customerData }) {
                                       {product.size_unit})
                                     </td>
                                     <td className="text-right">
-                                      $&nbsp;{product.price}
+                                      {formatPriceWithSpaces(product.price)}
                                     </td>
                                     <td className="text-right">
-                                      $&nbsp;{product.price * product.quantity}
+                                      {formatPriceWithSpaces(product.price * product.quantity)}
                                     </td>
                                   </tr>
                                 ))}
@@ -1800,7 +1801,7 @@ export default function Index({ user, customerData }) {
                                       Subtotal:
                                     </td>
                                     <td className="text-end">
-                                      $&nbsp;{totalAmount.toFixed(2)}
+                                      {formatPriceWithSpaces(totalAmount)}
                                     </td>
                                   </tr>
                                   {selectedShippingService && (
@@ -1810,7 +1811,7 @@ export default function Index({ user, customerData }) {
                                           {selectedShippingService.carrier} {selectedShippingService.name}:
                                         </td>
                                         <td className="text-end">
-                                          $&nbsp;{shippingCostBreakdown.originalCost.toFixed(2)}
+                                          {formatPriceWithSpaces(shippingCostBreakdown.originalCost)}
                                         </td>
                                       </tr>
                                       <tr>
@@ -1818,7 +1819,7 @@ export default function Index({ user, customerData }) {
                                           Service & Handling Fee:
                                         </td>
                                         <td className="text-end">
-                                          $&nbsp;{shippingCostBreakdown.markupAmount.toFixed(2)}
+                                          {formatPriceWithSpaces(shippingCostBreakdown.markupAmount)}
                                         </td>
                                       </tr>
                                     </>
@@ -1830,7 +1831,7 @@ export default function Index({ user, customerData }) {
                                       </td>
                                       <td className="text-end">
                                         $&nbsp;
-                                        {((totalAmount + shippingCostBreakdown.totalCost) * parseFloat(shippingAddress.tax_rate || 0) / 100).toFixed(2)}
+                                        {formatPriceWithSpaces((totalAmount + shippingCostBreakdown.totalCost) * parseFloat(shippingAddress.tax_rate || 0) / 100)}
                                       </td>
                                     </tr>
                                   )}
@@ -1840,7 +1841,7 @@ export default function Index({ user, customerData }) {
                                         Discount:
                                       </td>
                                       <td className="text-end text-success">
-                                        -$&nbsp;{discountAmount.toFixed(2)}
+                                        -{formatPriceWithSpaces(discountAmount)}
                                       </td>
                                     </tr>
                                   )}
@@ -1851,7 +1852,7 @@ export default function Index({ user, customerData }) {
                                       </td>
                                       <td className="text-end">
                                         $&nbsp;
-                                        {stripeFeeCalculation.feeAmount.toFixed(2)}
+                                        {formatPriceWithSpaces(stripeFeeCalculation.feeAmount)}
                                       </td>
                                     </tr>
                                   )}
@@ -1864,7 +1865,7 @@ export default function Index({ user, customerData }) {
                                     <td className="text-start">Total:</td>
                                     <td className="text-end">
                                       $&nbsp;
-                                      {stripeFeeCalculation.adjustedAmount.toFixed(2)}
+                                      {formatPriceWithSpaces(stripeFeeCalculation.adjustedAmount)}
                                     </td>
                                   </tr>
                                 </tbody>
