@@ -12,7 +12,7 @@ import { getprofileByCustomer } from "../services/webCustomerService";
 import { calculateCart } from "../services/utilityService";
 import { toast, ToastContainer } from "react-toastify";
 import Script from 'next/script';
-import { globalProductImageAddress } from '../config';
+import { getImageUrl } from '../config';
 import PromotionalPopup from '../components/common/PromotionalPopup';
 import { saveUserSession, getCurrentUser, clearUserSession } from "../services/authService";
 
@@ -26,16 +26,7 @@ function MyApp({
 
   // Helper function to get proper product image URL
   const getProductImageUrl = (imageData) => {
-    if (!imageData) return "";
-    
-    // Handle both old base64 and new file-based images
-    if (imageData.startsWith('data:')) {
-      return imageData; // Base64 image
-    } else if (imageData.startsWith('http')) {
-      return imageData; // Already a full URL
-    } else {
-      return `${globalProductImageAddress}${imageData}`; // File-based image
-    }
+    return getImageUrl(imageData, 'products');
   };
 
   // Load cart from localStorage on app initialization
