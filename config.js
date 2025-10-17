@@ -4,6 +4,7 @@ const apiUrl = isDev ? 'http://localhost:3303/api' : process.env.NEXT_PUBLIC_API
 const backendDomain = isDev ? 'localhost' : process.env.NEXT_PUBLIC_BACKEND_DOMAIN;
 const siteUrl = isDev ? 'http://localhost:3000' : process.env.NEXT_PUBLIC_SITE_URL;
 
+
 // DigitalOcean Spaces configuration
 const isProduction = process.env.NODE_ENV === 'production';
 const doSpacesCdnBase = process.env.NEXT_PUBLIC_DO_SPACES_CDN_BASE || 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';

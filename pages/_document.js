@@ -15,6 +15,7 @@ export default function Document() {
         <link rel='stylesheet' href='/app/assets/css/style.css' />
         <link rel='stylesheet' href='/app/assets/auth/style.css' />
         <script async src='/app/assets/js/bootstrap.bundle.min.js'></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCe92gBOWPXDIKSNCwI9RfYZEtJffQpaT8&libraries=places"></script>
       </Head>
       <body>
         <Main />
