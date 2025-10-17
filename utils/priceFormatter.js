@@ -29,7 +29,7 @@ export const formatPrice = (price, options = {}) => {
 // Common price formatting functions
 export const formatPriceWithCurrency = (price) => formatPrice(price, { showCurrency: true });
 export const formatPriceWithoutCurrency = (price) => formatPrice(price, { showCurrency: false });
-export const formatPriceWithSpaces = (price) => formatPrice(price, { showCurrency: true, prefix: '$&nbsp;' });
+export const formatPriceWithSpaces = (price) => formatPrice(price, { showCurrency: true, prefix: '$ ' });
 
 // For displaying prices in JSX
 export const PriceDisplay = ({ price, className = '', showCurrency = true, ...props }) => {
