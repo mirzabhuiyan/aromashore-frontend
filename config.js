@@ -18,7 +18,12 @@ const getImageUrl = (filename, uploadType = 'products') => {
   if (filename.startsWith('data:')) {
     return filename; // Base64 image
   } else if (filename.startsWith('http')) {
-    return filename; // Already a full URL
+    // If it's already a full URL, check if it's the old domain and fix it
+    if (filename.includes('primesmell.com')) {
+      const filePath = filename.split('/').slice(-2).join('/'); // Get the last two parts (uploads/products/filename)
+      return `${doSpacesCdnBase}/${filePath}`;
+    }
+    return filename; // Already a full URL with correct domain
   } else {
     // File-based image - always use CDN for production
     if (isProduction) {
