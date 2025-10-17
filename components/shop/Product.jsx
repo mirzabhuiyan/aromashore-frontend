@@ -171,7 +171,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 										<span className='product-name'>{name}</span>
 									</Link>
 									<div className='product-price mt-2'>
-										<b>Price: ${displayPrice}</b>
+										<b>Price: ${Number(displayPrice).toFixed(2)}</b>
 										{isDistributor && productpro.dist_price && (
 											<span className="badge bg-info ms-2">Distributor Price</span>
 										)}
