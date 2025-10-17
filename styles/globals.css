@@ -1319,10 +1319,26 @@ button:hover .cart__quantity {
 .eye-icon a i {}
 
 .sidebar-categories,
-.sidebar-refine-search {
+.sidebar-refine-search,
+.sidebar-search {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 8px;
+}
+
+.sidebar-categories i,
+.sidebar-refine-search i,
+.sidebar-search i {
+  order: 1;
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+.sidebar-categories span,
+.sidebar-refine-search span,
+.sidebar-search span {
+  order: 2;
 }
 
 /*  Product end */
@@ -1673,15 +1689,23 @@ button:hover .cart__quantity {
   }
 
   .mobile-filter {
-    display: block;
+    display: block !important;
   }
 
   .desktop-filter {
-    display: none;
+    display: none !important;
   }
 
   /* Professional mobile filter design */
   @media screen and (max-width: 768px) {
+    .mobile-filter {
+      display: block !important;
+    }
+
+    .desktop-filter {
+      display: none !important;
+    }
+
     .shop-sidebar__section {
       background: #ffffff !important;
       border: 1px solid #e9ecef !important;
@@ -1718,6 +1742,7 @@ button:hover .cart__quantity {
       margin: 0 !important;
       flex: 1 !important;
       line-height: 1.2 !important;
+      justify-content: flex-end !important;
     }
 
     .shop-sidebar__section .section-title h2 i {
@@ -1726,6 +1751,9 @@ button:hover .cart__quantity {
       flex-shrink: 0 !important;
       line-height: 1 !important;
       vertical-align: middle !important;
+      order: 1 !important;
+      margin-right: 8px !important;
+      margin-left: 0 !important;
     }
 
     .shop-sidebar__section .section-title h2 span {
@@ -1734,21 +1762,7 @@ button:hover .cart__quantity {
       text-overflow: ellipsis !important;
       line-height: 1.2 !important;
       vertical-align: middle !important;
-    }
-
-    /* Right-align specific filter titles */
-    .shop-sidebar__section.-search .section-title h2 {
-      justify-content: flex-end !important;
-    }
-
-    .shop-sidebar__section.-search .section-title h2 i {
       order: 2 !important;
-      margin-left: 8px !important;
-      margin-right: 0 !important;
-    }
-
-    .shop-sidebar__section.-search .section-title h2 span {
-      order: 1 !important;
     }
 
     .shop-sidebar__section .section-title > div {
@@ -1964,10 +1978,16 @@ button:hover .cart__quantity {
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    justify-content: flex-end !important;
   }
 
   .shop-sidebar__section .section-title h2 i {
     flex-shrink: 0 !important;
     margin-right: 6px !important;
+    order: 1 !important;
+  }
+
+  .shop-sidebar__section .section-title h2 span {
+    order: 2 !important;
   }
 }
