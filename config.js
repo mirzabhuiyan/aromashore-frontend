@@ -1,12 +1,14 @@
 // Environment-based configuration
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' && process.env.NODE_ENV !== 'production';
 const apiUrl = isDev ? 'http://localhost:3303/api' : (process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303/api');
 const backendDomain = isDev ? 'localhost' : (process.env.NEXT_PUBLIC_BACKEND_DOMAIN || 'aroma-shore-backend-dirk7.ondigitalocean.app');
 const siteUrl = isDev ? 'http://localhost:3000' : (process.env.NEXT_PUBLIC_SITE_URL || 'https://aroma-shore-frontend-dirk7.ondigitalocean.app');
 
 // DigitalOcean Spaces configuration
-const isProduction = process.env.NODE_ENV === 'production' || !isDev;
-const doSpacesCdnBase = process.env.NEXT_PUBLIC_DO_SPACES_CDN_BASE || 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
+// Always use CDN in production, regardless of NODE_ENV
+const isProduction = !isDev || process.env.NODE_ENV === 'production' || process.env.VERCEL || process.env.DIGITALOCEAN_APP_ID;
+// Always use the correct CDN domain, ignore any environment variables that might point to old domains
+const doSpacesCdnBase = 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
 
 // Image URL helper function
 const getImageUrl = (filename, uploadType = 'products') => {
