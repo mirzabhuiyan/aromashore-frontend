@@ -51,7 +51,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 		// console.log(discount, price);
 		let calculatedPrice = Number(price) - (Number(price) * (Number(discount) / 100));
 		totalBundlePrice += calculatedPrice;
-		return <span className="text-success">${calculatedPrice}</span>;
+		return <span className="text-success">${calculatedPrice.toFixed(2)}</span>;
 	}
 
 	const addBundleToCart = (mainProduct, bundleProducts, discount, bundleId) => {
@@ -201,7 +201,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 										</div>
 									</div>
 									<div className="card-footer pt-3 pb-3 d-flex justify-content-between align-items-center">
-										<b>Total Price: ${totalBundlePrice} ({bpl.discount}% off)</b>
+										<b>Total Price: ${totalBundlePrice.toFixed(2)} ({bpl.discount}% off)</b>
 										<button className="btn btn-dark" onClick={() => addBundleToCart(productVeriation, bundleProducts, bpl.discount, bpl.id)}>
 											<i className="fa fa-cart-plus me-2"></i>
 											Add Bundle To Cart

@@ -53,6 +53,7 @@ export default function Index() {
 	const [selectedBrandIdList, setSelectedBrandIdList] = useState([]);
 	const [categoryList, setCategoryList] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [apiError, setApiError] = useState(false);
 
 	const [totalCount, setTotalCount] = useState(0);
 	const [pageNo, setPageNo] = useState(0);
@@ -79,63 +80,154 @@ export default function Index() {
 	useEffect(() => {
 		// Only make API calls in browser environment, not during build
 		if (typeof window === "undefined") return;
-		axios.get(apiUrl + "/web/getall/brand").then((response) => {
-			// console.log(response);
-			if (response.data.appStatus) {
-				const brandList = response.data.appData;
-				brandList.map((brand) => {
-					brand.isChecked = false;
-				});
-				setProductBrandList(brandList);
-			}
-		});
+		axios.get(apiUrl + "/web/getall/brand", {
+			timeout: 10000 // 10 second timeout
+		})
+			.then((response) => {
+				// console.log(response);
+				if (response.data.appStatus) {
+					const brandList = response.data.appData;
+					brandList.map((brand) => {
+						brand.isChecked = false;
+					});
+					setProductBrandList(brandList);
+				} else {
+					console.error("Brand API Error:", response.data.message || "Unknown error");
+					setProductBrandList([]);
+				}
+			})
+			.catch((error) => {
+				console.error("Brand Network Error:", error);
+				setProductBrandList([]);
+			});
 
-		axios.get(apiUrl + "/web/getall/category").then((response) => {
-			// console.log(response);
-			if (response.data.appStatus) {
-				setCategoryList(response.data.appData);
-			}
-		});
+		axios.get(apiUrl + "/web/getall/category", {
+			timeout: 10000 // 10 second timeout
+		})
+			.then((response) => {
+				// console.log(response);
+				if (response.data.appStatus) {
+					setCategoryList(response.data.appData);
+				} else {
+					console.error("Category API Error:", response.data.message || "Unknown error");
+					setCategoryList([]);
+				}
+			})
+			.catch((error) => {
+				console.error("Category Network Error:", error);
+				setCategoryList([]);
+			});
 	}, []);
 
 	useEffect(() => {
 		// Only make API calls in browser environment, not during build
 		if (typeof window === "undefined") return;
-		// Build filter parameters
-		const filterParams = {
-			pageSize: 1000, // Get all products for client-side filtering
-			pageNo: 0
-		};
+		
+		// Add a small delay to ensure component is fully mounted
+		const timer = setTimeout(() => {
+			// Handle category=all by redirecting to clean URL
+			if (query.category === "all") {
+				router.replace("/shop");
+				return;
+			}
+			
+			// Build filter parameters
+			const filterParams = {
+				pageSize: 1000, // Get all products for client-side filtering
+				pageNo: 0
+			};
 
-		// Add category filter
-		if (query.category && query.category !== "" && query.category !== "all") {
-			filterParams.categoryId = query.category;
-		}
+			// Add category filter
+			if (query.category && query.category !== "" && query.category !== "all") {
+				filterParams.categoryId = query.category;
+			}
 
-		// Add brand filter
-		if (selectedBrandIdList.length > 0) {
-			filterParams.brandIds = selectedBrandIdList;
-		}
+			// Add brand filter
+			if (selectedBrandIdList.length > 0) {
+				filterParams.brandIds = selectedBrandIdList;
+			}
 
-		// Add perfume notes filter
-		if (perfumeNotes.trim() !== "") {
-			filterParams.perfumeNotes = perfumeNotes;
-		}
+			// Add perfume notes filter
+			if (perfumeNotes.trim() !== "") {
+				filterParams.perfumeNotes = perfumeNotes;
+			}
 
-		// Add season filter
-		if (season.trim() !== "") {
-			filterParams.season = season;
-		}
+			// Add season filter
+			if (season.trim() !== "") {
+				filterParams.season = season;
+			}
 
-		axios
-			.post(apiUrl + "/web/getall/product", filterParams)
-			.then((response) => {
-				// console.log(response);
-				if (response.data.appStatus) {
-					setAllProductList(response.data.appData.rows);
+			console.log("Making API call with params:", filterParams);
+			console.log("API URL:", apiUrl + "/web/getall/product");
+
+			// Mobile-specific configuration
+			const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+			
+			axios
+				.post(apiUrl + "/web/getall/product", filterParams, {
+					timeout: isMobile ? 20000 : 15000, // Longer timeout for mobile
+					headers: {
+						'Content-Type': 'application/json',
+						'Accept': 'application/json',
+						'Cache-Control': 'no-cache',
+						'Pragma': 'no-cache'
+					}
+				})
+				.then((response) => {
+					console.log("API Response:", response);
+					if (response.data.appStatus) {
+						const products = response.data.appData.rows;
+						setAllProductList(products);
+						setIsLoading(false);
+						setApiError(false);
+						
+						// Cache the data for offline use
+						try {
+							localStorage.setItem('cachedProducts', JSON.stringify(products));
+							console.log("Products cached successfully");
+						} catch (e) {
+							console.error("Failed to cache products:", e);
+						}
+					} else {
+						console.error("API Error:", response.data.message || "Unknown error");
+						setAllProductList([]);
+						setIsLoading(false);
+						setApiError(true);
+					}
+				})
+				.catch((error) => {
+					console.error("Network Error:", error);
+					
+					// Try to load cached data as fallback
+					const cachedData = localStorage.getItem('cachedProducts');
+					if (cachedData) {
+						try {
+							const parsedData = JSON.parse(cachedData);
+							setAllProductList(parsedData);
+							setIsLoading(false);
+							console.log("Loaded cached products as fallback");
+							return;
+						} catch (e) {
+							console.error("Failed to parse cached data:", e);
+						}
+					}
+					
+					setAllProductList([]);
 					setIsLoading(false);
-				}
-			});
+					setApiError(true);
+					
+					// Show user-friendly error message
+					if (error.code === 'ECONNABORTED') {
+						alert("Request timed out. Please check your internet connection and try again.");
+					} else if (error.code === 'ERR_NETWORK') {
+						alert("Network error. Please check your internet connection and try again.");
+					} else {
+						alert("Unable to load products. Please check your internet connection and try again.");
+					}
+				});
+		}, 100); // 100ms delay
+
+		return () => clearTimeout(timer);
 	}, [query.category, selectedBrandIdList, perfumeNotes, season]);
 
 	// Handle pagination only (filtering is now done on backend)
@@ -154,14 +246,17 @@ export default function Index() {
 		setIsLoading(true);
 		setPageNo(0); // Reset to first page when category changes
 		
-		if (categoryId === "all") {
-			router.push("/shop");
-		} else {
-			let href = "/shop?category=" + categoryId;
-			router.push(href);
+		try {
+			if (categoryId === "all") {
+				router.push("/shop");
+			} else {
+				let href = "/shop?category=" + categoryId;
+				router.push(href);
+			}
+		} catch (error) {
+			console.error("Navigation Error:", error);
+			setIsLoading(false);
 		}
-		
-		setIsLoading(false);
 	};
 
 	const handleBandSelect = (event, brand) => {
@@ -188,6 +283,7 @@ export default function Index() {
 
 	const clearAllFilters = () => {
 		setIsLoading(true);
+		setApiError(false);
 		// Clear brand filters
 		const clearedBrandList = productBrandList.map((brand) => ({
 			...brand,
@@ -208,6 +304,13 @@ export default function Index() {
 		// Reset pagination
 		setPageNo(0);
 		setIsLoading(false);
+	};
+
+	const retryApiCall = () => {
+		setApiError(false);
+		setIsLoading(true);
+		// Trigger a re-render by updating a state
+		setPageNo(prev => prev);
 	};
 
 	return (
@@ -1082,20 +1185,51 @@ export default function Index() {
 										<div className='col-12 text-center'>
 											<i className='fa fa-spinner fa-spin me-2'></i>Loading Products...
 										</div>
+									) : apiError ? (
+										<div className='col-12 text-center'>
+											<div className='alert alert-warning' style={{ margin: '20px 0' }}>
+												<h5><i className='fas fa-exclamation-triangle me-2'></i>Connection Error</h5>
+												<p>Unable to load products. Please check your internet connection.</p>
+												<button 
+													className='btn btn-primary' 
+													onClick={retryApiCall}
+													style={{ marginTop: '10px' }}
+												>
+													<i className='fas fa-redo me-2'></i>Retry
+												</button>
+											</div>
+										</div>
 									) : (
 										<div className='shop-products '>
 											<div className='shop-products__gird'>
 												<div className='row'>
 													{
-														displayedProductList.length > 0 &&
-														displayedProductList.map((product, i) => <Product key={i} product={product} viewType={isGridView} shopPage={true} />)
+														displayedProductList.length > 0 ? (
+															displayedProductList.map((product, i) => <Product key={i} product={product} viewType={isGridView} shopPage={true} />)
+														) : (
+															<div className='col-12 text-center'>
+																<div className='alert alert-info' style={{ margin: '20px 0' }}>
+																	<h5><i className='fas fa-info-circle me-2'></i>No Products Found</h5>
+																	<p>No products match your current filters.</p>
+																	<button 
+																		className='btn btn-outline-primary' 
+																		onClick={clearAllFilters}
+																		style={{ marginTop: '10px' }}
+																	>
+																		<i className='fas fa-eraser me-2'></i>Clear Filters
+																	</button>
+																</div>
+															</div>
+														)
 													}
 												</div>
-												<div className='row'>
-													<div className="col-12">
-														<Pagination recordCount={totalCount} recordPerPage={pageSize} setPageNo={(n) => setPageNo(n)} setPageSize={(n) => setPageSize(n)} />
+												{displayedProductList.length > 0 && (
+													<div className='row'>
+														<div className="col-12">
+															<Pagination recordCount={totalCount} recordPerPage={pageSize} setPageNo={(n) => setPageNo(n)} setPageSize={(n) => setPageSize(n)} />
+														</div>
 													</div>
-												</div>
+												)}
 											</div>
 										</div>
 									)}

@@ -376,14 +376,14 @@ function ProductDetail() {
 														{productpro ? (
 															productpro.sale_price > 0 ? (
 																<>
-																	{productpro.sale_price * qty}&nbsp;&nbsp;
-																	<del className="text-danger">${productpro.price}</del>
+																	{(productpro.sale_price * qty).toFixed(2)}&nbsp;&nbsp;
+																	<del className="text-danger">${(productpro.price * qty).toFixed(2)}</del>
 																</>
 															) : (
-																productpro.price * qty
+																(productpro.price * qty).toFixed(2)
 															)
 														) : (
-															0
+															"0.00"
 														)}
 													</h5>
 
