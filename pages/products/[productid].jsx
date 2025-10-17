@@ -14,6 +14,7 @@ import Cart from "./Icons";
 import parse from "html-react-parser";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { formatPriceWithCurrency } from '../../utils/priceFormatter';
 
 function AddToCart({ ...props }) {
 	const [status, setStatus] = React.useState("removed");
@@ -376,14 +377,14 @@ function ProductDetail() {
 														{productpro ? (
 															productpro.sale_price > 0 ? (
 																<>
-																	{(productpro.sale_price * qty).toFixed(2)}&nbsp;&nbsp;
-																	<del className="text-danger">${(productpro.price * qty).toFixed(2)}</del>
+																	{formatPriceWithCurrency(productpro.sale_price * qty)}&nbsp;&nbsp;
+																	<del className="text-danger">{formatPriceWithCurrency(productpro.price * qty)}</del>
 																</>
 															) : (
-																(productpro.price * qty).toFixed(2)
+																formatPriceWithCurrency(productpro.price * qty)
 															)
 														) : (
-															"0.00"
+															formatPriceWithCurrency(0)
 														)}
 													</h5>
 

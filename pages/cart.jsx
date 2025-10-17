@@ -10,6 +10,7 @@ import { calculateCart } from "../services/utilityService";
 import Cookies from "js-cookie";
 import Image from "next/image";
 import { getImageUrl } from '../config';
+import { formatPriceWithSpaces } from '../utils/priceFormatter';
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -99,7 +100,7 @@ function Cart() {
 													<td className='text-center'>
 														{product.size} {product.size_unit}
 													</td>
-													<td className='text-center'>$&nbsp;{product.price}</td>
+													<td className='text-center'>{formatPriceWithSpaces(product.price)}</td>
 													<td className='text-center'>
 														<div className='quantity-controlle1'>
 															{product.bundle_id == null ?
@@ -139,7 +140,7 @@ function Cart() {
 														}
 													</div>
 												</td>
-												<td className='text-center'>$&nbsp;{product.price * product.quantity}</td>
+												<td className='text-center'>{formatPriceWithSpaces(product.price * product.quantity)}</td>
 												<td className='text-center' style={{ marginBottom: "5px" }}>
 													<button
 															className='btn btn-sm btn-outline-danger rounded-circle'
@@ -207,7 +208,7 @@ function Cart() {
 										<tbody>
 											<tr>
 												<th className='pb-4'>Grand Total</th>
-												<th className='text-end pb-4'>$&nbsp;{totalAmount}</th>
+												<th className='text-end pb-4'>{formatPriceWithSpaces(totalAmount)}</th>
 											</tr>
 											<tr>
 												<td colSpan={2} className='text-end'>

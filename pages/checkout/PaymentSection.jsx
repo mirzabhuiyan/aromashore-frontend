@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { createPaymentIntent } from "../../services/publicContentsService";
+import { formatPriceWithCurrency } from '../../utils/priceFormatter';
 // Enhanced Stripe Elements configuration
 const cardElementOptions = {
   style: {
@@ -235,7 +236,7 @@ const PaymentSection = ({
             disabled={isLoading || !stripe}
             onClick={handleSubmit}
           >
-            {isLoading ? "Processing..." : `Pay $${(amount || 0).toFixed(2)}`}
+            {isLoading ? "Processing..." : `Pay ${formatPriceWithCurrency(amount || 0)}`}
           </button>
         </form>
       </div>

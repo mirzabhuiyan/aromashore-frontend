@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { getImageUrl } from '../../config';
+import { formatPriceWithSpaces } from '../../utils/priceFormatter';
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -106,7 +107,7 @@ const ShoppingCart = ({ isCartOpen }) => {
 							<div className='cart-items__total'>
 								<div className='cart-items__total__price'>
 									<h5>Total</h5>
-									<span>$&nbsp;{totalAmount}</span>
+									<span>{formatPriceWithSpaces(totalAmount)}</span>
 								</div>
 								{cart.length > 0 ?
 									<div className='cart-items__total__buttons'>

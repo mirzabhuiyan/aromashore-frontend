@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import Image from "next/image";
 import { apiUrl, getImageUrl } from "../../config";
+import { formatPriceWithCurrency } from '../../utils/priceFormatter';
 
 // Helper function to get proper product image URL
 const getProductImageUrl = (imageData) => {
@@ -51,7 +52,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 		// console.log(discount, price);
 		let calculatedPrice = Number(price) - (Number(price) * (Number(discount) / 100));
 		totalBundlePrice += calculatedPrice;
-		return <span className="text-success">${calculatedPrice.toFixed(2)}</span>;
+		return <span className="text-success">{formatPriceWithCurrency(calculatedPrice)}</span>;
 	}
 
 	const addBundleToCart = (mainProduct, bundleProducts, discount, bundleId) => {
@@ -154,7 +155,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 										<p className="mb-0"><b>SKU:</b>&nbsp;{productVeriation.variation_no}</p>
 										<p className="mb-0"><b>Size:</b>&nbsp;{productVeriation.size} {productVeriation.size_unit}</p>
 										<p className="mb-0"><b>Price:</b>&nbsp;<del className="text-danger">
-											${productVeriation.price}</del>&nbsp;{getDiscountedPrice(bpl.discount, productVeriation.price)}
+											{formatPriceWithCurrency(productVeriation.price)}</del>&nbsp;{getDiscountedPrice(bpl.discount, productVeriation.price)}
 										</p>
 									</div> */}
 											<i className="fas fa-plus"></i>
@@ -192,7 +193,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 															<p className="mb-0"><b>SKU:</b>&nbsp;{bp.variation_no}</p>
 															<p className="mb-0"><b>Size:</b>&nbsp;{bp.size} {bp.size_unit}</p>
 															<p className="mb-0"><b>Price:</b>&nbsp;<del className="text-danger">
-																${bp.price}</del>&nbsp;{getDiscountedPrice(bpl.discount, bp.price)}
+																{formatPriceWithCurrency(bp.price)}</del>&nbsp;{getDiscountedPrice(bpl.discount, bp.price)}
 															</p>
 														</div>
 													)
@@ -201,7 +202,7 @@ export default function ProductBundle({ productId = null, selectedProperty = nul
 										</div>
 									</div>
 									<div className="card-footer pt-3 pb-3 d-flex justify-content-between align-items-center">
-										<b>Total Price: ${totalBundlePrice.toFixed(2)} ({bpl.discount}% off)</b>
+										<b>Total Price: {formatPriceWithCurrency(totalBundlePrice)} ({bpl.discount}% off)</b>
 										<button className="btn btn-dark" onClick={() => addBundleToCart(productVeriation, bundleProducts, bpl.discount, bpl.id)}>
 											<i className="fa fa-cart-plus me-2"></i>
 											Add Bundle To Cart
