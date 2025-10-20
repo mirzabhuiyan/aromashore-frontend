@@ -23,6 +23,28 @@ const getImageUrl = (filename, uploadType = 'products') => {
       const filePath = filename.split('/').slice(-2).join('/'); // Get the last two parts (uploads/products/filename)
       return `${doSpacesCdnBase}/${filePath}`;
     }
+    
+    // Check if it's a backend URL that should be rewritten to CDN
+    try {
+      const url = new URL(filename);
+      const normalizedPath = url.pathname.replace(/\/+/g, '/').replace(/\/+/, '/');
+      
+      // Match common legacy upload path patterns
+      const patterns = [
+        /\/(?:api\/)?public\/uploads\/(products|labels|employees|customers|purchases)\/(.+)$/,
+        /\/uploads\/(products|labels|employees|customers|purchases)\/(.+)$/
+      ];
+      
+      for (const pattern of patterns) {
+        const m = normalizedPath.match(pattern);
+        if (m && isProduction) {
+          const type = m[1];
+          const file = m[2];
+          return `${doSpacesCdnBase}/uploads/${type}/${file}`;
+        }
+      }
+    } catch (_) {}
+    
     return filename; // Already a full URL with correct domain
   } else {
     // File-based image - always use CDN for production
@@ -55,6 +77,13 @@ console.log('Site URL:', siteUrl);
 console.log('DO Spaces CDN Base:', doSpacesCdnBase);
 console.log('Is Production:', isProduction);
 
+// Specific helper functions for different image types
+const getProductImageUrl = (filename) => getImageUrl(filename, 'products');
+const getLabelImageUrl = (filename) => getImageUrl(filename, 'labels');
+const getCustomerImageUrl = (filename) => getImageUrl(filename, 'customers');
+const getEmployeeImageUrl = (filename) => getImageUrl(filename, 'employees');
+const getPurchaseImageUrl = (filename) => getImageUrl(filename, 'purchases');
+
 export { 
   apiUrl, 
   globalProductImageAddress, 
@@ -62,6 +91,11 @@ export {
   siteUrl, 
   uploadsBase, 
   getImageUrl,
+  getProductImageUrl,
+  getLabelImageUrl,
+  getCustomerImageUrl,
+  getEmployeeImageUrl,
+  getPurchaseImageUrl,
   isProduction,
   doSpacesCdnBase
 };

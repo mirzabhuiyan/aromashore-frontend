@@ -12,7 +12,7 @@ import { getprofileByCustomer } from "../services/webCustomerService";
 import { calculateCart } from "../services/utilityService";
 import { toast, ToastContainer } from "react-toastify";
 import Script from 'next/script';
-import { getImageUrl } from '../config';
+import { getProductImageUrl } from '../config';
 import PromotionalPopup from '../components/common/PromotionalPopup';
 import { saveUserSession, getCurrentUser, clearUserSession } from "../services/authService";
 
