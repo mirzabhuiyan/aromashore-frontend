@@ -3,7 +3,7 @@ import Layout from "../../layouts/Layout";
 import PopularProduct from "../../components/common/PopularProduct";
 import SimilarProduct from "../../components/common/SimilarProduct";
 import ProductBundle from "../../components/shop/ProductBundle";
-import { apiUrl, getImageUrl } from "../../config";
+import { apiUrl, getProductImageUrl } from "../../config";
 import { AppStore } from "../../store/AppStore";
 import { Modal, Button } from "react-bootstrap";
 import axios from "axios";
@@ -272,7 +272,7 @@ function ProductDetail() {
 																		<div key={item.id} className='slider__item'>
 																			<img 
 																				// crossOrigin="anonymous" 
-																				src={getImageUrl(item.image)} 
+																				src={getProductImageUrl(item.image)} 
 																				alt={item.name} 
 																				width={500} 
 																				height={500} 
@@ -373,7 +373,6 @@ function ProductDetail() {
 														</div>
 													</div>
 													<h5>
-														$
 														{productpro ? (
 															productpro.sale_price > 0 ? (
 																<>

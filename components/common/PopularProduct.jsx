@@ -2,21 +2,8 @@ import { useState, useEffect } from "react";
 import SlickSlider from "react-slick";
 import Link from "next/link";
 import axios from "axios";
-import {apiUrl, getImageUrl} from "../../config";
+import {apiUrl, getProductImageUrl} from "../../config";
 
-// Helper function to get proper product image URL
-const getProductImageUrl = (imageData) => {
-  if (!imageData) return "/app/assets/images/200.svg";
-  
-  // Handle both old base64 and new file-based images
-  if (imageData.startsWith('data:')) {
-    return imageData; // Base64 image
-  } else if (imageData.startsWith('http')) {
-    return imageData; // Already a full URL
-  } else {
-    return getImageUrl(imageData, 'products'); // File-based image using CDN
-  }
-};
 import Product from "../shop/Product";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
