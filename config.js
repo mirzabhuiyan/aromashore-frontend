@@ -13,6 +13,13 @@ const doSpacesCdnBase = 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
 // Image URL helper function
 const getImageUrl = (filename, uploadType = 'products') => {
   if (!filename) return '/app/assets/images/200.svg';
+  // If the value points to our placeholder (even when incorrectly prefixed by CDN/backend paths),
+  // always return the local placeholder path so Next/Image does not try to rewrite it
+  try {
+    if (String(filename).includes('/app/assets/images/200.svg')) {
+      return '/app/assets/images/200.svg';
+    }
+  } catch (_) {}
   
   // Handle different image data types
   if (filename.startsWith('data:')) {
