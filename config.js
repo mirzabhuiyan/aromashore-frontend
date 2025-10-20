@@ -13,6 +13,13 @@ const doSpacesCdnBase = 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
 // Image URL helper function
 const getImageUrl = (filename, uploadType = 'products') => {
   if (!filename) return '/app/assets/images/200.svg';
+  // If the value points to our placeholder (even when incorrectly prefixed by CDN/backend paths),
+  // always return the local placeholder path so Next/Image does not try to rewrite it
+  try {
+    if (String(filename).includes('/app/assets/images/200.svg')) {
+      return '/app/assets/images/200.svg';
+    }
+  } catch (_) {}
   
   // Handle different image data types
   if (filename.startsWith('data:')) {
@@ -78,11 +85,36 @@ console.log('DO Spaces CDN Base:', doSpacesCdnBase);
 console.log('Is Production:', isProduction);
 
 // Specific helper functions for different image types
-const getProductImageUrl = (filename) => getImageUrl(filename, 'products');
-const getLabelImageUrl = (filename) => getImageUrl(filename, 'labels');
-const getCustomerImageUrl = (filename) => getImageUrl(filename, 'customers');
-const getEmployeeImageUrl = (filename) => getImageUrl(filename, 'employees');
-const getPurchaseImageUrl = (filename) => getImageUrl(filename, 'purchases');
+const getProductImageUrl = (filename) => {
+  if (!filename || filename === '/app/assets/images/200.svg') {
+    return '/app/assets/images/200.svg';
+  }
+  return getImageUrl(filename, 'products');
+};
+const getLabelImageUrl = (filename) => {
+  if (!filename || filename === '/app/assets/images/200.svg') {
+    return '/app/assets/images/200.svg';
+  }
+  return getImageUrl(filename, 'labels');
+};
+const getCustomerImageUrl = (filename) => {
+  if (!filename || filename === '/app/assets/images/200.svg') {
+    return '/app/assets/images/200.svg';
+  }
+  return getImageUrl(filename, 'customers');
+};
+const getEmployeeImageUrl = (filename) => {
+  if (!filename || filename === '/app/assets/images/200.svg') {
+    return '/app/assets/images/200.svg';
+  }
+  return getImageUrl(filename, 'employees');
+};
+const getPurchaseImageUrl = (filename) => {
+  if (!filename || filename === '/app/assets/images/200.svg') {
+    return '/app/assets/images/200.svg';
+  }
+  return getImageUrl(filename, 'purchases');
+};
 
 export { 
   apiUrl, 
