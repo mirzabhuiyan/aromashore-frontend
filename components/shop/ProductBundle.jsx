@@ -1,24 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import Image from "next/image";
-import { apiUrl, getImageUrl } from "../../config";
+import { apiUrl, getProductImageUrl } from "../../config";
 import { formatPriceWithCurrency } from '../../utils/priceFormatter';
-
-// Helper function to get proper product image URL
-const getProductImageUrl = (imageData) => {
-  if (!imageData) return "/app/assets/images/200.svg";
-  
-  // Handle both old base64 and new file-based images
-  if (imageData.startsWith('data:')) {
-    return imageData; // Base64 image
-  } else if (imageData.startsWith('http')) {
-    return imageData; // Already a full URL
-  } else {
-    // For file-based images, use CDN
-    const imageUrl = getImageUrl(imageData, 'products');
-    console.log('Bundle Image URL:', imageUrl);
-    return imageUrl; // File-based image
-  }
-};
 import axios from "axios";
 import { AppStore } from "../../store/AppStore";
 

@@ -9,22 +9,8 @@ import { AppStore } from "../store/AppStore";
 import { calculateCart } from "../services/utilityService";
 import Cookies from "js-cookie";
 import Image from "next/image";
-import { getImageUrl } from '../config';
+import { getProductImageUrl } from '../config';
 import { formatPriceWithSpaces } from '../utils/priceFormatter';
-
-// Helper function to get proper product image URL
-const getProductImageUrl = (imageData) => {
-  if (!imageData) return "/app/assets/images/200.svg";
-  
-  // Handle both old base64 and new file-based images
-  if (imageData.startsWith('data:')) {
-    return imageData; // Base64 image
-  } else if (imageData.startsWith('http')) {
-    return imageData; // Already a full URL
-  } else {
-    return getImageUrl(imageData, 'products'); // Use CDN for file-based images
-  }
-};
 
 function Cart() {
 	const router = useRouter();
