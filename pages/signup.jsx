@@ -35,6 +35,7 @@ function Signup() {
 		zipcode: '',
 		country: ''
 	});
+	const [isGeocoding, setIsGeocoding] = useState(false);
 
 	// useEffect(() => {
 	// 	axios.get(apiUrl + "/public/country").then(function (response) {
@@ -48,6 +49,15 @@ function Signup() {
 	// 		console.log(error);
 	// 	});
 	// }, []);
+
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (window.addressTimeout) {
+				clearTimeout(window.addressTimeout);
+			}
+		};
+	}, []);
 
 	const handleChange = (e) => {
 		var errorsCopy = { ...errors };
@@ -68,6 +78,16 @@ function Signup() {
 
 	const handleAddressChange = (name, value) => {
 		setAddress((prev) => ({ ...prev, [name]: value }));
+		
+		// Auto-fill city when address line 1 is changed and contains enough information
+		if (name === 'address_line_one' && value && value.length > 10) {
+			// Debounce the geocoding to avoid too many API calls
+			clearTimeout(window.addressTimeout);
+			window.addressTimeout = setTimeout(() => {
+				setIsGeocoding(true);
+				handleSelectAddress(value);
+			}, 1000);
+		}
 	};
 
 	const handleSelectAddress = async (value) => {
@@ -76,18 +96,67 @@ function Signup() {
 			const results = await geocodeByAddress(value);
 			if (results && results[0]) {
 				const addressComponents = results[0].address_components;
-				let city = '', state = '', zipcode = '', country = '',street = '',streetNumber = '';
+				let city = '', state = '', zipcode = '', country = '', street = '', streetNumber = '';
+				
+				// Debug logging
+				console.log('Address components:', addressComponents);
+				
 				addressComponents.forEach(component => {
-					if (component.types.includes('locality')) city = component.long_name;
+					console.log('Component:', component.long_name, 'Types:', component.types);
+					
+					// Try multiple city types for better coverage
+					if (component.types.includes('locality')) {
+						city = component.long_name;
+					} else if (component.types.includes('sublocality') && !city) {
+						city = component.long_name;
+					} else if (component.types.includes('sublocality_level_1') && !city) {
+						city = component.long_name;
+					} else if (component.types.includes('administrative_area_level_2') && !city) {
+						city = component.long_name;
+					}
+					
 					if (component.types.includes('administrative_area_level_1')) state = component.long_name;
 					if (component.types.includes('postal_code')) zipcode = component.long_name;
 					if (component.types.includes('country')) country = component.long_name;
 					if (component.types.includes('route')) street = component.long_name;
 					if (component.types.includes('street_number')) streetNumber = component.long_name;
-					});
-				setAddress((prev) => ({ ...prev, city, state, zipcode, country,street,streetNumber,address_line_one:streetNumber + ' ' + street }));
+				});
+				
+				console.log('Extracted values:', { city, state, zipcode, country, street, streetNumber });
+				
+				// Fallback: If city is not found, try to extract it from the address string
+				if (!city && value) {
+					const addressParts = value.split(',').map(part => part.trim());
+					// Look for city in the address parts (usually the second or third part)
+					for (let i = 1; i < addressParts.length && i < 3; i++) {
+						const part = addressParts[i];
+						// Skip if it looks like a state or zip code
+						if (!part.match(/^\d{5}(-\d{4})?$/) && !part.match(/^[A-Z]{2}$/)) {
+							city = part;
+							break;
+						}
+					}
+					console.log('Fallback city extraction:', city);
+				}
+				
+				// Update address with extracted values
+				const newAddress = {
+					city,
+					state,
+					zipcode,
+					country,
+					street,
+					streetNumber,
+					address_line_one: streetNumber ? `${streetNumber} ${street}`.trim() : street
+				};
+				
+				setAddress((prev) => ({ ...prev, ...newAddress }));
 			}
-		} catch (e) { }
+		} catch (e) {
+			console.error('Error in handleSelectAddress:', e);
+		} finally {
+			setIsGeocoding(false);
+		}
 	};
 
 	const validateUser = async () => {
@@ -236,8 +305,16 @@ function Signup() {
 													/>
 												</div>
 												<div className='col-12 col-md-6'>
-													<label>City</label>
-													<input className='form-control myform-control mb-2' type='text' name='city' value={address.city} onChange={e => handleAddressChange('city', e.target.value)} placeholder='City' />
+													<label>City {isGeocoding && <span className="text-muted">(Auto-filling...)</span>}</label>
+													<input 
+														className='form-control myform-control mb-2' 
+														type='text' 
+														name='city' 
+														value={address.city} 
+														onChange={e => handleAddressChange('city', e.target.value)} 
+														placeholder={isGeocoding ? 'Auto-filling city...' : 'City'} 
+														disabled={isGeocoding}
+													/>
 												</div>
 												<div className='col-12 col-md-6'>
 													<label>State</label>
