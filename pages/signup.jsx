@@ -187,17 +187,23 @@ function Signup() {
 		if (errorsCopy) return;
 		try {
 			const payload = { ...user, ...address };
+			console.log('Registration payload:', payload);
 			const { data } = await register(payload);
-			toast(data.appMessage);
 			if (data.appStatus) {
+				toast.success('Registration successful! Welcome to Aromashore!');
 				router.push('/');
+			} else {
+				toast.error(data.appMessage);
 			}
 			// If not successful, stay on the page and show the toast only
 		} catch (ex) {
+			console.error('Registration error:', ex);
 			if (ex.response && ex.response.status === 400) {
 				const errorsTemp = { ...errors };
 				errorsTemp.email = ex.response.data;
 				setErrors(errorsTemp);
+			} else {
+				toast.error('Registration failed. Please try again.');
 			}
 		}
 	};
