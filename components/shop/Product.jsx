@@ -131,15 +131,23 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 													width={250} 
 													height={250}
 													onError={(e) => {
-														console.log('CDN image failed, trying backend fallback:', e.target.src);
-														// Try backend fallback if CDN fails
+														console.log('Image load error, trying fallback:', e.target.src);
+														// Try multiple fallback sources
 														if (e.target.src.includes('aroma-shore.nyc3.cdn.digitaloceanspaces.com')) {
+															// Try backend fallback
 															const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303';
 															const filename = e.target.src.split('/').pop();
 															e.target.src = `${backendUrl}/uploads/products/${filename}`;
+														} else if (e.target.src.includes('aroma-shore-backend-dirk7.ondigitalocean.app')) {
+															// Try local placeholder
+															e.target.src = '/app/assets/images/200.svg';
 														} else {
+															// Final fallback
 															e.target.src = '/app/assets/images/200.svg';
 														}
+													}}
+													onLoadStart={() => {
+														console.log('Image loading started');
 													}}
 													onLoad={(e) => {
 														console.log('Image loaded successfully:', e.target.src);
