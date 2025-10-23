@@ -131,8 +131,21 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 													width={250} 
 													height={250}
 													onError={(e) => {
-														e.target.src = '/app/assets/images/200.svg';
+														console.log('CDN image failed, trying backend fallback:', e.target.src);
+														// Try backend fallback if CDN fails
+														if (e.target.src.includes('aroma-shore.nyc3.cdn.digitaloceanspaces.com')) {
+															const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303';
+															const filename = e.target.src.split('/').pop();
+															e.target.src = `${backendUrl}/uploads/products/${filename}`;
+														} else {
+															e.target.src = '/app/assets/images/200.svg';
+														}
 													}}
+													onLoad={(e) => {
+														console.log('Image loaded successfully:', e.target.src);
+													}}
+													priority={false}
+													loading="lazy"
 												/>
 											) : (
 												<Image 
@@ -140,7 +153,9 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 													src='/app/assets/images/200.svg' 
 													alt='Product placeholder' 
 													width={250} 
-													height={250} 
+													height={250}
+													priority={false}
+													loading="lazy"
 												/>
 											)}
 										</span>

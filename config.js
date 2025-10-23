@@ -10,9 +10,10 @@ const isProduction = !isDev || process.env.NODE_ENV === 'production' || process.
 // Always use the correct CDN domain, ignore any environment variables that might point to old domains
 const doSpacesCdnBase = 'https://aroma-shore.nyc3.cdn.digitaloceanspaces.com';
 
-// Image URL helper function
+// Image URL helper function with better fallback handling
 const getImageUrl = (filename, uploadType = 'products') => {
   if (!filename) return '/app/assets/images/200.svg';
+  
   // If the value points to our placeholder (even when incorrectly prefixed by CDN/backend paths),
   // always return the local placeholder path so Next/Image does not try to rewrite it
   try {
@@ -54,9 +55,9 @@ const getImageUrl = (filename, uploadType = 'products') => {
     
     return filename; // Already a full URL with correct domain
   } else {
-    // File-based image - always use CDN for production
+    // File-based image - use CDN with fallback
     if (isProduction) {
-      // Production: Always use DigitalOcean Spaces CDN
+      // Production: Use CDN with backend fallback
       return `${doSpacesCdnBase}/uploads/${uploadType}/${filename}`;
     } else {
       // Development: Use local backend
