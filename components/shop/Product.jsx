@@ -52,6 +52,62 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 
 	return (
 		<>
+			<style jsx>{`
+				/* Mobile responsive fixes for product cards */
+				@media (max-width: 576px) {
+					.product-content__header {
+						margin-bottom: 8px !important;
+					}
+					
+					.product-category {
+						font-size: 12px !important;
+						margin-bottom: 4px !important;
+						line-height: 1.2 !important;
+					}
+					
+					.rate {
+						margin-bottom: 8px !important;
+					}
+					
+					.stars {
+						font-size: 12px !important;
+					}
+					
+					.product-name {
+						font-size: 14px !important;
+						line-height: 1.3 !important;
+						margin-bottom: 8px !important;
+						display: block !important;
+						overflow: hidden !important;
+						text-overflow: ellipsis !important;
+						white-space: nowrap !important;
+					}
+					
+					.product-price {
+						font-size: 13px !important;
+					}
+					
+					.product-thumb__image img {
+						width: 100% !important;
+						height: 200px !important;
+						object-fit: cover !important;
+					}
+					
+					.card {
+						margin-bottom: 16px !important;
+					}
+					
+					.card-body {
+						padding: 12px !important;
+					}
+				}
+				
+				@media (max-width: 768px) {
+					.product-thumb__image img {
+						height: 180px !important;
+					}
+				}
+			`}</style>
 			{viewType ? (
 				<div className={shopPage ? "col-6 col-md-6 col-lg-4 col-xl-3 mb-4" : "p-0"}>
 					<Card className='shadow'>
@@ -66,7 +122,28 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								)} */}
 								<div className='product-thumb'>
 									<Link href={"/products/" + id}>
-										<span className='product-thumb__image'>{productimages && Array.isArray(productimages) && productimages[0] ? <img className='img-fluid' src={getProductImageUrl(productimages[0]?.image)} alt={productimages[0]?.name} width={250} height={250} /> : <img className='img-fluid' src='/app/assets/images/200.svg' alt='Placeholder' width={250} height={250} />}</span>
+										<span className='product-thumb__image'>
+											{productimages && Array.isArray(productimages) && productimages[0] ? (
+												<Image 
+													className='img-fluid' 
+													src={getProductImageUrl(productimages[0]?.image)} 
+													alt={productimages[0]?.name || 'Product image'} 
+													width={250} 
+													height={250}
+													onError={(e) => {
+														e.target.src = '/app/assets/images/200.svg';
+													}}
+												/>
+											) : (
+												<Image 
+													className='img-fluid' 
+													src='/app/assets/images/200.svg' 
+													alt='Product placeholder' 
+													width={250} 
+													height={250} 
+												/>
+											)}
+										</span>
 									</Link>
 									<div className='product-thumb__actions'>
 										{/* <div className='product-btn'>
@@ -102,13 +179,15 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 								<div className='product-content'>
 									<div className='product-content__header'>
 										<div className='product-category text-uppercase'>{productcategory && productcategory.category_name ? productcategory.category_name : 'Uncategorized'}</div>
-										<div className='rate'>
-											{avgRatingRange.map((item, i) => {
-												return <i key={i} className='fas fa-star text-warning'></i>;
-											})}
-											{avgNonRatingRange.map((item, i) => {
-												return <i key={i} className='far fa-star text-secondary'></i>;
-											})}
+										<div className='rate d-flex align-items-center justify-content-between'>
+											<div className='stars d-flex'>
+												{avgRatingRange.map((item, i) => {
+													return <i key={i} className='fas fa-star text-warning me-1'></i>;
+												})}
+												{avgNonRatingRange.map((item, i) => {
+													return <i key={i} className='far fa-star text-secondary me-1'></i>;
+												})}
+											</div>
 											{/* <span>({totalReviewers})</span> */}
 										</div>
 									</div>

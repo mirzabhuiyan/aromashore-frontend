@@ -32,20 +32,17 @@ export default function HeaderNavigation({ openCart }) {
 	// useEffect(() => {},[])
 	useEffect(() => {
 		// console.log('header navigation ------->>', user, cart, openCart);
-		axios.get(apiUrl + "/web/get/webmenu").then((response) => {
-			// console.log("waiting end", response);
-			if (response.data.appStatus) {
-
-				// const bottomMenuList = response.data.appData;
-				// let bottomMenuListCopy = bottomMenuList?.map((item) => {
-				// 	return {
-				// 		...item,
-				// 		isActive: false
-				// 	};
-				// });
-				setMenuList(response.data.appData);
-			}
-		});
+		axios.get(apiUrl + "/web/get/webmenu")
+			.then((response) => {
+				// console.log("waiting end", response);
+				if (response.data.appStatus) {
+					setMenuList(response.data.appData);
+				}
+			})
+			.catch((error) => {
+				console.error("Error fetching menu:", error);
+				setMenuList([]);
+			});
 
 		axios.post(apiUrl + "/web/getall/product", {
 			pageSize: 10,
@@ -56,28 +53,40 @@ export default function HeaderNavigation({ openCart }) {
 				if (response.data.appStatus) {
 					setProductList(response.data.appData.rows);
 				}
+			})
+			.catch((error) => {
+				console.error("Error fetching products:", error);
+				setProductList([]);
 			});
 	}, []);
 
 	const handleSelectMenu = (menu) => {
-		console.log(menu);
-		if (menu !== null) {
-			setSelectedMenu(menu);
-			handleSelectedMenuAllProduct(menu.productcategories, menu.id);
-			handleSelectCategory(null);
-		} else {
-			setSelectedMenu(null);
-			handleSelectedMenuAllProduct(null);
-			handleSelectCategory(null);
+		try {
+			console.log(menu);
+			if (menu !== null) {
+				setSelectedMenu(menu);
+				handleSelectedMenuAllProduct(menu.productcategories, menu.id);
+				handleSelectCategory(null);
+			} else {
+				setSelectedMenu(null);
+				handleSelectedMenuAllProduct(null);
+				handleSelectCategory(null);
+			}
+		} catch (error) {
+			console.error("Error in handleSelectMenu:", error);
 		}
 	};
 
 	const handleSelectMobileMenu = (menu) => {
-		console.log(menu);
-		if (menu !== null) {
-			setSelectedMobileMenu(menu);
-		} else {
-			setSelectedMobileMenu(null);
+		try {
+			console.log(menu);
+			if (menu !== null) {
+				setSelectedMobileMenu(menu);
+			} else {
+				setSelectedMobileMenu(null);
+			}
+		} catch (error) {
+			console.error("Error in handleSelectMobileMenu:", error);
 		}
 	};
 
@@ -139,16 +148,21 @@ export default function HeaderNavigation({ openCart }) {
 	};
 
 	const handleInput = (e) => {
-		setInputValue(e.target.value);
-		const searchString = e.target.value.toLowerCase();
-		const loaclProductList = productList;
-		// loaclProductList.map(prod => console.log(prod.name.toLowerCase()))
-		let filterList = [];
-		if (searchString) {
-			filterList = loaclProductList.filter((prod) => prod.name.toLowerCase().includes(searchString));
+		try {
+			setInputValue(e.target.value);
+			const searchString = e.target.value.toLowerCase();
+			const loaclProductList = productList || [];
+			// loaclProductList.map(prod => console.log(prod.name.toLowerCase()))
+			let filterList = [];
+			if (searchString) {
+				filterList = loaclProductList.filter((prod) => prod && prod.name && prod.name.toLowerCase().includes(searchString));
+			}
+			console.log(filterList);
+			setFilteredProductList(filterList);
+		} catch (error) {
+			console.error("Error in handleInput:", error);
+			setFilteredProductList([]);
 		}
-		console.log(filterList);
-		setFilteredProductList(filterList);
 	};
 
 	const goToSelectedCategory = (categoryId) => {
@@ -164,7 +178,7 @@ export default function HeaderNavigation({ openCart }) {
 				<div className='container-fluid'>
 					<Link href='/'>
 						<span className='navbar-brand me-2'>
-							<img className='logo' src='/app/assets/images/logo-white.png' alt='Logo' width={50} height={44} />
+							<Image className='logo' src='/app/assets/images/logo-white.png' alt='Aromashore Logo' width={50} height={44} />
 						</span>
 					</Link>
 					<button className='navbar-toggler' type='button' data-bs-toggle='offcanvas' data-bs-target='#offcanvasNavbar' aria-controls='offcanvasNavbar' aria-label='Toggle navigation'>
@@ -213,7 +227,7 @@ export default function HeaderNavigation({ openCart }) {
 						</div>
 						<div className='offcanvas-body'>
 							<ul className='navbar-nav mr-auto desktop-tablet-view'>
-								{menuList?.map((menu, i) => {
+								{menuList && Array.isArray(menuList) && menuList.map((menu, i) => {
 									if (i <= 4) {
 										return (
 											<li key={menu.id} className='nav-item' onClick={() => handleSelectMenu(menu)}>
@@ -299,7 +313,7 @@ export default function HeaderNavigation({ openCart }) {
 									<input type='search' id='search' className='form-control form-control-sm' placeholder='Search by Product Name...' onChange={handleInput} onFocus={handleInput} />
 								</li>
 								<div className='dropdown'>
-									{menuList?.map((menu, i) => (
+									{menuList && Array.isArray(menuList) && menuList.map((menu, i) => (
 										<li className='nav-item' key={i}>
 											<a className='nav-link' onClick={() => handleSelectMobileMenu(menu)} href='#' data-bs-toggle='dropdown' aria-expanded='false'>
 												{menu.category_name || menu.name}
@@ -353,11 +367,25 @@ export default function HeaderNavigation({ openCart }) {
 									<div key={i}>
 										<Link href={"/products/" + product.id}>
 											<ListGroup.Item className='result-item'>
-												{product.productimages[0] ? <Image src={getProductImageUrl(product.productimages[0]?.image)} alt={product.productimages[0]?.name} width={30} height={30} /> : <Image src='/app/assets/images/200.svg' alt='Placeholder' width={30} height={30} />}
+												{product.productimages && product.productimages[0] ? (
+													<Image 
+														src={getProductImageUrl(product.productimages[0]?.image)} 
+														alt={product.productimages[0]?.name || 'Product image'} 
+														width={30} 
+														height={30}
+														onError={(e) => {
+															e.target.src = '/app/assets/images/200.svg';
+														}}
+													/>
+												) : (
+													<Image 
+														src='/app/assets/images/200.svg' 
+														alt='Product placeholder' 
+														width={30} 
+														height={30} 
+													/>
+												)}
 												&nbsp;&nbsp;
-												{/* <b>Brand:&nbsp;</b>
-												{product.productbrand.name},&nbsp;
-												<b>Name:&nbsp;</b> */}
 												{product.name}
 											</ListGroup.Item>
 											{/* <ListGroup.Item>{product.name}</ListGroup.Item> */}

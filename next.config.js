@@ -60,6 +60,11 @@ const nextConfig = {
         pathname: '/uploads/**',
       },
     ],
+    // Add image optimization settings
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Disable image optimization for development to avoid issues
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   eslint: {
     // Prevent lint errors from failing production builds

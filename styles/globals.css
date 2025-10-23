@@ -1497,7 +1497,7 @@ button:hover .cart__quantity {
 
   .footer-one__header__logo {
     margin-bottom: 3.07143em;
-    padding-left: 200px;
+    padding-left: 20px;
   }
 
   .footer-one__header__social .social-icons {
@@ -1506,7 +1506,7 @@ button:hover .cart__quantity {
   }
 
   .footer-one__footer {
-    padding-left: 121px;
+    padding-left: 20px;
     font-size: 12px;
   }
 
@@ -1550,11 +1550,11 @@ button:hover .cart__quantity {
 
 
 .icons_newsletter {
-  padding-left: 200px;
+  padding-left: 20px;
 }
 
 .footer-one__footer {
-  padding-left: 121px;
+  padding-left: 20px;
   font-size: 12px;
 }
 
@@ -1903,6 +1903,351 @@ button:hover .cart__quantity {
 /* responsive end  */
 
 /* Syeda's code end  */
+
+/* Image loading improvements */
+.logo {
+  max-width: 50px;
+  height: auto;
+  object-fit: contain;
+}
+
+.product-thumb__image img,
+.product-thumb__image Image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.product-thumb__image img[src=""],
+.product-thumb__image Image[src=""] {
+  opacity: 0;
+}
+
+/* Mobile UX improvements */
+@media (max-width: 576px) {
+  /* Prevent mobile zoom and improve touch handling */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Allow text selection in input fields */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
+  /* Hide horizontal scrollbars on mobile */
+  .slick-list {
+    overflow: hidden !important;
+  }
+  
+  /* Ensure logo is visible on mobile */
+  .navbar-brand .logo {
+    max-width: 40px;
+    height: auto;
+  }
+  
+  /* Fix mobile navigation issues */
+  .navbar-toggler {
+    border: none !important;
+    padding: 4px 8px !important;
+  }
+  
+  .navbar-toggler:focus {
+    box-shadow: none !important;
+  }
+  
+  /* Fix mobile offcanvas issues */
+  .offcanvas {
+    z-index: 1050 !important;
+  }
+  
+  .offcanvas-backdrop {
+    z-index: 1040 !important;
+  }
+  
+  /* Prevent mobile layout crashes */
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  /* Fix mobile dropdown issues */
+  .dropdown-menu {
+    position: static !important;
+    float: none !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Improve product slider mobile experience */
+  .product-slide {
+    padding: 0 8px !important;
+  }
+  
+  .product-slide .container {
+    padding: 0 !important;
+  }
+  
+  .product-slide .section-title {
+    padding: 0 8px !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .product-slide .section-title h2 {
+    font-size: 18px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Fix product card spacing on mobile */
+  .product-slide .slick-slide {
+    padding: 0 4px !important;
+  }
+  
+  /* Improve card shadows and spacing */
+  .product-slide .card {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Better touch targets */
+  .product-thumb__actions .btn {
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Improve text readability */
+  .product-name {
+    font-weight: 500 !important;
+    color: #2c3e50 !important;
+  }
+  
+  .product-category {
+    color: #6c757d !important;
+    font-weight: 500 !important;
+  }
+  
+  .product-price {
+    color: #28a745 !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Tablet improvements */
+@media (min-width: 577px) and (max-width: 768px) {
+  .product-slide .slick-slide {
+    padding: 0 8px !important;
+  }
+  
+  .product-slide .section-title h2 {
+    font-size: 20px !important;
+  }
+}
+
+/* Product View Page Improvements */
+.product-view-page {
+  padding: 20px 0;
+}
+
+.product-view-page .product-thumb__image {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.product-view-page .product-thumb__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-view-page .product-thumb__image:hover img {
+  transform: scale(1.05);
+}
+
+.product-view-page .product-content {
+  padding: 20px 0;
+}
+
+.product-view-page .product-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.product-view-page .product-category {
+  font-size: 14px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 15px;
+}
+
+.product-view-page .product-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 20px;
+}
+
+.product-view-page .product-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #495057;
+  margin-bottom: 30px;
+}
+
+/* Fix product card styling in product view */
+.product-view-page .card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.product-view-page .card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.product-view-page .card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-view-page .product-thumb__image {
+  height: 200px;
+  margin-bottom: 15px;
+}
+
+.product-view-page .product-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-view-page .product-category {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.product-view-page .product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #28a745;
+  margin-top: auto;
+}
+
+/* Fix star rating display */
+.product-view-page .rate {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.product-view-page .rate .stars {
+  color: #ffc107;
+  font-size: 14px;
+}
+
+/* Fix "You May Also Like" and "Popular Product" sections */
+.product-view-page .section-title {
+  margin-bottom: 30px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #8abc41;
+}
+
+.product-view-page .section-title h2 {
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.product-view-page .section-title h2::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 3px;
+  background-color: #8abc41;
+  margin-top: 8px;
+}
+
+/* Fix "No similar products found" message */
+.product-view-page .no-products-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-size: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.product-view-page .brand-id {
+  font-size: 14px;
+  color: #6c757d;
+  margin-top: 10px;
+}
+
+/* Mobile improvements for product view */
+@media (max-width: 768px) {
+  .product-view-page .product-thumb__image {
+    height: 250px;
+  }
+  
+  .product-view-page .product-name {
+    font-size: 18px;
+  }
+  
+  .product-view-page .card-body {
+    padding: 15px;
+  }
+  
+  .product-view-page .product-thumb__image {
+    height: 180px;
+  }
+  
+  .product-view-page .section-title h2 {
+    font-size: 20px;
+  }
+}
 
 /* Reduce filter title sizes on phones */
 @media screen and (max-width: 576px) {

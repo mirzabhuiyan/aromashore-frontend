@@ -238,7 +238,8 @@ function ProductDetail() {
 	return (
 		<>
 			<Layout>
-				<div className='breadcrumb'>
+				<div className='product-view-page'>
+					<div className='breadcrumb'>
 					<div className='container mt-2'>
 						<ul className='mb-2 p-0'>
 							<li>
@@ -521,6 +522,7 @@ function ProductDetail() {
 						<PopularProduct />
 					</>
 				)}
+				</div>
 			</Layout>
 		</>
 	);
