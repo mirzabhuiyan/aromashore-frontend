@@ -53,7 +53,14 @@ const nextConfig = {
         port: '3303',
         pathname: '/uploads/**',
       },
-      // Add DigitalOcean Spaces CDN for production
+      // Add DigitalOcean backend for production
+      {
+        protocol: 'https',
+        hostname: 'aroma-shore-backend-dirk7.ondigitalocean.app',
+        port: '3303',
+        pathname: '/uploads/**',
+      },
+      // Add DigitalOcean Spaces CDN for production (fallback)
       {
         protocol: 'https',
         hostname: 'aroma-shore.nyc3.cdn.digitaloceanspaces.com',
@@ -65,6 +72,10 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     // Disable image optimization for development to avoid issues
     unoptimized: process.env.NODE_ENV === 'development',
+    // Add better error handling for production
+    loader: 'default',
+    // Add timeout for image loading
+    minimumCacheTTL: 60,
   },
   eslint: {
     // Prevent lint errors from failing production builds
