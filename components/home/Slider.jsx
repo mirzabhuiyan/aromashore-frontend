@@ -38,17 +38,13 @@ export default function Slider() {
 														<img className='slider-background' src={banner.image} alt={banner.title} layout='fill' />
 													</div>
 													<div className='slider-content'>
-														<h5 style={{ color: "#202020", marginBottom: 0 }} className='slider-content__subtitle' data-animation-in='fadeInUp' data-animation-delay='0.1'>
+														<h5 style={{ color: "#202020", marginBottom: 0 }} className='slider-content__subtitle'>
 															{banner.sub_title}
 														</h5>
-														<h2 style={{ color: "#8abc41", marginBottom: 0 }} className='slider-content__title' data-animation-in='fadeInUp' data-animation-delay='0.2'>
+														<h2 style={{ color: "#8abc41", marginBottom: 0 }} className='slider-content__title'>
 															{banner.title}
 														</h2>
-														{/* <div
-                          data-animation-in="fadeInUp"
-                          data-animation-out="fadeInDown"
-                          data-animation-delay="0.4"
-                        >
+														{/* <div>
                           <a className="btn -red" href="#">
                             Appointment
                           </a>

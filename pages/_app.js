@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import Head from "next/head";
 import Cookies from "js-cookie";
 import App from "next/app";
 // import Router from "next/router";
@@ -219,9 +220,16 @@ function MyApp({
     }
   };
 
-  return (
-    <AppStore.Provider
-      value={{
+	return (
+		<>
+			<Head>
+				<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+				<meta name="mobile-web-app-capable" content="yes" />
+				<meta name="apple-mobile-web-app-capable" content="yes" />
+				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+			</Head>
+			<AppStore.Provider
+				value={{
         cart,
         user,
         setUSER: (u) => {
@@ -273,7 +281,9 @@ function MyApp({
         is_IN_WISHLIST,
       }}
     >
-      <Component {...pageProps} />
+      <div suppressHydrationWarning={true}>
+        <Component {...pageProps} />
+      </div>
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -287,6 +297,7 @@ function MyApp({
       />
       <PromotionalPopup />
     </AppStore.Provider>
+    </>
   );
 }
 
