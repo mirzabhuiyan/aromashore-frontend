@@ -55,10 +55,11 @@ const getImageUrl = (filename, uploadType = 'products') => {
     
     return filename; // Already a full URL with correct domain
   } else {
-    // File-based image - use CDN with fallback
+    // File-based image - use backend for production to avoid CDN issues
     if (isProduction) {
-      // Production: Use CDN with backend fallback
-      return `${doSpacesCdnBase}/uploads/${uploadType}/${filename}`;
+      // Production: Use backend instead of CDN to avoid connectivity issues
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303';
+      return `${backendUrl}/uploads/${uploadType}/${filename}`;
     } else {
       // Development: Use local backend
       return `${uploadsBase}${uploadType}/${filename}`;
@@ -66,11 +67,11 @@ const getImageUrl = (filename, uploadType = 'products') => {
   }
 };
 
-// Always use CDN for uploads when not in development
-// This ensures product images load from the correct CDN domain
+// Use backend for uploads to avoid CDN connectivity issues
+// This ensures product images load reliably from backend
 let uploadsBase = isDev 
   ? 'http://localhost:3303/uploads/' 
-  : `${doSpacesCdnBase}/uploads/`;
+  : (process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303') + '/uploads/';
 
 // Backward-compat: product images live under uploads/products
 const globalProductImageAddress = `${uploadsBase}products/`;
