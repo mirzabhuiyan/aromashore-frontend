@@ -235,7 +235,7 @@ export default function PopularProduct({ categoryId = null }) {
 			{
 				breakpoint: 1200,
 				settings: {
-					slidesToShow: 3,
+					slidesToShow: 4,
 					slidesToScroll: 1,
 				}
 			},
@@ -269,6 +269,16 @@ export default function PopularProduct({ categoryId = null }) {
 				console.log('PopularProduct API response:', response.data);
 				if (response.data.appStatus) {
 					console.log('PopularProduct: Found', response.data.appData.length, 'products');
+					// Debug first product data
+					if (response.data.appData.length > 0) {
+						const firstProduct = response.data.appData[0];
+						console.log('PopularProduct: First product data:', {
+							id: firstProduct.id,
+							name: firstProduct.name,
+							productimages: firstProduct.productimages,
+							productproperties: firstProduct.productproperties
+						});
+					}
 					setProductList(response.data.appData);
 				} else {
 					console.log('PopularProduct: No products found');
@@ -293,7 +303,7 @@ export default function PopularProduct({ categoryId = null }) {
 				/* Space out Slick slides and prevent overlap */
 				.product-slider :global(.slick-list) {
 					margin: 0 -12px;
-					overflow: visible;
+					overflow: hidden;
 				}
 				.product-slider :global(.slick-track) {
 					display: flex;
