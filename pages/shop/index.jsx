@@ -81,7 +81,11 @@ export default function Index() {
 		// Only make API calls in browser environment, not during build
 		if (typeof window === "undefined") return;
 		axios.get(apiUrl + "/web/getall/brand", {
-			timeout: 10000 // 10 second timeout
+			timeout: 10000, // 10 second timeout
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json'
+			}
 		})
 			.then((response) => {
 				// console.log(response);
@@ -96,13 +100,39 @@ export default function Index() {
 					setProductBrandList([]);
 				}
 			})
-			.catch((error) => {
-				console.error("Brand Network Error:", error);
-				setProductBrandList([]);
-			});
+				.catch((error) => {
+					console.error("Brand Network Error:", error);
+					// Retry once after a short delay
+					setTimeout(() => {
+						axios.get(apiUrl + "/web/getall/brand", {
+							timeout: 10000,
+							headers: {
+								'Content-Type': 'application/json',
+								'Accept': 'application/json'
+							}
+						})
+						.then((response) => {
+							if (response.data.appStatus) {
+								const brandList = response.data.appData;
+								brandList.map((brand) => {
+									brand.isChecked = false;
+								});
+								setProductBrandList(brandList);
+							}
+						})
+						.catch((retryError) => {
+							console.error("Brand retry failed:", retryError);
+							setProductBrandList([]);
+						});
+					}, 1000);
+				});
 
 		axios.get(apiUrl + "/web/getall/category", {
-			timeout: 10000 // 10 second timeout
+			timeout: 10000, // 10 second timeout
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json'
+			}
 		})
 			.then((response) => {
 				// console.log(response);
@@ -115,13 +145,34 @@ export default function Index() {
 			})
 			.catch((error) => {
 				console.error("Category Network Error:", error);
-				setCategoryList([]);
+				// Retry once after a short delay
+				setTimeout(() => {
+					axios.get(apiUrl + "/web/getall/category", {
+						timeout: 10000,
+						headers: {
+							'Content-Type': 'application/json',
+							'Accept': 'application/json'
+						}
+					})
+					.then((response) => {
+						if (response.data.appStatus) {
+							setCategoryList(response.data.appData);
+						}
+					})
+					.catch((retryError) => {
+						console.error("Category retry failed:", retryError);
+						setCategoryList([]);
+					});
+				}, 1000);
 			});
 	}, []);
 
 	useEffect(() => {
 		// Only make API calls in browser environment, not during build
 		if (typeof window === "undefined") return;
+		
+		// Prevent multiple simultaneous requests
+		if (isLoading) return;
 		
 		// Add a small delay to ensure component is fully mounted
 		const timer = setTimeout(() => {
@@ -168,9 +219,7 @@ export default function Index() {
 					timeout: isMobile ? 20000 : 15000, // Longer timeout for mobile
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/json',
-						'Cache-Control': 'no-cache',
-						'Pragma': 'no-cache'
+						'Accept': 'application/json'
 					}
 				})
 				.then((response) => {
@@ -198,31 +247,70 @@ export default function Index() {
 				.catch((error) => {
 					console.error("Network Error:", error);
 					
-					// Try to load cached data as fallback
-					const cachedData = localStorage.getItem('cachedProducts');
-					if (cachedData) {
-						try {
-							const parsedData = JSON.parse(cachedData);
-							setAllProductList(parsedData);
-							setIsLoading(false);
-							console.log("Loaded cached products as fallback");
-							return;
-						} catch (e) {
-							console.error("Failed to parse cached data:", e);
+					// Retry once after a short delay
+					setTimeout(() => {
+						console.log("Retrying product API call...");
+						axios
+							.post(apiUrl + "/web/getall/product", filterParams, {
+								timeout: isMobile ? 20000 : 15000,
+								headers: {
+									'Content-Type': 'application/json',
+									'Accept': 'application/json'
+								}
+							})
+							.then((response) => {
+								console.log("Retry API Response:", response);
+								if (response.data.appStatus) {
+									const products = response.data.appData.rows;
+									setAllProductList(products);
+									setIsLoading(false);
+									setApiError(false);
+									
+									// Cache the data for offline use
+									try {
+										localStorage.setItem('cachedProducts', JSON.stringify(products));
+										console.log("Products cached successfully");
+									} catch (e) {
+										console.error("Failed to cache products:", e);
+									}
+								} else {
+									console.error("Retry API Error:", response.data.message || "Unknown error");
+									handleApiFailure();
+								}
+							})
+							.catch((retryError) => {
+								console.error("Retry failed:", retryError);
+								handleApiFailure();
+							});
+					}, 2000);
+					
+					function handleApiFailure() {
+						// Try to load cached data as fallback
+						const cachedData = localStorage.getItem('cachedProducts');
+						if (cachedData) {
+							try {
+								const parsedData = JSON.parse(cachedData);
+								setAllProductList(parsedData);
+								setIsLoading(false);
+								console.log("Loaded cached products as fallback");
+								return;
+							} catch (e) {
+								console.error("Failed to parse cached data:", e);
+							}
 						}
-					}
-					
-					setAllProductList([]);
-					setIsLoading(false);
-					setApiError(true);
-					
-					// Show user-friendly error message
-					if (error.code === 'ECONNABORTED') {
-						alert("Request timed out. Please check your internet connection and try again.");
-					} else if (error.code === 'ERR_NETWORK') {
-						alert("Network error. Please check your internet connection and try again.");
-					} else {
-						alert("Unable to load products. Please check your internet connection and try again.");
+						
+						setAllProductList([]);
+						setIsLoading(false);
+						setApiError(true);
+						
+						// Show user-friendly error message
+						if (error.code === 'ECONNABORTED') {
+							alert("Request timed out. Please check your internet connection and try again.");
+						} else if (error.code === 'ERR_NETWORK') {
+							alert("Network error. Please check your internet connection and try again.");
+						} else {
+							alert("Unable to load products. Please check your internet connection and try again.");
+						}
 					}
 				});
 		}, 100); // 100ms delay
@@ -355,7 +443,7 @@ export default function Index() {
 														display: 'flex',
 														justifyContent: 'space-between',
 														alignItems: 'center',
-														borderBottom: '2px solid #007bff',
+														borderBottom: '2px solid #8abc41',
 														paddingBottom: '12px',
 														flexWrap: 'wrap',
 														gap: '8px'
@@ -369,9 +457,11 @@ export default function Index() {
 															alignItems: 'center',
 															gap: '8px',
 															flex: '1',
-															minWidth: '0'
+															minWidth: '0',
+															textAlign: 'left',
+															justifyContent: 'flex-start'
 														}}>
-															<i className="fas fa-tags" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<i className="fas fa-tags" style={{ color: '#8abc41', flexShrink: 0 }}></i>
 															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Categories</span>
 														</h2>
 														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
@@ -553,7 +643,7 @@ export default function Index() {
 														display: 'flex',
 														justifyContent: 'space-between',
 														alignItems: 'center',
-														borderBottom: '2px solid #007bff',
+														borderBottom: '2px solid #8abc41',
 														paddingBottom: '12px',
 														flexWrap: 'wrap',
 														gap: '8px'
@@ -567,9 +657,11 @@ export default function Index() {
 															alignItems: 'center',
 															gap: '8px',
 															flex: '1',
-															minWidth: '0'
+															minWidth: '0',
+															textAlign: 'left',
+															justifyContent: 'flex-start'
 														}}>
-															<i className="fas fa-star" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<i className="fas fa-star" style={{ color: '#8abc41', flexShrink: 0 }}></i>
 															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Inspired By</span>
 														</h2>
 														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
@@ -837,7 +929,7 @@ export default function Index() {
 												}}>
 													<div className='section-title -style1 -medium' style={{ 
 														marginBottom: "1.5em",
-														borderBottom: '2px solid #007bff',
+														borderBottom: '2px solid #8abc41',
 														paddingBottom: '12px',
 														display: 'flex', 
 														justifyContent: 'space-between', 
@@ -854,9 +946,11 @@ export default function Index() {
 															alignItems: 'center',
 															gap: '8px',
 															flex: '1',
-															minWidth: '0'
+															minWidth: '0',
+															textAlign: 'left',
+															justifyContent: 'flex-start'
 														}}>
-															<i className="fas fa-spray-can" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<i className="fas fa-spray-can" style={{ color: '#8abc41', flexShrink: 0 }}></i>
 															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Perfume Notes</span>
 														</h2>
 														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
@@ -1002,7 +1096,7 @@ export default function Index() {
 												}}>
 													<div className='section-title -style1 -medium' style={{ 
 														marginBottom: "1.5em",
-														borderBottom: '2px solid #007bff',
+														borderBottom: '2px solid #8abc41',
 														paddingBottom: '12px',
 														display: 'flex', 
 														justifyContent: 'space-between', 
@@ -1019,9 +1113,11 @@ export default function Index() {
 															alignItems: 'center',
 															gap: '8px',
 															flex: '1',
-															minWidth: '0'
+															minWidth: '0',
+															textAlign: 'left',
+															justifyContent: 'flex-start'
 														}}>
-															<i className="fas fa-sun" style={{ color: '#007bff', flexShrink: 0 }}></i>
+															<i className="fas fa-sun" style={{ color: '#8abc41', flexShrink: 0 }}></i>
 															<span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Season</span>
 														</h2>
 														<div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>

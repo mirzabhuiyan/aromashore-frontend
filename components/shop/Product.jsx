@@ -43,12 +43,31 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 
 	const productpro = productproperties && Array.isArray(productproperties) && productproperties.length > 0 ? productproperties[0] : {};
 
-	// Determine which price to show
-	const displayPrice = isDistributor && productpro.dist_price
-		? productpro.dist_price
-		: productpro.sale_price > 0
-			? productpro.sale_price
-			: productpro.price;
+	// Determine which price to show - with better fallback logic
+	let displayPrice = 0;
+	
+	if (isDistributor && productpro.dist_price && productpro.dist_price > 0) {
+		displayPrice = productpro.dist_price;
+	} else if (productpro.sale_price && productpro.sale_price > 0) {
+		displayPrice = productpro.sale_price;
+	} else if (productpro.price && productpro.price > 0) {
+		displayPrice = productpro.price;
+	} else {
+		// If no price found, try to get from product directly
+		displayPrice = product.price || product.sale_price || product.dist_price || 0;
+	}
+
+	// Debug price calculation
+	console.log('Product price debug:', {
+		productId: id,
+		productName: name,
+		isDistributor,
+		dist_price: productpro.dist_price,
+		sale_price: productpro.sale_price,
+		price: productpro.price,
+		displayPrice,
+		productproperties: productproperties
+	});
 
 	return (
 		<>
@@ -131,26 +150,14 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 													width={250} 
 													height={250}
 													onError={(e) => {
-														console.log('Image load error, trying fallback:', e.target.src);
-														// Try multiple fallback sources
-														if (e.target.src.includes('aroma-shore.nyc3.cdn.digitaloceanspaces.com')) {
-															// Try backend fallback
-															const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303';
-															const filename = e.target.src.split('/').pop();
-															e.target.src = `${backendUrl}/uploads/products/${filename}`;
-														} else if (e.target.src.includes('aroma-shore-backend-dirk7.ondigitalocean.app')) {
-															// Try local placeholder
-															e.target.src = '/app/assets/images/200.svg';
-														} else {
-															// Final fallback
-															e.target.src = '/app/assets/images/200.svg';
-														}
-													}}
-													onLoadStart={() => {
-														console.log('Image loading started');
+														console.log('Popular Product image error, trying fallback:', e.target.src);
+														// Try backend fallback
+														const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aroma-shore-backend-dirk7.ondigitalocean.app:3303';
+														const filename = e.target.src.split('/').pop();
+														e.target.src = `${backendUrl}/uploads/products/${filename}`;
 													}}
 													onLoad={(e) => {
-														console.log('Image loaded successfully:', e.target.src);
+														console.log('Popular Product image loaded:', e.target.src);
 													}}
 													priority={false}
 													loading="lazy"
@@ -219,7 +226,7 @@ export default function Product({ product, viewType = true, shopPage = false }) 
 									<span className='product-name'>{name}</span>
 								</Link>
 								<div className='product-price mt-2'>
-									<b>Price: {formatPriceWithCurrency(displayPrice)}</b>
+									<b>Price: {displayPrice > 0 ? formatPriceWithCurrency(displayPrice) : 'Contact for Price'}</b>
 									{isDistributor && productpro.dist_price && (
 										<span className="badge bg-info ms-2">Distributor Price</span>
 									)}
